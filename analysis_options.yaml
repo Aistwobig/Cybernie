@@ -1,0 +1,7 @@
+# Turns on the recommended Flutter lints. If the editor underlines something in
+# yellow, this file is why. Run `flutter analyze` to see them all at once.
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Add or silence individual rules here as you go.

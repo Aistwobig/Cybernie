@@ -1,0 +1,30 @@
+# Secrets: NEVER commit these. Add the line before you create the file.
+.env
+.env.*
+!.env.example
+env.json
+*.keystore
+*.jks
+serviceAccountKey.json
+google-services.json.bak
+
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+# Note: pubspec.lock IS committed for an app. It pins your exact package
+# versions so your build is the same on your laptop and on the CI runner.
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+
+# Raw video captures: compress into docs/ instead, GitHub blocks files over 100 MB
+*.mov
+raw-*.mp4
+
+# OS and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/launch.json

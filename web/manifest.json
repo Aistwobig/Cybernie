@@ -1,0 +1,11 @@
+{
+  "name": "My Final Project",
+  "short_name": "Final Project",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#6750A4",
+  "description": "My 6ADET final project.",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false
+}

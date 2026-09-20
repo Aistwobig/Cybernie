@@ -1,0 +1,117 @@
+name: Deploy web demo
+
+# Builds the Flutter web app and publishes it to GitHub Pages on every push to
+# main, so the link in your README is always your latest commit.
+#
+# Before this works, turn Pages on once: repository Settings > Pages >
+# Build and deployment > Source: GitHub Actions.
+#
+# CONFIG AND SECRETS. Values compiled into a web build are readable by anyone who
+# visits the site, so it matters which kind you are shipping:
+#
+#   Safe to ship: project identifiers whose data is protected by rules, i.e. the
+#   Firebase config in firebase_options.dart and the Supabase URL plus publishable
+#   key. Both vendors document these as safe to expose in a client. Your Firestore
+#   rules and your Supabase RLS policies are what actually protect the data.
+#
+#   NOT safe to ship: anything billable or privileged. A Gemini API key, a
+#   Supabase secret (service_role) key, a service account JSON. A stranger can
+#   read these off your deployed site and spend your quota. Keep those features
+#   local and demo them on video, or put a server in front.
+#
+# Whatever you do pass in, put it in Settings > Secrets and variables > Actions
+# and reference it below. Never write a key literally in this file: it is public.
+#
+# Step by step, with the Dart side and the usual mistakes: page 12 of
+# content/extending-your-app/ in your course workspace.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v7
+
+      # A fresh copy of the template has no Flutter app in it yet. Skip quietly
+      # rather than failing, so your repo is not red before you have written
+      # anything. Once pubspec.yaml exists, every push deploys.
+      - id: check
+        env:
+          IS_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          if [ -f pubspec.yaml ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No pubspec.yaml yet. Add your Flutter app and this workflow will deploy it."
+          fi
+          # GitHub Pages only publishes PUBLIC repositories on a free account.
+          # Say so loudly rather than failing the deploy with a confusing 404.
+          if [ "$IS_PRIVATE" = "true" ]; then
+            echo "::warning::This repository is private, so GitHub Pages cannot publish it and the deploy step is skipped. Make the repository public (Settings > General > Danger Zone > Change visibility) to get your live link."
+          fi
+
+      - if: steps.check.outputs.ready == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - if: steps.check.outputs.ready == 'true'
+        run: flutter pub get
+
+      # Neither of these blocks your deploy: a failing test should not take your
+      # live link down. They are here so you find out before your grader does.
+      - if: steps.check.outputs.ready == 'true'
+        run: flutter analyze --no-fatal-infos
+        continue-on-error: true
+
+      - if: steps.check.outputs.ready == 'true'
+        run: flutter test
+        continue-on-error: true
+
+      - name: Build web
+        if: steps.check.outputs.ready == 'true'
+        env:
+          # Uncomment to match the repository secrets you actually created.
+          # SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          # SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+          DUMMY: unused
+        # --base-href matters: on a project page the site lives at
+        # username.github.io/<repo>/, and without it every asset 404s and you get
+        # a white screen.
+        run: |
+          flutter build web --release \
+            --base-href "/${{ github.event.repository.name }}/"
+          # add one --dart-define=NAME=$NAME line per secret you uncommented above
+
+      - if: steps.check.outputs.ready == 'true'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    # Skipped, not failed, when there is no app yet or the repo is private.
+    if: needs.build.outputs.ready == 'true' && github.event.repository.private == false
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
