@@ -74,23 +74,7 @@ lib/
 
 6. Screenshots
 
-Please refer to the following required screenshots for each screen in the app. Each screen must include its corresponding visual capture below:
-
-Select Room Screen:
-
-[Insert screenshot of Select Room screen here showing available room cards and layout]
-
-Tavern Room Screen:
-
-[Insert screenshot of Tavern Room screen here showing active room interaction components]
-
-Friends Screen:
-
-[Insert screenshot of Friends screen here showing friend list tiles and connection status]
-
-Profile Screen:
-
-[Insert screenshot of Profile screen here showing the user profile header and preferences]
+to be followed
 
 7. Known Issues and Next Steps
 
