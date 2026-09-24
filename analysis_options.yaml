@@ -1,5 +1,9 @@
 # Turns on the recommended Flutter lints. If the editor underlines something in
 # yellow, this file is why. Run `flutter analyze` to see them all at once.
+analyzer:
+  exclude:
+    - build/**
+    - web/**
 include: package:flutter_lints/flutter.yaml
 
 linter:
