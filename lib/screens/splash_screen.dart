@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../constants/app_images.dart';
+import '../constants/app_strings.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_styles.dart';
@@ -18,7 +20,7 @@ class SplashScreen extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.asset(
-              'assets/images/clearbg.png',
+              AppImages.splashBg,
               fit: BoxFit.cover,
             ),
             Container(
@@ -40,20 +42,20 @@ class SplashScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.spa, // swap for a real fleur-de-lis SVG asset
-                    color: AppColors.parchment,
-                    size: 34,
+                  Image.asset(
+                    AppImages.logo,
+                    width: 40,
+                    height: 40,
                   ),
                   const SizedBox(height: 10),
-                  Text('CYBERNIE', style: CyberniStyles.title),
+                  Text(AppStrings.appName, style: CyberniStyles.title),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const _OrnamentDash(),
                       const SizedBox(width: 8),
-                      Text('A SAFE SOCIAL SPACE', style: CyberniStyles.subtitle),
+                      Text(AppStrings.tagline, style: CyberniStyles.subtitle),
                       const SizedBox(width: 8),
                       const _OrnamentDash(),
                     ],
@@ -71,7 +73,7 @@ class SplashScreen extends StatelessWidget {
                   const Icon(Icons.diamond_outlined,
                       size: 9, color: AppColors.parchmentSoft),
                   const SizedBox(width: 10),
-                  Text('TAP TO CONTINUE', style: CyberniStyles.cta),
+                  Text(AppStrings.tapToContinue, style: CyberniStyles.cta),
                   const SizedBox(width: 10),
                   const Icon(Icons.diamond_outlined,
                       size: 9, color: AppColors.parchmentSoft),
