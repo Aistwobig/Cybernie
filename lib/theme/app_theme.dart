@@ -15,5 +15,24 @@ class AppTheme {
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF6750A4),
         ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          hintStyle: TextStyle(color: AppColors.ink.withValues(alpha: 0.35)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(6),
+            borderSide: BorderSide(color: AppColors.ink.withValues(alpha: 0.2)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(6),
+            borderSide: BorderSide(color: AppColors.ink.withValues(alpha: 0.2)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(6),
+            borderSide: BorderSide(color: AppColors.ink.withValues(alpha: 0.6)),
+          ),
+        ),
       );
 }
