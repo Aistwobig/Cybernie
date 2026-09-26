@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../screens/splash_screen.dart';
-// import '../screens/login_screen.dart';
+import '../screens/login_screen.dart';
 // import '../screens/welcome_screen.dart';
 // import '../screens/select_room_screen.dart';
 // import '../screens/tavern_room_screen.dart';
@@ -22,12 +22,12 @@ class AppRoutes {
   static const addFriends = '/friends/add';
   static const profile = '/profile';
 
-  /// The route table the MaterialApp consumes.
+  /// The route table the MaterialApp consumes. 
   /// Uncomment each screen's import above as you build it,
   /// then add its entry here.
   static Map<String, WidgetBuilder> get routes => {
         splash: (context) => const SplashScreen(),
-        // login: (context) => const LoginScreen(),
+        login: (context) => const LoginScreen(),
         // welcome: (context) => const WelcomeScreen(),
         // selectRoom: (context) => const SelectRoomScreen(),
         // tavernRoom: (context) => const TavernRoomScreen(),

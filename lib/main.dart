@@ -1,17 +1,19 @@
-// Entry point only. All configuration (theme, routes, screens) lives in
-// their own files under lib/ — see app.dart, theme/, routes/, and screens/.
-//
-// DevicePreview is left ON in the deployed build on purpose: your live link
-// is opened on a desktop browser, and a phone layout at full desktop width
-// looks broken when it isn't wrapped in a frame.
-//
-// Want it off for a portfolio build instead? Import
-//   'package:flutter/foundation.dart' show kReleaseMode;
-// and set `enabled: !kReleaseMode`.
+// Single entry point: DevicePreview setup, theme, and all named routes
+// live here now instead of being split across app.dart / routes/app_routes.dart.
 
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
-import 'app.dart';
+
+import 'theme/app_theme.dart';
+import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart';
+// import 'screens/welcome_screen.dart';
+// import 'screens/select_room_screen.dart';
+// import 'screens/tavern_room_screen.dart';
+// import 'screens/register_screen.dart';
+// import 'screens/friends_screen.dart';
+// import 'screens/add_friends_screen.dart';
+// import 'screens/profile_screen.dart';
 
 void main() {
   runApp(
@@ -20,4 +22,35 @@ void main() {
       builder: (context) => const App(),
     ),
   );
+}
+
+class App extends StatelessWidget {
+  const App({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'CYBERNIE',
+      debugShowCheckedModeBanner: false,
+
+      // Required for DevicePreview to actually control the app.
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
+
+      theme: AppTheme.theme,
+
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(),
+        '/login': (context) => const LoginScreen(),
+        // '/welcome': (context) => const WelcomeScreen(),
+        // '/rooms': (context) => const SelectRoomScreen(),
+        // '/rooms/tavern': (context) => const TavernRoomScreen(),
+        // '/register': (context) => const RegisterScreen(),
+        // '/friends': (context) => const FriendsScreen(),
+        // '/friends/add': (context) => const AddFriendsScreen(),
+        // '/profile': (context) => const ProfileScreen(),
+      },
+    );
+  }
 }

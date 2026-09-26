@@ -1,27 +1,33 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
-import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_styles.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
+  void _goToLogin(BuildContext context) {
+    Navigator.of(context).pushReplacementNamed('/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: () {
-          Navigator.of(context).pushReplacementNamed(AppRoutes.login);
-        },
+        onTap: () => _goToLogin(context),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.asset(
-              AppImages.splashBg,
-              fit: BoxFit.cover,
+            ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
+              child: Image.asset(
+                AppImages.splashBg,
+                fit: BoxFit.cover,
+              ),
             ),
             Container(
               decoration: BoxDecoration(
@@ -29,9 +35,9 @@ class SplashScreen extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withValues(alpha: 0.35),
-                    Colors.black.withValues(alpha: 0.15),
-                    Colors.black.withValues(alpha: 0.55),
+                    Colors.black.withValues(alpha: 0.45),
+                    Colors.black.withValues(alpha: 0.25),
+                    Colors.black.withValues(alpha: 0.6),
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
@@ -67,20 +73,65 @@ class SplashScreen extends StatelessWidget {
               left: 0,
               right: 0,
               bottom: 48,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.diamond_outlined,
-                      size: 9, color: AppColors.parchmentSoft),
-                  const SizedBox(width: 10),
-                  Text(AppStrings.tapToContinue, style: CyberniStyles.cta),
-                  const SizedBox(width: 10),
-                  const Icon(Icons.diamond_outlined,
-                      size: 9, color: AppColors.parchmentSoft),
-                ],
+              child: Center(
+                child: _TapToContinue(
+                  onTap: () => _goToLogin(context),
+                ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TapToContinue extends StatefulWidget {
+  const _TapToContinue({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  State<_TapToContinue> createState() => _TapToContinueState();
+}
+
+class _TapToContinueState extends State<_TapToContinue> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          transform: Matrix4.translationValues(0, _hovering ? -6 : 0, 0),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 180),
+            style: CyberniStyles.cta.copyWith(
+              color: _hovering ? Colors.white : AppColors.parchmentSoft,
+              letterSpacing: _hovering ? 4 : 3,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.diamond_outlined,
+                    size: 9,
+                    color: _hovering ? Colors.white : AppColors.parchmentSoft),
+                const SizedBox(width: 10),
+                Text(AppStrings.tapToContinue),
+                const SizedBox(width: 10),
+                Icon(Icons.diamond_outlined,
+                    size: 9,
+                    color: _hovering ? Colors.white : AppColors.parchmentSoft),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -55,7 +55,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   Center(
                     child: Column(
                       children: [
-                        Image.asset(AppImages.logo, width: 28, height: 28),
+                        ColorFiltered(
+                          colorFilter: ColorFilter.mode(
+                            AppColors.ink,
+                            BlendMode.srcIn,
+                          ),
+                          child: Image.asset(
+                            AppImages.logo,
+                            width: 28,
+                            height: 28,
+                          ),
+                        ),
                         const SizedBox(height: 10),
                         Text(AppStrings.appName, style: _titleStyle),
                         const SizedBox(height: 4),
