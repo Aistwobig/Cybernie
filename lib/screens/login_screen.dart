@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
-import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
+import '../widgets/corner_framed_box.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,8 +15,6 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
-  // Text styles specific to this screen (dark ink on a light background,
-  // unlike the splash screen's light-on-dark CyberniStyles).
   TextStyle get _titleStyle => GoogleFonts.cinzel(
         fontSize: 26,
         fontWeight: FontWeight.w700,
@@ -45,13 +43,12 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: _CornerFramedBox(
+          child: CornerFramedBox(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Logo + title block
                   Center(
                     child: Column(
                       children: [
@@ -74,8 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
-                  // Username
                   Text(AppStrings.usernameLabel, style: _fieldLabelStyle),
                   const SizedBox(height: 6),
                   TextField(
@@ -84,8 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // Password
                   Text(AppStrings.passwordLabel, style: _fieldLabelStyle),
                   const SizedBox(height: 6),
                   TextField(
@@ -107,8 +100,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Log in button
                   SizedBox(
                     height: 48,
                     child: FilledButton(
@@ -119,8 +110,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       onPressed: () {
-                        // TODO: wire up real authentication once the backend
-                        // exists. For now this is just a placeholder tap.
+                        // No real auth backend yet — for now, logging in just
+                        // takes you to the Welcome screen.
+                        Navigator.of(context).pushReplacementNamed('/welcome');
                       },
                       child: Text(
                         AppStrings.logInButton,
@@ -133,8 +125,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // Safety note
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -155,8 +145,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
-                  // Register prompt
                   Center(
                     child: Text(
                       AppStrings.noAccountPrompt,
@@ -177,8 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.of(context)
-                            .pushReplacementNamed(AppRoutes.register);
+                        Navigator.of(context).pushReplacementNamed('/register');
                       },
                       child: Text(
                         AppStrings.registerButton,
@@ -196,54 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Draws a thin rounded border around [child], with a small ornamental
-/// corner mark at each corner — an approximation of the dashed-frame look
-/// in the mockup using plain widgets (no extra packages).
-class _CornerFramedBox extends StatelessWidget {
-  const _CornerFramedBox({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: AppColors.ink.withValues(alpha: 0.25),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: child,
-        ),
-        const Positioned(top: 10, left: 10, child: _CornerMark()),
-        const Positioned(
-          top: 10,
-          right: 10,
-          child: _CornerMark(),
-        ),
-        const Positioned(bottom: 10, left: 10, child: _CornerMark()),
-        const Positioned(bottom: 10, right: 10, child: _CornerMark()),
-      ],
-    );
-  }
-}
-
-class _CornerMark extends StatelessWidget {
-  const _CornerMark();
-
-  @override
-  Widget build(BuildContext context) {
-    return Icon(
-      Icons.add,
-      size: 12,
-      color: AppColors.ink.withValues(alpha: 0.3),
     );
   }
 }

@@ -17,4 +17,12 @@ class AppStrings {
       'SAFETY NOTE: Your information is protected and will never be shared.';
   static const String noAccountPrompt = "Don't have an account?";
   static const String registerButton = 'REGISTER';
+
+  // Welcome / character screen
+  static const String welcomeGreeting = 'Welcome, Player!';
+  static const String characterPreviewLabel = 'CHARACTER PREVIEW';
+  static const String joinRoomButton = 'JOIN ROOM';
+  static const String navHome = 'HOME';
+  static const String navFriends = 'FRIENDS';
+  static const String navProfile = 'PROFILE';
 }

@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
-// import 'screens/welcome_screen.dart';
+import 'screens/welcome_screen.dart';
 // import 'screens/select_room_screen.dart';
 // import 'screens/tavern_room_screen.dart';
 // import 'screens/register_screen.dart';
@@ -43,7 +43,7 @@ class App extends StatelessWidget {
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
-        // '/welcome': (context) => const WelcomeScreen(),
+        '/welcome': (context) => const WelcomeScreen(),
         // '/rooms': (context) => const SelectRoomScreen(),
         // '/rooms/tavern': (context) => const TavernRoomScreen(),
         // '/register': (context) => const RegisterScreen(),

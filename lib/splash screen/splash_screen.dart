@@ -1,19 +1,18 @@
 import 'dart:ui';
- 
+
 import 'package:flutter/material.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
-import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_styles.dart';
- 
+
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
- 
+
   void _goToLogin(BuildContext context) {
-    Navigator.of(context).pushReplacementNamed(AppRoutes.login);
+    Navigator.of(context).pushReplacementNamed('/login');
   }
- 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,7 +22,6 @@ class SplashScreen extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Background image with a slight blur for a softer, faded look.
             ImageFiltered(
               imageFilter: ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
               child: Image.asset(
@@ -31,8 +29,6 @@ class SplashScreen extends StatelessWidget {
                 fit: BoxFit.cover,
               ),
             ),
- 
-            // Dark gradient fade on top of the blur so text stays legible.
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -47,7 +43,6 @@ class SplashScreen extends StatelessWidget {
                 ),
               ),
             ),
- 
             Align(
               alignment: const Alignment(0, -0.15),
               child: Column(
@@ -74,7 +69,6 @@ class SplashScreen extends StatelessWidget {
                 ],
               ),
             ),
- 
             Positioned(
               left: 0,
               right: 0,
@@ -91,34 +85,25 @@ class SplashScreen extends StatelessWidget {
     );
   }
 }
- 
-/// The "TAP TO CONTINUE" prompt as its own interactive widget.
-/// On hover (web/desktop with a mouse), it lifts up, brightens to white,
-/// and widens its letter spacing, with a pointer cursor.
+
 class _TapToContinue extends StatefulWidget {
   const _TapToContinue({required this.onTap});
- 
+
   final VoidCallback onTap;
- 
+
   @override
   State<_TapToContinue> createState() => _TapToContinueState();
 }
- 
+
 class _TapToContinueState extends State<_TapToContinue> {
   bool _hovering = false;
- 
+
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      onEnter: (_) {
-        debugPrint('CTA hover: entered');
-        setState(() => _hovering = true);
-      },
-      onExit: (_) {
-        debugPrint('CTA hover: exited');
-        setState(() => _hovering = false);
-      },
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
@@ -152,10 +137,10 @@ class _TapToContinueState extends State<_TapToContinue> {
     );
   }
 }
- 
+
 class _OrnamentDash extends StatelessWidget {
   const _OrnamentDash();
- 
+
   @override
   Widget build(BuildContext context) {
     return Container(
