@@ -8,20 +8,17 @@ import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/friends_screen.dart';
+import 'screens/profile_screen.dart';
+
 // import 'screens/select_room_screen.dart';
 // import 'screens/tavern_room_screen.dart';
 // import 'screens/register_screen.dart';
-// import 'screens/friends_screen.dart';
 // import 'screens/add_friends_screen.dart';
 // import 'screens/profile_screen.dart';
 
 void main() {
-  runApp(
-    DevicePreview(
-      enabled: true,
-      builder: (context) => const App(),
-    ),
-  );
+  runApp(DevicePreview(enabled: true, builder: (context) => const App()));
 }
 
 class App extends StatelessWidget {
@@ -44,12 +41,12 @@ class App extends StatelessWidget {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/welcome': (context) => const WelcomeScreen(),
+        '/friends': (context) => const FriendsScreen(),
+        '/profile': (context) => const ProfileScreen(),
         // '/rooms': (context) => const SelectRoomScreen(),
         // '/rooms/tavern': (context) => const TavernRoomScreen(),
         // '/register': (context) => const RegisterScreen(),
-        // '/friends': (context) => const FriendsScreen(),
         // '/friends/add': (context) => const AddFriendsScreen(),
-        // '/profile': (context) => const ProfileScreen(),
       },
     );
   }

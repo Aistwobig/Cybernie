@@ -21,6 +21,8 @@ dependencies:
   # Lets you use real SVG assets (e.g. the fleur-de-lis icon) instead ofq
   # built-in Material icons.
   flutter_svg: ^2.0.10+1
+  image_picker: ^1.2.3
+  shared_preferences: ^2.5.5
  
 dev_dependencies:
   flutter_test:

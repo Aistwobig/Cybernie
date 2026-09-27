@@ -6,8 +6,10 @@ class AppImages {
   static const String logo = 'assets/images/logo.png';
   static const String characterMen = 'assets/images/men.png';
   static const String characterMenAnim = 'assets/images/menanim.png';
+  static const String profileLuna = 'assets/images/3.png';
+  static const String profileRogue = 'assets/images/4.png';
+  static const String profileMage = 'assets/images/5.png';
 
   // Add more as you build the other screens, e.g.:
   // static const String tavernRoomThumb = 'assets/images/tavern_room.png';
-
 }

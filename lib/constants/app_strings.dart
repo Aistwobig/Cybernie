@@ -25,4 +25,25 @@ class AppStrings {
   static const String navHome = 'HOME';
   static const String navFriends = 'FRIENDS';
   static const String navProfile = 'PROFILE';
+
+  // Profile screen
+  static const String profileTitle = 'Profile';
+  static const String profilePlayerName = 'Player';
+  static const String profileLevel = 'Level 12';
+  static const String chooseCharacter = 'Choose a Character';
+  static const String characterLuna = 'Luna';
+  static const String characterRogue = 'Rogue';
+  static const String characterMage = 'Mage';
+  static const String characterLily = 'Lily';
+  static const String characterDancer = 'Dancer';
+  static const String moreCharacters = '+ MORE';
+  static const String saveButton = 'SAVE';
+  static const String editPlayerName = 'Edit player name';
+  static const String playerNameLabel = 'Player name';
+  static const String cancelButton = 'CANCEL';
+  static const String profileSaved = 'Profile saved';
+  static const String moreCharactersComingSoon = 'More characters coming soon';
+  static const String editProfilePicture = 'Choose a profile photo';
+  static const String profilePhotoPickerError =
+      'Unable to open photos. Please try again.';
 }

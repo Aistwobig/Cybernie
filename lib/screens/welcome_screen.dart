@@ -16,23 +16,41 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen> {
   int _navIndex = 0;
 
-  void _onNavTap(int index) {
+  Future<void> _onNavTap(int index) async {
+    if (index == _navIndex) return;
+
+    if (index == 1) {
+      // Friends tab: navigate to the Friends screen, then reset the nav
+      // highlight back to Home once the user returns here.
+      setState(() => _navIndex = 1);
+      await Navigator.of(context).pushNamed('/friends');
+      if (mounted) setState(() => _navIndex = 0);
+      return;
+    }
+
+    if (index == 2) {
+      setState(() => _navIndex = index);
+      await Navigator.of(context).pushNamed('/profile');
+      if (mounted) setState(() => _navIndex = 0);
+      return;
+    }
+
+    // Home (0)
     setState(() => _navIndex = index);
-    // TODO: wire up navigation for Friends (1) and Profile (2) once built.
   }
 
   TextStyle get _greetingStyle => GoogleFonts.cinzel(
-        fontSize: 24,
-        fontWeight: FontWeight.w700,
-        color: AppColors.ink,
-      );
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    color: AppColors.ink,
+  );
 
   TextStyle get _fieldLabelStyle => GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        letterSpacing: 2.0,
-        color: AppColors.ink.withValues(alpha: 0.5),
-      );
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 2.0,
+    color: AppColors.ink.withValues(alpha: 0.5),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -189,9 +207,7 @@ class _CharacterBoxContent extends StatelessWidget {
     // Animated walk-cycle sprite sheet, replacing the old static
     // AppImages.characterMen. Cycles South -> West -> Back -> East -> South.
     return const SizedBox.expand(
-      child: SpriteWalkPreview(
-        assetPath: AppImages.characterMenAnim,
-      ),
+      child: SpriteWalkPreview(assetPath: AppImages.characterMenAnim),
     );
   }
 }
@@ -212,7 +228,9 @@ class _NavTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? AppColors.ink : AppColors.ink.withValues(alpha: 0.4);
+    final color = isActive
+        ? AppColors.ink
+        : AppColors.ink.withValues(alpha: 0.4);
 
     return InkWell(
       onTap: onTap,
