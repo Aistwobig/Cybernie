@@ -34,6 +34,12 @@ click **Run**. This creates:
 A profile row is created automatically the first time someone signs in with
 Google.
 
+Then run
+[`migrations/20260930000000_realtime_rooms.sql`](migrations/20260930000000_realtime_rooms.sql)
+the same way. It lets signed-in players use the private Realtime channels that
+carry live positions and the player count in each room (`room:tavern`).
+Without it, players can chat but can't see each other move.
+
 ## 3. Create the Google OAuth client
 
 1. Go to https://console.cloud.google.com, create a project (or pick one).

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
+import 'services/auth_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -14,7 +15,7 @@ import 'screens/friends_screen.dart';
 import 'screens/profile_screen.dart';
 
 import 'screens/select_room_screen.dart';
-// import 'screens/tavern_room_screen.dart';
+import 'screens/tavern_room_screen.dart';
 // import 'screens/add_friends_screen.dart';
 
 Future<void> main() async {
@@ -52,7 +53,8 @@ class App extends StatelessWidget {
 
       theme: AppTheme.theme,
 
-      initialRoute: '/',
+      // Signed-in players skip the splash and login screens.
+      initialRoute: AuthService.isSignedIn ? '/welcome' : '/',
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
@@ -60,7 +62,7 @@ class App extends StatelessWidget {
         '/friends': (context) => const FriendsScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/rooms': (context) => const SelectRoomScreen(),
-        // '/rooms/tavern': (context) => const TavernRoomScreen(),
+        '/rooms/tavern': (context) => const TavernRoomScreen(),
         // '/friends/add': (context) => const AddFriendsScreen(),
       },
     );

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
 import '../services/auth_service.dart';
+import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/corner_framed_box.dart';
 import '../widgets/sprite_walk_preview.dart';
@@ -16,6 +17,27 @@ class WelcomeScreen extends StatefulWidget {
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
   int _navIndex = 0;
+  String _playerName = AppStrings.profilePlayerName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPlayerName();
+  }
+
+  /// Shows the name from the player's profile, which starts as the first name
+  /// on their Google account and can be changed on the Profile screen.
+  Future<void> _loadPlayerName() async {
+    if (!AuthService.isSignedIn) return;
+    try {
+      final profile = await ProfileService.fetchMine();
+      if (mounted && profile.displayName.isNotEmpty) {
+        setState(() => _playerName = profile.displayName);
+      }
+    } catch (_) {
+      // Keep the default name if the profile can't be loaded.
+    }
+  }
 
   Future<void> _onNavTap(int index) async {
     if (index == _navIndex) return;
@@ -33,6 +55,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       setState(() => _navIndex = index);
       await Navigator.of(context).pushNamed('/profile');
       if (mounted) setState(() => _navIndex = 0);
+      // The name may have been edited on the Profile screen.
+      await _loadPlayerName();
       return;
     }
 
@@ -79,7 +103,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(AppStrings.welcomeGreeting, style: _greetingStyle),
+                  Expanded(
+                    child: Text(
+                      AppStrings.welcomeGreeting(_playerName),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _greetingStyle,
+                    ),
+                  ),
                   PopupMenuButton<void>(
                     icon: const Icon(
                       Icons.menu,

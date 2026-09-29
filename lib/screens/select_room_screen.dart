@@ -1,15 +1,63 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
+import '../services/auth_service.dart';
+import '../services/room_service.dart';
 import '../theme/app_theme.dart';
 
 /// "Select Room" screen, opened from the JOIN ROOM button on the welcome
-/// screen. Lists the available rooms (just Bernie's Tavern for now) plus a
-/// dashed "coming soon" placeholder for future rooms.
-class SelectRoomScreen extends StatelessWidget {
+/// screen. Lists the available rooms (just Bernie's Tavern for now) with a
+/// live player count, plus a dashed "coming soon" placeholder.
+class SelectRoomScreen extends StatefulWidget {
   const SelectRoomScreen({super.key});
+
+  @override
+  State<SelectRoomScreen> createState() => _SelectRoomScreenState();
+}
+
+class _SelectRoomScreenState extends State<SelectRoomScreen> {
+  static const String _tavernId = 'tavern';
+
+  StreamSubscription<int>? _countSubscription;
+  int _tavernPlayers = 0;
+
+  bool get _tavernFull => _tavernPlayers >= RoomService.maxPlayers;
+
+  @override
+  void initState() {
+    super.initState();
+    _watchCount();
+  }
+
+  @override
+  void dispose() {
+    _countSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _watchCount() {
+    if (!AuthService.isSignedIn) return;
+    _countSubscription = RoomService.watchPlayerCount(_tavernId).listen(
+      (count) {
+        if (mounted) setState(() => _tavernPlayers = count);
+      },
+      onError: (_) {},
+    );
+  }
+
+  Future<void> _joinTavern() async {
+    // The room screen opens its own connection to this room's channel, so
+    // stop watching the count until we come back.
+    await _countSubscription?.cancel();
+    _countSubscription = null;
+    if (!mounted) return;
+    await Navigator.of(context).pushNamed('/rooms/tavern');
+    if (mounted) _watchCount();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,12 +76,11 @@ class SelectRoomScreen extends StatelessWidget {
                   _RoomCard(
                     imagePath: AppImages.tavernRoom,
                     name: AppStrings.tavernRoomName,
-                    details: AppStrings.tavernRoomDetails,
-                    onJoin: () => ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(AppStrings.joiningTavern),
-                      ),
+                    details: AppStrings.tavernRoomDetails(
+                      _tavernPlayers,
+                      RoomService.maxPlayers,
                     ),
+                    onJoin: _tavernFull ? null : _joinTavern,
                   ),
                   const SizedBox(height: 22),
                   const _ComingSoonTile(),
@@ -91,7 +138,9 @@ class _RoomCard extends StatelessWidget {
   final String imagePath;
   final String name;
   final String details;
-  final VoidCallback onJoin;
+
+  /// Null when the room is full.
+  final VoidCallback? onJoin;
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +226,9 @@ class _RoomCard extends StatelessWidget {
                   ),
                   onPressed: onJoin,
                   child: Text(
-                    AppStrings.joinButton,
+                    onJoin == null
+                        ? AppStrings.roomFullButton
+                        : AppStrings.joinButton,
                     style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,

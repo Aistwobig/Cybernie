@@ -9,6 +9,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
+import '../services/auth_service.dart';
+import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -77,6 +79,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _selectedCharacter = character;
       }
     });
+
+    // Signed in: the name comes from the Supabase profile (initially the
+    // player's Google first name) instead of this device.
+    if (!AuthService.isSignedIn) return;
+    try {
+      final profile = await ProfileService.fetchMine();
+      if (mounted && profile.displayName.isNotEmpty) {
+        setState(() => _playerName = profile.displayName);
+      }
+    } catch (_) {
+      // Keep the locally saved name if the profile can't be loaded.
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -88,6 +102,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     await prefs.setString(_nameKey, _playerName);
     await prefs.setInt(_characterKey, _selectedCharacter);
+
+    if (AuthService.isSignedIn) {
+      try {
+        await ProfileService.updateMine(displayName: _playerName);
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text(AppStrings.profileSaveError)),
+          );
+        }
+        return;
+      }
+    }
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

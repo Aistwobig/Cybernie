@@ -19,7 +19,7 @@ class AppStrings {
   static const String signOut = 'Sign out';
 
   // Welcome / character screen
-  static const String welcomeGreeting = 'Welcome, Player!';
+  static String welcomeGreeting(String name) => 'Welcome, $name!';
   static const String characterPreviewLabel = 'CHARACTER PREVIEW';
   static const String joinRoomButton = 'JOIN ROOM';
   static const String navHome = 'HOME';
@@ -42,6 +42,8 @@ class AppStrings {
   static const String playerNameLabel = 'Player name';
   static const String cancelButton = 'CANCEL';
   static const String profileSaved = 'Profile saved';
+  static const String profileSaveError =
+      'Could not save your profile. Check your connection and try again.';
   static const String moreCharactersComingSoon = 'More characters coming soon';
   static const String editProfilePicture = 'Choose a profile photo';
   static const String profilePhotoPickerError =
@@ -50,8 +52,17 @@ class AppStrings {
   // Select room screen
   static const String selectRoomTitle = 'Select Room';
   static const String tavernRoomName = "Bernie's Tavern";
-  static const String tavernRoomDetails = '12 / 20 Players • 1 voice channel';
+  static String tavernRoomDetails(int players, int max) =>
+      '$players / $max Players • 1 voice channel';
+  static String playerCount(int players, int max) => '$players / $max';
+  static const String roomFullButton = 'ROOM FULL';
+  static const String roomConnectionError =
+      "Couldn't connect to the room. Other players may not be visible.";
   static const String joinButton = 'JOIN';
-  static const String joiningTavern = "Joining Bernie's Tavern...";
+  static const String leaveRoomButton = 'LEAVE ROOM';
+  static const String hitboxesButton = 'HITBOXES';
+  static const String chatHint = 'Type a message...';
+  static const String chatSendError = 'Message not sent. Please try again.';
+  static const String chatSignInRequired = 'Sign in to chat.';
   static const String moreRoomsComingSoon = 'MORE ROOMS — COMING SOON';
 }
