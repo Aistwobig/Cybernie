@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/corner_framed_box.dart';
 import '../widgets/sprite_walk_preview.dart';
@@ -39,6 +40,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     setState(() => _navIndex = index);
   }
 
+  Future<void> _signOut() async {
+    if (AuthService.isSignedIn) await AuthService.signOut();
+    if (mounted) {
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/login', (route) => false);
+    }
+  }
+
   TextStyle get _greetingStyle => GoogleFonts.cinzel(
     fontSize: 24,
     fontWeight: FontWeight.w700,
@@ -70,7 +80,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(AppStrings.welcomeGreeting, style: _greetingStyle),
-                  const Icon(Icons.menu, color: AppColors.ink, size: 28),
+                  PopupMenuButton<void>(
+                    icon: const Icon(
+                      Icons.menu,
+                      color: AppColors.ink,
+                      size: 28,
+                    ),
+                    color: AppColors.parchment,
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        onTap: _signOut,
+                        child: Text(
+                          AppStrings.signOut,
+                          style: GoogleFonts.inter(color: AppColors.ink),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

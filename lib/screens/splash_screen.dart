@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_styles.dart';
 
@@ -10,7 +11,10 @@ class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   void _goToLogin(BuildContext context) {
-    Navigator.of(context).pushReplacementNamed('/login');
+    // Already signed in (or just returned from Google): skip the login screen.
+    Navigator.of(
+      context,
+    ).pushReplacementNamed(AuthService.isSignedIn ? '/welcome' : '/login');
   }
 
   @override

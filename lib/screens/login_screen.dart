@@ -1,10 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../config/supabase_config.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
+import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/corner_framed_box.dart';
 
+/// Sign in and register both go through Google. A new player's account and
+/// profile are created on their first Google sign-in, so "Register" just
+/// opens the same Google flow.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -13,7 +22,51 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool _obscurePassword = true;
+  bool _isSigningIn = false;
+  StreamSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    if (SupabaseConfig.isConfigured) {
+      _authSubscription = AuthService.authChanges.listen((state) {
+        if (state.event == AuthChangeEvent.signedIn && mounted) {
+          Navigator.of(context).pushReplacementNamed('/welcome');
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _continueWithGoogle() async {
+    if (_isSigningIn) return;
+    setState(() => _isSigningIn = true);
+
+    try {
+      // On web the page navigates away to Google here; the app reloads
+      // signed in when Google sends the player back.
+      await AuthService.signInWithGoogle();
+    } on AuthException catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(AppStrings.googleSignInError)),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSigningIn = false);
+    }
+  }
 
   TextStyle get _titleStyle => GoogleFonts.cinzel(
         fontSize: 26,
@@ -27,13 +80,6 @@ class _LoginScreenState extends State<LoginScreen> {
         fontWeight: FontWeight.w500,
         color: AppColors.ink.withValues(alpha: 0.7),
         letterSpacing: 2,
-      );
-
-  TextStyle get _fieldLabelStyle => GoogleFonts.inter(
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: AppColors.ink.withValues(alpha: 0.7),
-        letterSpacing: 1,
       );
 
   @override
@@ -70,36 +116,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  Text(AppStrings.usernameLabel, style: _fieldLabelStyle),
-                  const SizedBox(height: 6),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: AppStrings.usernameHint,
+                  const SizedBox(height: 40),
+                  Text(
+                    AppStrings.signInPrompt,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: AppColors.ink.withValues(alpha: 0.7),
+                      height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  Text(AppStrings.passwordLabel, style: _fieldLabelStyle),
-                  const SizedBox(height: 6),
-                  TextField(
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      hintText: AppStrings.passwordHint,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          size: 20,
-                          color: AppColors.ink.withValues(alpha: 0.6),
-                        ),
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   SizedBox(
                     height: 48,
                     child: FilledButton(
@@ -109,19 +136,31 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
-                      onPressed: () {
-                        // No real auth backend yet — for now, logging in just
-                        // takes you to the Welcome screen.
-                        Navigator.of(context).pushReplacementNamed('/welcome');
-                      },
-                      child: Text(
-                        AppStrings.logInButton,
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1,
-                          color: Colors.white,
-                        ),
-                      ),
+                      onPressed: _isSigningIn ? null : _continueWithGoogle,
+                      child: _isSigningIn
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const _GoogleBadge(),
+                                const SizedBox(width: 10),
+                                Text(
+                                  AppStrings.signInWithGoogle,
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 1,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -164,11 +203,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
-                      onPressed: () {
-                        Navigator.of(context).pushReplacementNamed('/register');
-                      },
+                      onPressed: _isSigningIn ? null : _continueWithGoogle,
                       child: Text(
-                        AppStrings.registerButton,
+                        AppStrings.registerWithGoogle,
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1,
@@ -181,6 +218,33 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A small white circle with a "G", marking the button as Google sign-in.
+class _GoogleBadge extends StatelessWidget {
+  const _GoogleBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: 20,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        'G',
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          color: AppColors.ink,
+          height: 1,
         ),
       ),
     );

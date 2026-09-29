@@ -116,6 +116,7 @@ class _RoomCard extends StatelessWidget {
                 children: [
                   Container(
                     height: 140,
+                    width: double.infinity,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(3),
                       border: Border.all(
@@ -125,7 +126,16 @@ class _RoomCard extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(2),
-                      child: Image.asset(imagePath, fit: BoxFit.cover),
+                      // Slight zoom crops the black edge baked into the map.
+                      child: Transform.scale(
+                        scale: 1.08,
+                        child: Image.asset(
+                          imagePath,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
                   ..._cornerBrackets(

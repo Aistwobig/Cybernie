@@ -8,15 +8,15 @@ class AppStrings {
   static const String tapToContinue = 'TAP TO CONTINUE';
 
   // Login screen
-  static const String usernameLabel = 'USERNAME';
-  static const String usernameHint = 'Enter your username';
-  static const String passwordLabel = 'PASSWORD';
-  static const String passwordHint = 'Enter your password';
-  static const String logInButton = 'LOG IN';
+  static const String signInPrompt = 'Sign in with your Google account';
+  static const String signInWithGoogle = 'SIGN IN WITH GOOGLE';
+  static const String googleSignInError =
+      'Google sign-in failed. Please try again.';
   static const String safetyNote =
       'SAFETY NOTE: Your information is protected and will never be shared.';
   static const String noAccountPrompt = "Don't have an account?";
-  static const String registerButton = 'REGISTER';
+  static const String registerWithGoogle = 'REGISTER WITH GOOGLE';
+  static const String signOut = 'Sign out';
 
   // Welcome / character screen
   static const String welcomeGreeting = 'Welcome, Player!';
