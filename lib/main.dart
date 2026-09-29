@@ -11,7 +11,7 @@ import 'screens/welcome_screen.dart';
 import 'screens/friends_screen.dart';
 import 'screens/profile_screen.dart';
 
-// import 'screens/select_room_screen.dart';
+import 'screens/select_room_screen.dart';
 // import 'screens/tavern_room_screen.dart';
 // import 'screens/register_screen.dart';
 // import 'screens/add_friends_screen.dart';
@@ -43,7 +43,7 @@ class App extends StatelessWidget {
         '/welcome': (context) => const WelcomeScreen(),
         '/friends': (context) => const FriendsScreen(),
         '/profile': (context) => const ProfileScreen(),
-        // '/rooms': (context) => const SelectRoomScreen(),
+        '/rooms': (context) => const SelectRoomScreen(),
         // '/rooms/tavern': (context) => const TavernRoomScreen(),
         // '/register': (context) => const RegisterScreen(),
         // '/friends/add': (context) => const AddFriendsScreen(),

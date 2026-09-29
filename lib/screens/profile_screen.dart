@@ -1,8 +1,11 @@
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
@@ -46,18 +49,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final ImagePicker _imagePicker = ImagePicker();
 
+  static const String _photoKey = 'profile_photo';
+  static const String _nameKey = 'profile_name';
+  static const String _characterKey = 'profile_character';
+
   _ProfileCharacter get _activeCharacter => _characters[_selectedCharacter];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    final photo = prefs.getString(_photoKey);
+    final name = prefs.getString(_nameKey);
+    final character = prefs.getInt(_characterKey);
+    if (!mounted) return;
+
+    setState(() {
+      if (photo != null) _profilePhotoBytes = base64Decode(photo);
+      if (name != null && name.isNotEmpty) _playerName = name;
+      if (character != null &&
+          character >= 0 &&
+          character < _characters.length) {
+        _selectedCharacter = character;
+      }
+    });
+  }
+
+  Future<void> _saveProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_profilePhotoBytes == null) {
+      await prefs.remove(_photoKey);
+    } else {
+      await prefs.setString(_photoKey, base64Encode(_profilePhotoBytes!));
+    }
+    await prefs.setString(_nameKey, _playerName);
+    await prefs.setInt(_characterKey, _selectedCharacter);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AppStrings.profileSaved)),
+      );
+    }
+  }
 
   Future<void> _pickProfilePhoto() async {
     if (_isPickingProfilePhoto) return;
     setState(() => _isPickingProfilePhoto = true);
 
     try {
+      // Kept small because the photo is stored as a base64 string.
       final image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1200,
-        maxHeight: 1200,
-        imageQuality: 90,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
       );
       if (image == null) return;
 
@@ -363,9 +412,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   borderRadius: BorderRadius.circular(5),
                 ),
               ),
-              onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text(AppStrings.profileSaved)),
-              ),
+              onPressed: _saveProfile,
               child: Text(
                 AppStrings.saveButton,
                 style: GoogleFonts.inter(

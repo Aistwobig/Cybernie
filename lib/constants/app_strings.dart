@@ -46,4 +46,12 @@ class AppStrings {
   static const String editProfilePicture = 'Choose a profile photo';
   static const String profilePhotoPickerError =
       'Unable to open photos. Please try again.';
+
+  // Select room screen
+  static const String selectRoomTitle = 'Select Room';
+  static const String tavernRoomName = "Bernie's Tavern";
+  static const String tavernRoomDetails = '12 / 20 Players • 1 voice channel';
+  static const String joinButton = 'JOIN';
+  static const String joiningTavern = "Joining Bernie's Tavern...";
+  static const String moreRoomsComingSoon = 'MORE ROOMS — COMING SOON';
 }

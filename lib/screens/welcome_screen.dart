@@ -122,7 +122,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                         ),
-                        onPressed: () {},
+                        onPressed: () =>
+                            Navigator.of(context).pushNamed('/rooms'),
                         child: Text(
                           AppStrings.joinRoomButton,
                           style: GoogleFonts.inter(
