@@ -34,17 +34,19 @@ class ProfileService {
     }).eq('id', _userId);
   }
 
-  /// Uploads a profile photo to `avatars/<user id>/avatar.jpg` and returns its
+  /// Uploads a profile photo to `avatars/<user id>/avatar` and returns its
   /// public URL. The storage policy only allows writing inside your own folder.
   static Future<String> uploadAvatar(Uint8List bytes) async {
-    final path = '$_userId/avatar.jpg';
+    final path = '$_userId/avatar';
+    // The picker returns PNG on some platforms and JPEG on others.
+    final isPng = bytes.length > 4 && bytes[0] == 0x89 && bytes[1] == 0x50;
     await _client.storage
         .from('avatars')
         .uploadBinary(
           path,
           bytes,
-          fileOptions: const FileOptions(
-            contentType: 'image/jpeg',
+          fileOptions: FileOptions(
+            contentType: isPng ? 'image/png' : 'image/jpeg',
             upsert: true,
           ),
         );

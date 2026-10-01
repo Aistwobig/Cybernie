@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
 import 'services/auth_service.dart';
+import 'services/presence_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -16,7 +17,7 @@ import 'screens/profile_screen.dart';
 
 import 'screens/select_room_screen.dart';
 import 'screens/tavern_room_screen.dart';
-// import 'screens/add_friends_screen.dart';
+import 'screens/add_friends_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,8 @@ Future<void> main() async {
       url: SupabaseConfig.url,
       publishableKey: SupabaseConfig.publishableKey,
     );
+    // Marks the signed-in player as online while the app is open.
+    PresenceService.start();
   } else {
     debugPrint(
       'Supabase is not configured: copy .env.example to .env and run with '
@@ -63,7 +66,7 @@ class App extends StatelessWidget {
         '/profile': (context) => const ProfileScreen(),
         '/rooms': (context) => const SelectRoomScreen(),
         '/rooms/tavern': (context) => const TavernRoomScreen(),
-        // '/friends/add': (context) => const AddFriendsScreen(),
+        '/friends/add': (context) => const AddFriendsScreen(),
       },
     );
   }

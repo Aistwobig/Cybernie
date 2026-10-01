@@ -42,12 +42,44 @@ class AppStrings {
   static const String playerNameLabel = 'Player name';
   static const String cancelButton = 'CANCEL';
   static const String profileSaved = 'Profile saved';
+  static const String profilePhotoSaved = 'Profile photo saved';
+  static const String profilePhotoSaveError =
+      "Couldn't save your photo. Please try again.";
   static const String profileSaveError =
       'Could not save your profile. Check your connection and try again.';
   static const String moreCharactersComingSoon = 'More characters coming soon';
   static const String editProfilePicture = 'Choose a profile photo';
   static const String profilePhotoPickerError =
       'Unable to open photos. Please try again.';
+
+  // Friends screens
+  static const String friendsTitle = 'Friends';
+  static const String searchFriendsHint = 'Search friends...';
+  static const String noFriendsYet =
+      'No friends yet. Find players and send them a friend request.';
+  static String noFriendsMatch(String query) => 'No friends match "$query"';
+  static const String findPlayersButton = 'FIND PLAYERS';
+  static const String friendsLoadError = "Couldn't load your friends.";
+  static const String retryButton = 'TRY AGAIN';
+  static const String removeFriendButton = 'REMOVE FRIEND';
+  static const String confirmRemoveFriend = 'TAP AGAIN TO REMOVE';
+  static const String friendActionError =
+      'Something went wrong. Please try again.';
+  static const String addFriendsTitle = 'Add Friends';
+  static const String searchPlayersHint = 'Search by name or username...';
+  static String friendRequestsHeader(int count) => 'FRIEND REQUESTS ($count)';
+  static const String resultsHeader = 'RESULTS';
+  static const String searchPlayersPrompt =
+      'Search for players who have signed in to Cybernie.';
+  static String noPlayersMatch(String query) => 'No players match "$query"';
+  static const String acceptButton = 'ACCEPT';
+  static const String declineButton = 'DECLINE';
+  static const String addButton = 'ADD';
+  static const String pendingLabel = 'Pending';
+  static const String friendsLabel = 'Friends';
+  static const String friendSafetyNote =
+      'SAFETY NOTE: Please be aware of fake accounts and do not share '
+      'personal information.';
 
   // Select room screen
   static const String selectRoomTitle = 'Select Room';

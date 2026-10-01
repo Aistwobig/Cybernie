@@ -12,6 +12,7 @@ import '../constants/app_strings.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/player_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -46,7 +47,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   int _selectedCharacter = 1;
   String _playerName = AppStrings.profilePlayerName;
+  /// A photo picked on this screen (shown immediately, before any upload).
   Uint8List? _profilePhotoBytes;
+
+  /// The saved photo from the player's Supabase profile.
+  String? _profilePhotoUrl;
   bool _isPickingProfilePhoto = false;
 
   final ImagePicker _imagePicker = ImagePicker();
@@ -55,7 +60,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const String _nameKey = 'profile_name';
   static const String _characterKey = 'profile_character';
 
-  _ProfileCharacter get _activeCharacter => _characters[_selectedCharacter];
 
   @override
   void initState() {
@@ -63,7 +67,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadProfile();
   }
 
+  /// Signed in: everything comes from the player's Supabase profile, so it
+  /// follows their Google account to any device. Signed out (offline dev
+  /// runs): falls back to what was saved on this device.
   Future<void> _loadProfile() async {
+    if (AuthService.isSignedIn) {
+      try {
+        final profile = await ProfileService.fetchMine();
+        if (!mounted) return;
+        setState(() {
+          if (profile.displayName.isNotEmpty) {
+            _playerName = profile.displayName;
+          }
+          _profilePhotoUrl = profile.avatarUrl;
+          if (profile.characterIndex < _characters.length) {
+            _selectedCharacter = profile.characterIndex;
+          }
+        });
+      } catch (_) {
+        // Keep the defaults if the profile can't be loaded.
+      }
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
     final photo = prefs.getString(_photoKey);
     final name = prefs.getString(_nameKey);
@@ -79,56 +105,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _selectedCharacter = character;
       }
     });
-
-    // Signed in: the name comes from the Supabase profile (initially the
-    // player's Google first name) instead of this device.
-    if (!AuthService.isSignedIn) return;
-    try {
-      final profile = await ProfileService.fetchMine();
-      if (mounted && profile.displayName.isNotEmpty) {
-        setState(() => _playerName = profile.displayName);
-      }
-    } catch (_) {
-      // Keep the locally saved name if the profile can't be loaded.
-    }
   }
 
   Future<void> _saveProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (_profilePhotoBytes == null) {
-      await prefs.remove(_photoKey);
-    } else {
-      await prefs.setString(_photoKey, base64Encode(_profilePhotoBytes!));
-    }
-    await prefs.setString(_nameKey, _playerName);
-    await prefs.setInt(_characterKey, _selectedCharacter);
-
     if (AuthService.isSignedIn) {
       try {
-        await ProfileService.updateMine(displayName: _playerName);
+        await ProfileService.updateMine(
+          displayName: _playerName,
+          characterIndex: _selectedCharacter,
+        );
       } catch (_) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text(AppStrings.profileSaveError)),
-          );
-        }
+        _showSnack(AppStrings.profileSaveError);
         return;
       }
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      if (_profilePhotoBytes == null) {
+        await prefs.remove(_photoKey);
+      } else {
+        await prefs.setString(_photoKey, base64Encode(_profilePhotoBytes!));
+      }
+      await prefs.setString(_nameKey, _playerName);
+      await prefs.setInt(_characterKey, _selectedCharacter);
     }
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(AppStrings.profileSaved)),
-      );
-    }
+    _showSnack(AppStrings.profileSaved);
   }
 
+  /// Just-picked photo first, then the saved one, then a blank person icon
+  /// (the same one friends see until a photo is imported).
+  Widget _buildAvatarImage() {
+    final bytes = _profilePhotoBytes;
+    if (bytes != null) {
+      return Image.memory(bytes, width: 60, height: 60, fit: BoxFit.cover);
+    }
+    return PlayerAvatar(photoUrl: _profilePhotoUrl, radius: 30);
+  }
+
+  void _showSnack(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  /// Picks a photo and, when signed in, saves it to the player's account
+  /// straight away (no need to press Save).
   Future<void> _pickProfilePhoto() async {
     if (_isPickingProfilePhoto) return;
     setState(() => _isPickingProfilePhoto = true);
 
     try {
-      // Kept small because the photo is stored as a base64 string.
       final image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 512,
@@ -139,6 +164,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final bytes = await image.readAsBytes();
       if (mounted) setState(() => _profilePhotoBytes = bytes);
+
+      if (AuthService.isSignedIn) {
+        try {
+          final url = await ProfileService.uploadAvatar(bytes);
+          await ProfileService.updateMine(avatarUrl: url);
+          _profilePhotoUrl = url;
+          _showSnack(AppStrings.profilePhotoSaved);
+        } catch (_) {
+          _showSnack(AppStrings.profilePhotoSaveError);
+        }
+      }
     } on PlatformException {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -282,19 +318,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     radius: 30,
                     backgroundColor: AppColors.parchmentSoft,
                     child: ClipOval(
-                      child: _profilePhotoBytes == null
-                          ? Image.asset(
-                              _activeCharacter.imagePath,
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            )
-                          : Image.memory(
-                              _profilePhotoBytes!,
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            ),
+                      child: _buildAvatarImage(),
                     ),
                   ),
                   Positioned(
