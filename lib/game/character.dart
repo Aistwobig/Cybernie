@@ -16,13 +16,19 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
   Character({
     required String sheetAsset,
     required String name,
+    String? idleSheetAsset,
+    String? horizontalRunSheetAsset,
     double feetFraction = 0.963,
   }) : _sheetAsset = sheetAsset,
+       _idleSheetAsset = idleSheetAsset,
+       _horizontalRunSheetAsset = horizontalRunSheetAsset,
        _feetFraction = feetFraction,
        _name = name,
        super(anchor: Anchor(0.5, feetFraction));
 
   String _sheetAsset;
+  String? _idleSheetAsset;
+  String? _horizontalRunSheetAsset;
   double _feetFraction;
   String _name;
 
@@ -65,35 +71,72 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
 
   /// Switches to another character's sheet (e.g. once a player's chosen
   /// character is known).
-  Future<void> useSheet(String asset, double feetFraction) async {
-    if (asset == _sheetAsset && feetFraction == _feetFraction) return;
+  Future<void> useSheet(
+    String asset,
+    double feetFraction, {
+    String? idleSheetAsset,
+    String? horizontalRunSheetAsset,
+  }) async {
+    if (asset == _sheetAsset &&
+        feetFraction == _feetFraction &&
+        idleSheetAsset == _idleSheetAsset &&
+        horizontalRunSheetAsset == _horizontalRunSheetAsset) {
+      return;
+    }
     _sheetAsset = asset;
+    _idleSheetAsset = idleSheetAsset;
+    _horizontalRunSheetAsset = horizontalRunSheetAsset;
     _feetFraction = feetFraction;
     if (!isLoaded) return; // onLoad will pick up the new sheet.
     await _loadSheet();
     _nameTag.position = Vector2(size.x / 2, 2);
   }
 
-  /// Builds the walk and idle animations from [_sheetAsset]. The cell size
-  /// comes from the image itself (8 x 4 grid).
+  /// Builds animations from 8 x 4 walk/idle sheets and an optional 8 x 2
+  /// horizontal run sheet.
   Future<void> _loadSheet() async {
     final image = await game.images.load(_sheetAsset);
     final cell = Vector2(image.width / 8, image.height / 4);
-    final sheet = SpriteSheet(image: image, srcSize: cell);
+    final walkSheet = SpriteSheet(image: image, srcSize: cell);
+    final idleImage = _idleSheetAsset == null
+        ? image
+        : await game.images.load(_idleSheetAsset!);
+    final idleSheet = SpriteSheet(
+      image: idleImage,
+      srcSize: Vector2(idleImage.width / 8, idleImage.height / 4),
+    );
+    final runImage = _horizontalRunSheetAsset == null
+        ? null
+        : await game.images.load(_horizontalRunSheetAsset!);
+    final runSheet = runImage == null
+        ? null
+        : SpriteSheet(
+            image: runImage,
+            srcSize: Vector2(runImage.width / 8, runImage.height / 2),
+          );
 
-    animations = {
-      for (final facing in Facing.values) ...{
-        (facing, true): sheet.createAnimation(
-          row: facing.index,
-          stepTime: 0.09,
-        ),
-        (facing, false): sheet.createAnimation(
-          row: facing.index,
-          stepTime: 1,
-          to: 1,
-        ),
-      },
-    };
+    final builtAnimations = <(Facing, bool), SpriteAnimation>{};
+    for (final facing in Facing.values) {
+      builtAnimations[(facing, true)] = walkSheet.createAnimation(
+        row: facing.index,
+        stepTime: 0.09,
+      );
+      builtAnimations[(facing, false)] = idleSheet.createAnimation(
+        row: facing.index,
+        stepTime: 0.2,
+      );
+    }
+    if (runSheet != null) {
+      builtAnimations[(Facing.west, true)] = runSheet.createAnimation(
+        row: 0,
+        stepTime: 0.09,
+      );
+      builtAnimations[(Facing.east, true)] = runSheet.createAnimation(
+        row: 1,
+        stepTime: 0.09,
+      );
+    }
+    animations = builtAnimations;
     current = (facing, moving);
     size = cell * (displayHeight / cell.y);
     anchor = Anchor(0.5, _feetFraction);

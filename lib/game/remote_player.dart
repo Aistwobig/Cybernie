@@ -11,6 +11,8 @@ class RemotePlayer extends Character with TapCallbacks {
     required this.playerId,
     required super.sheetAsset,
     required super.name,
+    super.idleSheetAsset,
+    super.horizontalRunSheetAsset,
     super.feetFraction,
     required Vector2 start,
     this.onTap,

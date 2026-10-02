@@ -14,6 +14,8 @@ class Player extends Character {
   Player({
     required super.sheetAsset,
     required super.name,
+    super.idleSheetAsset,
+    super.horizontalRunSheetAsset,
     super.feetFraction,
   });
 
@@ -23,12 +25,8 @@ class Player extends Character {
   static const double feetWidth = 28;
   static const double feetHeight = 12;
 
-  Rect feetAt(double x, double y) => Rect.fromLTWH(
-    x - feetWidth / 2,
-    y - feetHeight,
-    feetWidth,
-    feetHeight,
-  );
+  Rect feetAt(double x, double y) =>
+      Rect.fromLTWH(x - feetWidth / 2, y - feetHeight, feetWidth, feetHeight);
 
   Rect get feet => feetAt(position.x, position.y);
 

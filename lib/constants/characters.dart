@@ -9,6 +9,8 @@ class GameCharacter {
   const GameCharacter({
     required this.name,
     required this.sheet,
+    this.idleSheet,
+    this.horizontalRunSheet,
     this.feetFraction = 0.963,
   });
 
@@ -16,6 +18,12 @@ class GameCharacter {
 
   /// The walk sheet: used on the Profile tile, the Home preview and in rooms.
   final String sheet;
+
+  /// Optional 8-column x 4-row idle cycle, with one row per facing.
+  final String? idleSheet;
+
+  /// Optional 8-column x 2-row run cycle: left on row 0, right on row 1.
+  final String? horizontalRunSheet;
 
   /// Where the feet sit inside a cell, as a fraction of the cell's height.
   /// Characters stand on this point in the tavern.
@@ -38,6 +46,8 @@ const List<GameCharacter> gameCharacters = [
   GameCharacter(
     name: AppStrings.characterMage,
     sheet: AppImages.mageSheet,
+    idleSheet: AppImages.mageIdleSheet,
+    horizontalRunSheet: AppImages.mageRunSheet,
     feetFraction: 246 / 256,
   ),
   GameCharacter(

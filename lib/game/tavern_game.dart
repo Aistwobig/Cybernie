@@ -33,7 +33,12 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   set playerCharacter(int index) {
     _character = characterAt(index);
     if (isLoaded) {
-      player.useSheet(_character.sheet, _character.feetFraction);
+      player.useSheet(
+        _character.sheet,
+        _character.feetFraction,
+        idleSheetAsset: _character.idleSheet,
+        horizontalRunSheetAsset: _character.horizontalRunSheet,
+      );
     }
   }
 
@@ -80,8 +85,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   /// Makes the other players on screen match [players]: adds newcomers,
   /// removes whoever left and updates renamed ones.
   void syncOtherPlayers(
-    List<({String id, String name, int character, double x, double y})>
-    players,
+    List<({String id, String name, int character, double x, double y})> players,
   ) {
     final ids = {for (final p in players) p.id};
     for (final id in _others.keys.toList()) {
@@ -92,7 +96,12 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       final look = characterAt(p.character);
       if (existing != null) {
         existing.name = p.name;
-        existing.useSheet(look.sheet, look.feetFraction);
+        existing.useSheet(
+          look.sheet,
+          look.feetFraction,
+          idleSheetAsset: look.idleSheet,
+          horizontalRunSheetAsset: look.horizontalRunSheet,
+        );
         continue;
       }
       final other = RemotePlayer(
@@ -100,6 +109,8 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         onTap: (id) => onPlayerTap?.call(id),
         sheetAsset: look.sheet,
         feetFraction: look.feetFraction,
+        idleSheetAsset: look.idleSheet,
+        horizontalRunSheetAsset: look.horizontalRunSheet,
         name: p.name,
         start: Vector2(p.x, p.y),
       );
@@ -178,8 +189,9 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       sheetAsset: _character.sheet,
       feetFraction: _character.feetFraction,
       name: _playerName,
-    )
-      ..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy);
+      idleSheetAsset: _character.idleSheet,
+      horizontalRunSheetAsset: _character.horizontalRunSheet,
+    )..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy);
 
     world.addAll([map, player, _keyboardInput]);
 
