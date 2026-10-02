@@ -230,10 +230,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Image.asset(
-                        AppImages.ornamentDivider,
-                        width: 150,
-                        filterQuality: FilterQuality.medium,
+                      NightTint(
+                        lineArt: true,
+                        child: Image.asset(
+                          AppImages.ornamentDivider,
+                          width: 150,
+                          filterQuality: FilterQuality.medium,
+                        ),
                       ),
                       const SizedBox(width: 6),
                       Image.asset(
@@ -253,10 +256,35 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
             position: PopupMenuPosition.under,
             itemBuilder: (context) => [
               PopupMenuItem(
+                onTap: ThemeModeController.toggle,
+                child: Row(
+                  children: [
+                    Icon(
+                      ThemeModeController.night.value
+                          ? Icons.light_mode_outlined
+                          : Icons.dark_mode_outlined,
+                      size: 20,
+                      color: AppColors.ink,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      ThemeModeController.night.value
+                          ? AppStrings.dayMode
+                          : AppStrings.nightMode,
+                      style: FantasyText.mono(
+                        size: 14,
+                        color: AppColors.ink,
+                        weight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
                 onTap: _signOut,
                 child: Row(
                   children: [
-                    const Icon(Icons.logout, size: 20, color: AppColors.ink),
+                    Icon(Icons.logout, size: 20, color: AppColors.ink),
                     const SizedBox(width: 12),
                     Text(
                       AppStrings.signOut,
@@ -287,7 +315,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
                   ),
                 ],
               ),
-              child: const Icon(Icons.menu, size: 26, color: AppColors.ink),
+              child: Icon(Icons.menu, size: 26, color: AppColors.ink),
             ),
           ),
         ],
@@ -420,11 +448,13 @@ class _CharacterStage extends StatelessWidget {
                 children: [
                   Opacity(
                     opacity: 0.75,
-                    child: Image.asset(
-                      AppImages.homePreviewScene,
-                      fit: BoxFit.cover,
-                      alignment: Alignment.bottomCenter,
-                      filterQuality: FilterQuality.medium,
+                    child: NightTint(
+                      child: Image.asset(
+                        AppImages.homePreviewScene,
+                        fit: BoxFit.cover,
+                        alignment: Alignment.bottomCenter,
+                        filterQuality: FilterQuality.medium,
+                      ),
                     ),
                   ),
                   const CustomPaint(painter: _HaloPainter()),
@@ -573,10 +603,11 @@ class _OctagonArrow extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
                 child: Material(
                   color: const Color(0xFF4A3424),
+                  // A dark button in both modes, so its colors stay fixed.
                   shape: const _OctagonBorder(
-                    side: BorderSide(color: AppColors.parchmentDim),
+                    side: BorderSide(color: Color(0xFFDCD3BE)),
                   ),
-                  child: Icon(icon, color: AppColors.parchment, size: 26),
+                  child: Icon(icon, color: const Color(0xFFF5EFE0), size: 26),
                 ),
               ),
             ),
@@ -588,9 +619,12 @@ class _OctagonArrow extends StatelessWidget {
 }
 
 class _OctagonBorder extends ShapeBorder {
-  const _OctagonBorder({this.side = const BorderSide(color: AppColors.ink)});
+  const _OctagonBorder({BorderSide? side}) : _side = side;
 
-  final BorderSide side;
+  final BorderSide? _side;
+
+  /// An [AppColors.ink] outline unless another side was given.
+  BorderSide get side => _side ?? BorderSide(color: AppColors.ink);
 
   Path _path(Rect r) {
     final c = r.shortestSide * 0.28;
@@ -744,10 +778,13 @@ class _EnteringTavernState extends State<_EnteringTavern>
                           style: FantasyText.title(size: 19),
                         ),
                         const SizedBox(height: 8),
-                        Image.asset(
-                          AppImages.ornamentDivider,
-                          width: 170,
-                          filterQuality: FilterQuality.medium,
+                        NightTint(
+                          lineArt: true,
+                          child: Image.asset(
+                            AppImages.ornamentDivider,
+                            width: 170,
+                            filterQuality: FilterQuality.medium,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(

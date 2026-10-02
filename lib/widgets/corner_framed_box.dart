@@ -23,10 +23,26 @@ class CornerFramedBox extends StatelessWidget {
           child: child,
         ),
         // Positioned corner brackets inset slightly from the border
-        const Positioned(top: 6, left: 6, child: _CornerBracket(alignment: Alignment.topLeft)),
-        const Positioned(top: 6, right: 6, child: _CornerBracket(alignment: Alignment.topRight)),
-        const Positioned(bottom: 6, left: 6, child: _CornerBracket(alignment: Alignment.bottomLeft)),
-        const Positioned(bottom: 6, right: 6, child: _CornerBracket(alignment: Alignment.bottomRight)),
+        const Positioned(
+          top: 6,
+          left: 6,
+          child: _CornerBracket(alignment: Alignment.topLeft),
+        ),
+        const Positioned(
+          top: 6,
+          right: 6,
+          child: _CornerBracket(alignment: Alignment.topRight),
+        ),
+        const Positioned(
+          bottom: 6,
+          left: 6,
+          child: _CornerBracket(alignment: Alignment.bottomLeft),
+        ),
+        const Positioned(
+          bottom: 6,
+          right: 6,
+          child: _CornerBracket(alignment: Alignment.bottomRight),
+        ),
       ],
     );
   }
@@ -47,16 +63,24 @@ class _CornerBracket extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         border: Border(
-          top: (alignment == Alignment.topLeft || alignment == Alignment.topRight)
+          top:
+              (alignment == Alignment.topLeft ||
+                  alignment == Alignment.topRight)
               ? BorderSide(color: color, width: strokeWidth)
               : BorderSide.none,
-          bottom: (alignment == Alignment.bottomLeft || alignment == Alignment.bottomRight)
+          bottom:
+              (alignment == Alignment.bottomLeft ||
+                  alignment == Alignment.bottomRight)
               ? BorderSide(color: color, width: strokeWidth)
               : BorderSide.none,
-          left: (alignment == Alignment.topLeft || alignment == Alignment.bottomLeft)
+          left:
+              (alignment == Alignment.topLeft ||
+                  alignment == Alignment.bottomLeft)
               ? BorderSide(color: color, width: strokeWidth)
               : BorderSide.none,
-          right: (alignment == Alignment.topRight || alignment == Alignment.bottomRight)
+          right:
+              (alignment == Alignment.topRight ||
+                  alignment == Alignment.bottomRight)
               ? BorderSide(color: color, width: strokeWidth)
               : BorderSide.none,
         ),

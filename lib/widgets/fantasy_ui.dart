@@ -26,24 +26,23 @@ class FantasyText {
   );
 
   /// Player and character names.
-  static TextStyle name({double size = 20, Color color = AppColors.ink}) =>
-      GoogleFonts.lora(
-        fontSize: size,
-        fontWeight: FontWeight.w700,
-        color: color,
-      );
+  static TextStyle name({double size = 20, Color? color}) => GoogleFonts.lora(
+    fontSize: size,
+    fontWeight: FontWeight.w700,
+    color: color ?? AppColors.ink,
+  );
 
   /// The spaced typewriter text: labels, statuses, hints.
   static TextStyle mono({
     double size = 13,
-    Color color = AppColors.inkMuted,
+    Color? color,
     FontWeight weight = FontWeight.w400,
     double spacing = 0.8,
   }) => GoogleFonts.courierPrime(
     fontSize: size,
     fontWeight: weight,
     letterSpacing: spacing,
-    color: color,
+    color: color ?? AppColors.inkMuted,
   );
 }
 
@@ -57,13 +56,15 @@ class FantasyCard extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.fromLTRB(16, 14, 16, 14),
-    this.fill = AppColors.card,
+    this.fill,
     this.cornerSize = 22,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
-  final Color fill;
+
+  /// Background inside the frame; [AppColors.card] when null.
+  final Color? fill;
 
   /// How big the corner curls are drawn, in logical pixels.
   final double cornerSize;
@@ -83,7 +84,7 @@ class FantasyCard extends StatelessWidget {
             padding: EdgeInsets.all(inset),
             child: DecoratedBox(
               decoration: BoxDecoration(
-                color: fill,
+                color: fill ?? AppColors.card,
                 borderRadius: BorderRadius.circular(3),
               ),
             ),
@@ -211,7 +212,10 @@ class FantasyButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final enabled = onPressed != null && !busy;
-    final textColor = AppColors.parchment.withValues(alpha: enabled ? 1 : 0.55);
+    // The button art is dark in both modes, so its text stays day parchment.
+    final textColor = const Color(
+      0xFFF5EFE0,
+    ).withValues(alpha: enabled ? 1 : 0.55);
 
     return Semantics(
       button: true,
@@ -412,7 +416,7 @@ class FramedIconButton extends StatelessWidget {
                 color: fill,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5),
-                  side: const BorderSide(color: AppColors.ink, width: 1.6),
+                  side: BorderSide(color: AppColors.ink, width: 1.6),
                 ),
                 child: InkWell(
                   onTap: onPressed,
@@ -528,10 +532,12 @@ class CastleBackdrop extends StatelessWidget {
                         top: 0,
                         width: imageWidth,
                         height: height,
-                        child: Image.asset(
-                          AppImages.headerCastle,
-                          fit: BoxFit.fill,
-                          filterQuality: FilterQuality.medium,
+                        child: NightTint(
+                          child: Image.asset(
+                            AppImages.headerCastle,
+                            fit: BoxFit.fill,
+                            filterQuality: FilterQuality.medium,
+                          ),
                         ),
                       ),
                     ],
@@ -577,10 +583,13 @@ class FantasyTitleBar extends StatelessWidget {
                 child: Text(title.toUpperCase(), style: FantasyText.title()),
               ),
               const SizedBox(height: 4),
-              Image.asset(
-                AppImages.ornamentDivider,
-                width: 130,
-                filterQuality: FilterQuality.medium,
+              NightTint(
+                lineArt: true,
+                child: Image.asset(
+                  AppImages.ornamentDivider,
+                  width: 130,
+                  filterQuality: FilterQuality.medium,
+                ),
               ),
             ],
           ),
@@ -772,10 +781,13 @@ class _NavTab extends StatelessWidget {
             SizedBox(
               height: 8,
               child: isActive
-                  ? Image.asset(
-                      AppImages.ornamentDivider,
-                      width: 70,
-                      filterQuality: FilterQuality.medium,
+                  ? NightTint(
+                      lineArt: true,
+                      child: Image.asset(
+                        AppImages.ornamentDivider,
+                        width: 70,
+                        filterQuality: FilterQuality.medium,
+                      ),
                     )
                   : null,
             ),
@@ -810,7 +822,7 @@ class FramedTextButton extends StatelessWidget {
         color: AppColors.card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(5),
-          side: const BorderSide(color: AppColors.ink, width: 1.6),
+          side: BorderSide(color: AppColors.ink, width: 1.6),
         ),
         child: InkWell(
           onTap: onPressed,

@@ -105,9 +105,9 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
 
   void _showError() {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text(AppStrings.friendActionError)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text(AppStrings.friendActionError)));
   }
 
   @override
@@ -197,7 +197,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
     }
     if (_isSearching && _results.isEmpty) {
       return [
-        const Padding(
+        Padding(
           padding: EdgeInsets.all(24),
           child: Center(
             child: CircularProgressIndicator(
@@ -234,10 +234,8 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
           filled: true,
           onPressed: busy
               ? null
-              : () => _act(
-                  player,
-                  () => FriendsService.acceptRequest(player.id),
-                ),
+              : () =>
+                    _act(player, () => FriendsService.acceptRequest(player.id)),
         ),
         const SizedBox(width: 6),
         _SmallButton(
@@ -263,20 +261,15 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
           filled: true,
           onPressed: busy
               ? null
-              : () => _act(
-                  player,
-                  () => FriendsService.acceptRequest(player.id),
-                ),
+              : () =>
+                    _act(player, () => FriendsService.acceptRequest(player.id)),
         );
       case FriendStatus.none:
         return _SmallButton(
           label: AppStrings.addButton,
           onPressed: busy
               ? null
-              : () => _act(
-                  player,
-                  () => FriendsService.sendRequest(player.id),
-                ),
+              : () => _act(player, () => FriendsService.sendRequest(player.id)),
         );
     }
   }
@@ -322,7 +315,9 @@ class _SmallButton extends StatelessWidget {
       fontWeight: FontWeight.w700,
       letterSpacing: 0.4,
     );
-    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(4));
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(4),
+    );
     const padding = EdgeInsets.symmetric(horizontal: 10);
 
     return SizedBox(
@@ -331,7 +326,7 @@ class _SmallButton extends StatelessWidget {
           ? FilledButton(
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.ink,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onInk,
                 padding: padding,
                 shape: shape,
               ),
@@ -341,7 +336,7 @@ class _SmallButton extends StatelessWidget {
           : OutlinedButton(
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.ink,
-                side: const BorderSide(color: AppColors.ink),
+                side: BorderSide(color: AppColors.ink),
                 padding: padding,
                 shape: shape,
               ),

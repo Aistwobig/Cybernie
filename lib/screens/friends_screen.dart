@@ -216,10 +216,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   stops: [0, 0.35],
                                 ).createShader(rect),
                                 blendMode: BlendMode.dstIn,
-                                child: Image.asset(
-                                  AppImages.friendsFooterScene,
-                                  fit: BoxFit.fitWidth,
-                                  filterQuality: FilterQuality.medium,
+                                child: NightTint(
+                                  child: Image.asset(
+                                    AppImages.friendsFooterScene,
+                                    fit: BoxFit.fitWidth,
+                                    filterQuality: FilterQuality.medium,
+                                  ),
                                 ),
                               ),
                             ),
@@ -254,7 +256,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Widget _buildList() {
     if (_isLoading) {
-      return const Center(
+      return Center(
         child: CircularProgressIndicator(color: AppColors.ink, strokeWidth: 2),
       );
     }
@@ -312,8 +314,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
           const SizedBox(height: 12),
           _SectionLabel(AppStrings.suggestedHeader),
           if (suggestions == null)
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.all(16),
               child: Center(
                 child: SizedBox(
                   width: 20,
@@ -387,7 +389,7 @@ class SearchField extends StatelessWidget {
           filled: false,
           hintText: hintText,
           hintStyle: FantasyText.mono(size: 15),
-          prefixIcon: const Icon(Icons.search, size: 24, color: AppColors.ink),
+          prefixIcon: Icon(Icons.search, size: 24, color: AppColors.ink),
           prefixIconConstraints: const BoxConstraints(minWidth: 44),
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
@@ -445,10 +447,12 @@ class PlayerRow extends StatelessWidget {
                           padding: const EdgeInsets.all(5),
                           child: Opacity(
                             opacity: 0.9,
-                            child: Image.asset(
-                              AppImages.flowerBanner,
-                              fit: BoxFit.fill,
-                              filterQuality: FilterQuality.medium,
+                            child: NightTint(
+                              child: Image.asset(
+                                AppImages.flowerBanner,
+                                fit: BoxFit.fill,
+                                filterQuality: FilterQuality.medium,
+                              ),
                             ),
                           ),
                         ),
@@ -771,7 +775,7 @@ class _Message extends StatelessWidget {
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.ink,
-                  side: const BorderSide(color: AppColors.ink),
+                  side: BorderSide(color: AppColors.ink),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
                   ),

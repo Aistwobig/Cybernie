@@ -128,13 +128,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       onPlayers: (others) {
         _game.syncOtherPlayers([
           for (final p in others)
-            (
-              id: p.id,
-              name: p.name,
-              character: p.character,
-              x: p.x,
-              y: p.y,
-            ),
+            (id: p.id, name: p.name, character: p.character, x: p.x, y: p.y),
         ]);
         if (!mounted) return;
         setState(() {
@@ -519,11 +513,7 @@ class _RoomTitle extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.people_outline,
-                      size: 16,
-                      color: AppColors.ink,
-                    ),
+                    Icon(Icons.people_outline, size: 16, color: AppColors.ink),
                     const SizedBox(width: 4),
                     Text(
                       AppStrings.playerCount(
@@ -536,11 +526,7 @@ class _RoomTitle extends StatelessWidget {
                         color: AppColors.ink,
                       ),
                     ),
-                    const Icon(
-                      Icons.expand_more,
-                      size: 16,
-                      color: AppColors.ink,
-                    ),
+                    Icon(Icons.expand_more, size: 16, color: AppColors.ink),
                   ],
                 ),
               ),
@@ -574,8 +560,8 @@ class _HudButton extends StatelessWidget {
     );
     final buttonStyle = OutlinedButton.styleFrom(
       backgroundColor: filled ? AppColors.ink : AppColors.parchment,
-      foregroundColor: filled ? Colors.white : AppColors.ink,
-      side: const BorderSide(color: AppColors.ink),
+      foregroundColor: filled ? AppColors.onInk : AppColors.ink,
+      side: BorderSide(color: AppColors.ink),
       padding: const EdgeInsets.symmetric(horizontal: 14),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
     );
@@ -596,8 +582,8 @@ class _HudButton extends StatelessWidget {
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
           backgroundColor: filled ? AppColors.ink : AppColors.parchment,
-          foregroundColor: filled ? Colors.white : AppColors.ink,
-          side: const BorderSide(color: AppColors.ink),
+          foregroundColor: filled ? AppColors.onInk : AppColors.ink,
+          side: BorderSide(color: AppColors.ink),
           padding: const EdgeInsets.symmetric(horizontal: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         ),
@@ -771,7 +757,7 @@ class _ChatInput extends StatelessWidget {
                       ? AppColors.ink
                       : AppColors.parchment,
                   padding: EdgeInsets.zero,
-                  side: const BorderSide(color: AppColors.ink),
+                  side: BorderSide(color: AppColors.ink),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -824,15 +810,15 @@ class _ChatInput extends StatelessWidget {
             ),
             onPressed: isSending ? null : onSend,
             child: isSending
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: AppColors.onInk,
                     ),
                   )
-                : const Icon(Icons.send, size: 18, color: Colors.white),
+                : Icon(Icons.send, size: 18, color: AppColors.onInk),
           ),
         ),
       ],

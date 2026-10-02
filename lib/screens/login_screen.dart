@@ -69,18 +69,18 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   TextStyle get _titleStyle => GoogleFonts.cinzel(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
-        color: AppColors.ink,
-        letterSpacing: 2,
-      );
+    fontSize: 26,
+    fontWeight: FontWeight.w700,
+    color: AppColors.ink,
+    letterSpacing: 2,
+  );
 
   TextStyle get _subtitleStyle => GoogleFonts.cinzel(
-        fontSize: 11,
-        fontWeight: FontWeight.w500,
-        color: AppColors.ink.withValues(alpha: 0.7),
-        letterSpacing: 2,
-      );
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    color: AppColors.ink.withValues(alpha: 0.7),
+    letterSpacing: 2,
+  );
 
   @override
   Widget build(BuildContext context) {

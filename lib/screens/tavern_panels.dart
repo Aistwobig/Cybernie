@@ -137,7 +137,7 @@ class PlayersPanel extends StatelessWidget {
               name: player.name,
               avatarUrl: player.avatarUrl,
               onTap: () => onSelect(player.id),
-              trailing: const Icon(
+              trailing: Icon(
                 Icons.chevron_right,
                 size: 20,
                 color: AppColors.ink,
@@ -361,7 +361,7 @@ class _PlayerCardPanelState extends State<PlayerCardPanel> {
     final status = _status;
 
     if (status == null) {
-      return const Center(
+      return Center(
         child: SizedBox(
           width: 20,
           height: 20,
@@ -395,7 +395,7 @@ class _PlayerCardPanelState extends State<PlayerCardPanel> {
       child: FilledButton(
         style: FilledButton.styleFrom(
           backgroundColor: AppColors.ink,
-          foregroundColor: Colors.white,
+          foregroundColor: AppColors.onInk,
           disabledBackgroundColor: AppColors.parchmentDim,
           disabledForegroundColor: AppColors.ink,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -487,11 +487,7 @@ class _ReportPanelState extends State<ReportPanel> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.check_circle_outline,
-            size: 40,
-            color: AppColors.ink,
-          ),
+          Icon(Icons.check_circle_outline, size: 40, color: AppColors.ink),
           const SizedBox(height: 10),
           Text(
             AppStrings.reportThanks,
@@ -508,7 +504,7 @@ class _ReportPanelState extends State<ReportPanel> {
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.ink,
-              side: const BorderSide(color: AppColors.ink),
+              side: BorderSide(color: AppColors.ink),
               minimumSize: const Size(120, 44),
             ),
             onPressed: widget.onClose,
@@ -728,7 +724,7 @@ class _NoticeBoardPanelState extends State<NoticeBoardPanel> {
                 child: FilledButton(
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.ink,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.onInk,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
@@ -755,7 +751,7 @@ class _NoticeBoardPanelState extends State<NoticeBoardPanel> {
                             style: _body(weight: FontWeight.w700),
                           ),
                         )
-                      : const CircularProgressIndicator(
+                      : CircularProgressIndicator(
                           strokeWidth: 2,
                           color: AppColors.ink,
                         ),

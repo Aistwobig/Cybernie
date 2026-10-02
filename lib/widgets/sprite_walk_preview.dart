@@ -130,12 +130,12 @@ class _SpriteWalkPreviewState extends State<SpriteWalkPreview> {
       return const SizedBox.shrink();
     }
 
-    final direction =
-        widget.facing ?? widget.directionOrder[_directionIndex];
+    final direction = widget.facing ?? widget.directionOrder[_directionIndex];
     final side = _sideSheet;
     final useSide =
         side != null &&
-        (direction == SpriteDirection.west || direction == SpriteDirection.east);
+        (direction == SpriteDirection.west ||
+            direction == SpriteDirection.east);
 
     return CustomPaint(
       painter: _SpritePainter(
@@ -198,6 +198,8 @@ class _SpritePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SpritePainter oldDelegate) {
-    return oldDelegate.col != col || oldDelegate.row != row || oldDelegate.sheet != sheet;
+    return oldDelegate.col != col ||
+        oldDelegate.row != row ||
+        oldDelegate.sheet != sheet;
   }
 }

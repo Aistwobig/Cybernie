@@ -323,16 +323,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             border: Border.all(color: AppColors.card, width: 2),
                           ),
                           child: _isPickingProfilePhoto
-                              ? const Padding(
-                                  padding: EdgeInsets.all(7),
+                              ? Padding(
+                                  padding: const EdgeInsets.all(7),
                                   child: CircularProgressIndicator(
                                     strokeWidth: 1.5,
-                                    color: Colors.white,
+                                    color: AppColors.onInk,
                                   ),
                                 )
-                              : const Icon(
+                              : Icon(
                                   Icons.edit,
-                                  color: Colors.white,
+                                  color: AppColors.onInk,
                                   size: 15,
                                 ),
                         ),
@@ -448,7 +448,7 @@ class _CharacterTile extends StatelessWidget {
       label: character.name,
       excludeSemantics: true,
       child: FantasyCard(
-        fill: isSelected ? const Color(0xFF241A13) : AppColors.card,
+        fill: isSelected ? AppColors.selectedTile : AppColors.card,
         padding: EdgeInsets.zero,
         cornerSize: 18,
         child: Material(
@@ -490,7 +490,7 @@ class _CharacterTile extends StatelessWidget {
                         style: FantasyText.name(
                           size: 14,
                           color: isSelected
-                              ? AppColors.parchment
+                              ? const Color(0xFFF5EFE0)
                               : AppColors.ink,
                         ),
                       ),
@@ -539,7 +539,7 @@ class _MoreCharactersTile extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.add, size: 30, color: AppColors.ink),
+                Icon(Icons.add, size: 30, color: AppColors.ink),
                 const SizedBox(height: 4),
                 Text(
                   AppStrings.moreCharacters,

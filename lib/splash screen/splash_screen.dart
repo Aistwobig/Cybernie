@@ -24,10 +24,7 @@ class SplashScreen extends StatelessWidget {
           children: [
             ImageFiltered(
               imageFilter: ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
-              child: Image.asset(
-                AppImages.splashBg,
-                fit: BoxFit.cover,
-              ),
+              child: Image.asset(AppImages.splashBg, fit: BoxFit.cover),
             ),
             Container(
               decoration: BoxDecoration(
@@ -48,11 +45,7 @@ class SplashScreen extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset(
-                    AppImages.logo,
-                    width: 40,
-                    height: 40,
-                  ),
+                  Image.asset(AppImages.logo, width: 40, height: 40),
                   const SizedBox(height: 10),
                   Text(AppStrings.appName, style: CyberniStyles.title),
                   const SizedBox(height: 8),
@@ -74,9 +67,7 @@ class SplashScreen extends StatelessWidget {
               right: 0,
               bottom: 48,
               child: Center(
-                child: _TapToContinue(
-                  onTap: () => _goToLogin(context),
-                ),
+                child: _TapToContinue(onTap: () => _goToLogin(context)),
               ),
             ),
           ],
@@ -120,15 +111,19 @@ class _TapToContinueState extends State<_TapToContinue> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.diamond_outlined,
-                    size: 9,
-                    color: _hovering ? Colors.white : AppColors.parchmentSoft),
+                Icon(
+                  Icons.diamond_outlined,
+                  size: 9,
+                  color: _hovering ? Colors.white : AppColors.parchmentSoft,
+                ),
                 const SizedBox(width: 10),
                 Text(AppStrings.tapToContinue),
                 const SizedBox(width: 10),
-                Icon(Icons.diamond_outlined,
-                    size: 9,
-                    color: _hovering ? Colors.white : AppColors.parchmentSoft),
+                Icon(
+                  Icons.diamond_outlined,
+                  size: 9,
+                  color: _hovering ? Colors.white : AppColors.parchmentSoft,
+                ),
               ],
             ),
           ),
@@ -143,10 +138,6 @@ class _OrnamentDash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 18,
-      height: 1,
-      color: AppColors.parchmentDim,
-    );
+    return Container(width: 18, height: 1, color: AppColors.parchmentDim);
   }
 }

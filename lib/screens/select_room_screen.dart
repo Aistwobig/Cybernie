@@ -87,10 +87,12 @@ class _SelectRoomScreenState extends State<SelectRoomScreen> {
                     stops: [0, 0.35],
                   ).createShader(rect),
                   blendMode: BlendMode.dstIn,
-                  child: Image.asset(
-                    AppImages.friendsFooterScene,
-                    fit: BoxFit.fitWidth,
-                    filterQuality: FilterQuality.medium,
+                  child: NightTint(
+                    child: Image.asset(
+                      AppImages.friendsFooterScene,
+                      fit: BoxFit.fitWidth,
+                      filterQuality: FilterQuality.medium,
+                    ),
                   ),
                 ),
               ),
@@ -271,10 +273,13 @@ class _ComingSoonTile extends StatelessWidget {
                       ).copyWith(fontWeight: FontWeight.w600, letterSpacing: 2),
                     ),
                     const SizedBox(height: 8),
-                    Image.asset(
-                      AppImages.ornamentDivider,
-                      width: 150,
-                      filterQuality: FilterQuality.medium,
+                    NightTint(
+                      lineArt: true,
+                      child: Image.asset(
+                        AppImages.ornamentDivider,
+                        width: 150,
+                        filterQuality: FilterQuality.medium,
+                      ),
                     ),
                   ],
                 ),

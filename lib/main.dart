@@ -39,31 +39,27 @@ Future<void> main() async {
     );
   }
 
+  await ThemeModeController.load();
+
   runApp(DevicePreview(enabled: true, builder: (context) => const App()));
 }
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   const App({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'CYBERNIE',
-      debugShowCheckedModeBanner: false,
+  State<App> createState() => _AppState();
 
-      // Required for DevicePreview to actually control the app.
-      locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
-
-      theme: AppTheme.theme,
-
-      // Signed-in players skip the splash and login screens.
-      initialRoute: AuthService.isSignedIn ? '/welcome' : '/',
-      onGenerateInitialRoutes: _initialRoutes,
-      navigatorObservers: [AppNav.routeObserver],
-      onGenerateRoute: _page,
-    );
-  }
+  static final Map<String, WidgetBuilder> _routes = {
+    '/': (context) => const SplashScreen(),
+    '/login': (context) => const LoginScreen(),
+    '/welcome': (context) => const WelcomeScreen(),
+    '/friends': (context) => const FriendsScreen(),
+    '/profile': (context) => const ProfileScreen(),
+    '/rooms': (context) => const SelectRoomScreen(),
+    '/rooms/tavern': (context) => const TavernRoomScreen(),
+    '/friends/add': (context) => const AddFriendsScreen(),
+  };
 
   /// Bottom-nav tabs cross-fade (see AppNav.tabRoute); other screens use
   /// the normal page transition.
@@ -76,17 +72,6 @@ class App extends StatelessWidget {
         ? AppNav.tabRoute(settings, builder)
         : MaterialPageRoute<void>(settings: settings, builder: builder);
   }
-
-  static final Map<String, WidgetBuilder> _routes = {
-    '/': (context) => const SplashScreen(),
-    '/login': (context) => const LoginScreen(),
-    '/welcome': (context) => const WelcomeScreen(),
-    '/friends': (context) => const FriendsScreen(),
-    '/profile': (context) => const ProfileScreen(),
-    '/rooms': (context) => const SelectRoomScreen(),
-    '/rooms/tavern': (context) => const TavernRoomScreen(),
-    '/friends/add': (context) => const AddFriendsScreen(),
-  };
 
   /// The screens the app opens with (also used when a web page is reloaded
   /// on, say, #/friends). Flutter's default would put the splash screen
@@ -102,5 +87,52 @@ class App extends StatelessWidget {
       return [page('/welcome')];
     }
     return [page('/welcome'), page(name)];
+  }
+}
+
+class _AppState extends State<App> {
+  @override
+  void initState() {
+    super.initState();
+    ThemeModeController.night.addListener(_onModeChanged);
+  }
+
+  @override
+  void dispose() {
+    ThemeModeController.night.removeListener(_onModeChanged);
+    super.dispose();
+  }
+
+  /// Screens read their colors from AppColors while building, so every
+  /// widget (including const ones and screens further back in the stack)
+  /// is rebuilt to pick up the new mode. Navigation and screen state stay.
+  void _onModeChanged() {
+    setState(() {});
+    void rebuild(Element element) {
+      element.markNeedsBuild();
+      element.visitChildren(rebuild);
+    }
+
+    (context as Element).visitChildren(rebuild);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'CYBERNIE',
+      debugShowCheckedModeBanner: false,
+
+      // Required for DevicePreview to actually control the app.
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
+
+      theme: AppTheme.theme,
+
+      // Signed-in players skip the splash and login screens.
+      initialRoute: AuthService.isSignedIn ? '/welcome' : '/',
+      onGenerateInitialRoutes: App._initialRoutes,
+      navigatorObservers: [AppNav.routeObserver],
+      onGenerateRoute: App._page,
+    );
   }
 }

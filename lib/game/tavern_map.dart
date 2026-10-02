@@ -51,18 +51,15 @@ class TavernMap {
     Rect.fromLTRB(1212, 170, 1340, 290), // notice board
     Rect.fromLTRB(1278, 265, 1340, 522), // stacked barrels (right)
     Rect.fromLTRB(1232, 400, 1280, 488), // plant on stool (right)
-
     // --- Left side -----------------------------------------------------------
     Rect.fromLTRB(65, 425, 122, 630), // booth with two stools
     Rect.fromLTRB(203, 545, 398, 658), // round table + chairs
     Rect.fromLTRB(175, 712, 420, 888), // long table + chairs + stools
     Rect.fromLTRB(88, 828, 158, 928), // plant (bottom-left)
     Rect.fromLTRB(198, 912, 318, 982), // two barrels (bottom-left)
-
     // --- Entrance ------------------------------------------------------------
     Rect.fromLTRB(422, 928, 492, 1030), // plant left of the door
     Rect.fromLTRB(785, 928, 858, 1030), // plant right of the door
-
     // --- Right side ----------------------------------------------------------
     Rect.fromLTRB(968, 425, 1162, 568), // table (top-right) + chairs
     Rect.fromLTRB(1052, 582, 1268, 742), // table (middle-right) + chairs

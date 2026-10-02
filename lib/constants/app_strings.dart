@@ -24,6 +24,8 @@ class AppStrings {
   static const String enteringTavern = 'Opening the tavern doors...';
   static const String enteringTavernSubtitle = "Bernie's Tavern awaits.";
   static const String menuButton = 'Menu';
+  static const String nightMode = 'Night mode';
+  static const String dayMode = 'Day mode';
   static const String characterPreviewTitle = 'Character Preview';
   static const String characterPreviewSubtitle =
       'Customize your look and join the adventure.';
@@ -151,7 +153,8 @@ class AppStrings {
   static const String noticeBoardHint = 'Pin a note for everyone...';
   static const String pinNoteButton = 'PIN';
   static const String noticeBoardEmpty = 'No notes yet. Pin the first one!';
-  static const String noticeBoardError = 'Something went wrong. Please try again.';
+  static const String noticeBoardError =
+      'Something went wrong. Please try again.';
   static const String noticeBoardMissing =
       "The notice board isn't set up yet. Run the notice board SQL in Supabase.";
   static const String takeDownNote = 'Take down note';

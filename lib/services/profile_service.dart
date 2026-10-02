@@ -33,11 +33,14 @@ class ProfileService {
     int? characterIndex,
     String? avatarUrl,
   }) async {
-    await _client.from('profiles').update({
-      'display_name': ?displayName,
-      'character_index': ?characterIndex,
-      'avatar_url': ?avatarUrl,
-    }).eq('id', _userId);
+    await _client
+        .from('profiles')
+        .update({
+          'display_name': ?displayName,
+          'character_index': ?characterIndex,
+          'avatar_url': ?avatarUrl,
+        })
+        .eq('id', _userId);
   }
 
   /// Uploads a profile photo to `avatars/<user id>/avatar` and returns its
