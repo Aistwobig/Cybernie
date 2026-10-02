@@ -6,7 +6,7 @@ class AppImages {
   static const String logo = 'assets/images/logo.png';
   static const String characterMen = 'assets/images/men.png';
   static const String characterMenAnim = 'assets/images/menanim.png';
-  static const String mageSheet = 'assets/images/mage_sheet.png';
+  static const String mageSheet = 'assets/images/mage_walk.png';
   static const String mageIdleSheet = 'assets/images/Idle_mage.png';
   static const String mageRunSheet = 'assets/images/mage_left_right.png';
   static const String boyIdleSheet = 'assets/images/idle_anim_boy.png';
