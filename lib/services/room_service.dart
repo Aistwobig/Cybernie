@@ -9,10 +9,12 @@ class RoomPlayer {
     required this.name,
     required this.x,
     required this.y,
+    this.avatarUrl,
   });
 
   final String id;
   final String name;
+  final String? avatarUrl;
 
   /// Where they were when they joined. Live positions arrive as [PlayerMove].
   final double x;
@@ -89,11 +91,13 @@ class RoomService {
   /// fires when a new player arrives (so we can tell them where we are).
   Future<void> join({
     required String name,
+    required String? avatarUrl,
     required double x,
     required double y,
     required void Function(List<RoomPlayer> others) onPlayers,
     required void Function(PlayerMove move) onMove,
     required void Function() onSomeoneJoined,
+    required void Function(String playerId, String emoji) onEmote,
     required void Function() onError,
   }) async {
     await _client.realtime.setAuth(_client.auth.currentSession?.accessToken);
@@ -122,14 +126,45 @@ class RoomService {
             if (move != null && move.playerId != myId) onMove(move);
           },
         )
+        .onBroadcast(
+          event: 'emote',
+          callback: (message) {
+            final data = message['payload'] is Map
+                ? Map<String, dynamic>.from(message['payload'] as Map)
+                : message;
+            final id = data['id'];
+            final emoji = data['e'];
+            if (id is String && emoji is String && id != myId) {
+              if (isEmote(emoji)) onEmote(id, emoji);
+            }
+          },
+        )
         .subscribe((status, error) async {
           if (status == RealtimeSubscribeStatus.subscribed) {
-            await channel.track({'name': name, 'x': x.round(), 'y': y.round()});
+            await channel.track({
+              'name': name,
+              'avatar': ?avatarUrl,
+              'x': x.round(),
+              'y': y.round(),
+            });
           } else if (status == RealtimeSubscribeStatus.channelError ||
               status == RealtimeSubscribeStatus.timedOut) {
             onError();
           }
         });
+  }
+
+  /// The reactions players can send. Anything else received is ignored.
+  static const List<String> emotes = ['👋', '😂', '❤️', '👍', '🎉', '😮'];
+
+  static bool isEmote(String emoji) => emotes.contains(emoji);
+
+  Future<void> sendEmote(String emoji) async {
+    if (!isEmote(emoji)) return;
+    await _channel?.sendBroadcastMessage(
+      event: 'emote',
+      payload: {'id': myId, 'e': emoji},
+    );
   }
 
   Future<void> sendMove(PlayerMove move) async {
@@ -151,6 +186,7 @@ class RoomService {
       RoomPlayer(
         id: id,
         name: (data['name'] as String?) ?? 'Player',
+        avatarUrl: data['avatar'] as String?,
         x: (data['x'] as num?)?.toDouble() ?? 0,
         y: (data['y'] as num?)?.toDouble() ?? 0,
       );
@@ -172,13 +208,11 @@ class RoomService {
           opts: const RealtimeChannelConfig(private: true),
         );
         channel = watcher;
-        watcher
-            .onPresenceSync((_) {
-              if (!controller.isClosed) {
-                controller.add(watcher.presenceState().length);
-              }
-            })
-            .subscribe();
+        watcher.onPresenceSync((_) {
+          if (!controller.isClosed) {
+            controller.add(watcher.presenceState().length);
+          }
+        }).subscribe();
       },
       onCancel: () async {
         final watcher = channel;

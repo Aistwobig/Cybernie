@@ -96,5 +96,42 @@ class AppStrings {
   static const String chatHint = 'Type a message...';
   static const String chatSendError = 'Message not sent. Please try again.';
   static const String chatSignInRequired = 'Sign in to chat.';
+
+  // Tavern panels: who's here, player card, report, notice board, emotes
+  static const String backButton = 'Back';
+  static const String closeButton = 'Close';
+  static String playersHere(int count, int max) => "Who's here ($count / $max)";
+  static const String showPlayers = "See who's here";
+  static const String youLabel = 'You';
+  static const String aloneInRoom =
+      "It's just you for now. Invite a friend to join!";
+  static const String inThisRoom = 'In this room';
+  static const String playerCardError = "Couldn't load this player.";
+  static const String reportPlayer = 'Report player';
+  static const String addFriendButton = 'ADD FRIEND';
+  static const String acceptFriendButton = 'ACCEPT FRIEND REQUEST';
+  static const String requestSentLabel = 'FRIEND REQUEST SENT';
+  static const String alreadyFriendsLabel = 'FRIENDS ✓';
+  static String reportTitle(String name) => 'Report $name';
+  static const String reportPrompt =
+      "What happened? Reports are private: the player won't know it was you.";
+  static const String reportDetailsHint = 'Add details (optional)';
+  static const String sendReportButton = 'SEND REPORT';
+  static const String reportError = "Report not sent. Please try again.";
+  static const String reportThanks = 'Thanks for letting us know.';
+  static const String reportThanksDetail =
+      'Your report was sent and will be reviewed.';
+  static const String doneButton = 'DONE';
+  static const String noticeBoardTitle = 'Notice Board';
+  static const String readNoticeBoard = 'Read notice board';
+  static const String readNoticeBoardKey = 'Read notice board (E)';
+  static const String noticeBoardHint = 'Pin a note for everyone...';
+  static const String pinNoteButton = 'PIN';
+  static const String noticeBoardEmpty = 'No notes yet. Pin the first one!';
+  static const String noticeBoardError = 'Something went wrong. Please try again.';
+  static const String noticeBoardMissing =
+      "The notice board isn't set up yet. Run the notice board SQL in Supabase.";
+  static const String takeDownNote = 'Take down note';
+  static const String emotesButton = 'Emotes';
   static const String moreRoomsComingSoon = 'MORE ROOMS — COMING SOON';
 }

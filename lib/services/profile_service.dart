@@ -22,6 +22,12 @@ class ProfileService {
     return Profile.fromMap(row);
   }
 
+  /// Another player's profile, e.g. for the card shown when you tap them.
+  static Future<Profile> fetchById(String id) async {
+    final row = await _client.from('profiles').select().eq('id', id).single();
+    return Profile.fromMap(row);
+  }
+
   static Future<void> updateMine({
     String? displayName,
     int? characterIndex,

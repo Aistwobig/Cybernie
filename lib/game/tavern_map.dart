@@ -16,6 +16,12 @@ class TavernMap {
   /// Where players appear: just inside the front door, on the doormat.
   static const Offset spawnPoint = Offset(637, 945);
 
+  /// The open floor in front of the notice board (the board itself is at
+  /// x 1212-1340, y 170-290). Standing within [noticeBoardReach] of this
+  /// point offers "Read notice board".
+  static const Offset noticeBoardSpot = Offset(1245, 310);
+  static const double noticeBoardReach = 95;
+
   /// Everything a player's feet cannot walk through.
   static const List<Rect> collisionBoxes = [
     // --- Outer walls -------------------------------------------------------

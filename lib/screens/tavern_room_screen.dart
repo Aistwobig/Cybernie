@@ -15,6 +15,7 @@ import '../services/profile_service.dart';
 import '../services/room_service.dart';
 import '../game/tavern_map.dart';
 import '../theme/app_theme.dart';
+import 'tavern_panels.dart';
 
 /// Bernie's Tavern. Always landscape and full screen: phones are asked to
 /// rotate, and where that isn't possible (web, the device preview frame) the
@@ -42,6 +43,16 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   bool _isSending = false;
   int _playersInRoom = 1;
 
+  String _myName = AppStrings.profilePlayerName;
+  String? _myAvatarUrl;
+  List<RoomPlayer> _others = const [];
+  _Panel _panel = _Panel.none;
+  String? _cardPlayerId;
+  String _reportName = '';
+  bool _cameFromList = false;
+  bool _nearNoticeBoard = false;
+  bool _emotesOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +61,11 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       DeviceOrientation.landscapeRight,
     ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    _game.onPlayerTap = (id) => _openPlayerCard(id, fromList: false);
+    _game.onNoticeBoardNearby = (near) {
+      if (mounted) setState(() => _nearNoticeBoard = near);
+    };
+    _game.onInteract = _openNoticeBoard;
     _enterRoom();
     _connectChat();
   }
@@ -58,7 +74,11 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   void dispose() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    _game.onLocalMove = null;
+    _game
+      ..onLocalMove = null
+      ..onPlayerTap = null
+      ..onNoticeBoardNearby = null
+      ..onInteract = null;
     _room?.leave();
     _chat?.dispose();
     _gameFocus.dispose();
@@ -75,11 +95,13 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     try {
       final profile = await ProfileService.fetchMine();
       if (profile.displayName.isNotEmpty) name = profile.displayName;
+      _myAvatarUrl = profile.avatarUrl;
     } catch (_) {
       // Keep the default name.
     }
     if (!mounted) return;
     _game.playerName = name;
+    setState(() => _myName = name);
 
     final room = RoomService(_roomId);
     _room = room;
@@ -95,13 +117,18 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 
     await room.join(
       name: name,
+      avatarUrl: _myAvatarUrl,
       x: TavernMap.spawnPoint.dx,
       y: TavernMap.spawnPoint.dy,
       onPlayers: (others) {
         _game.syncOtherPlayers([
           for (final p in others) (id: p.id, name: p.name, x: p.x, y: p.y),
         ]);
-        if (mounted) setState(() => _playersInRoom = others.length + 1);
+        if (!mounted) return;
+        setState(() {
+          _others = others;
+          _playersInRoom = others.length + 1;
+        });
       },
       onMove: (move) => _game.moveOtherPlayer(
         move.playerId,
@@ -111,6 +138,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         move.moving,
       ),
       onSomeoneJoined: _game.broadcastPosition,
+      onEmote: _game.otherPlayerEmotes,
       onError: () => _showSnack(AppStrings.roomConnectionError),
     );
   }
@@ -169,6 +197,92 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 
   void _leaveRoom() => Navigator.of(context).pop();
 
+  void _openPlayers() => setState(() {
+    _panel = _Panel.players;
+    _emotesOpen = false;
+  });
+
+  void _openPlayerCard(String playerId, {required bool fromList}) {
+    if (!mounted) return;
+    setState(() {
+      _cardPlayerId = playerId;
+      _cameFromList = fromList;
+      _panel = _Panel.playerCard;
+      _emotesOpen = false;
+    });
+  }
+
+  void _openReport(String playerId, String name) => setState(() {
+    _cardPlayerId = playerId;
+    _reportName = name;
+    _panel = _Panel.report;
+  });
+
+  void _openNoticeBoard() {
+    if (!mounted) return;
+    setState(() {
+      _panel = _Panel.noticeBoard;
+      _emotesOpen = false;
+    });
+  }
+
+  void _closePanel() {
+    setState(() => _panel = _Panel.none);
+    // Give the keyboard back to the game so WASD works again.
+    _gameFocus.requestFocus();
+  }
+
+  void _sendEmote(String emoji) {
+    _game.emote(emoji);
+    _room?.sendEmote(emoji);
+    setState(() => _emotesOpen = false);
+    _gameFocus.requestFocus();
+  }
+
+  /// The name a player is shown with in the room, for the card's title
+  /// while their profile loads.
+  String _nameInRoom(String playerId) =>
+      _others.where((p) => p.id == playerId).map((p) => p.name).firstOrNull ??
+      AppStrings.profilePlayerName;
+
+  Widget? _buildPanel() {
+    final cardId = _cardPlayerId;
+    switch (_panel) {
+      case _Panel.none:
+        return null;
+      case _Panel.players:
+        return PlayersPanel(
+          myName: _myName,
+          myAvatarUrl: _myAvatarUrl,
+          others: _others,
+          onSelect: (id) => _openPlayerCard(id, fromList: true),
+          onClose: _closePanel,
+        );
+      case _Panel.playerCard:
+        if (cardId == null) return null;
+        return PlayerCardPanel(
+          key: ValueKey(cardId),
+          playerId: cardId,
+          fallbackName: _nameInRoom(cardId),
+          onReport: _openReport,
+          onClose: _closePanel,
+          onBack: _cameFromList ? _openPlayers : null,
+        );
+      case _Panel.report:
+        if (cardId == null) return null;
+        return ReportPanel(
+          key: ValueKey('report-$cardId'),
+          playerId: cardId,
+          playerName: _reportName,
+          roomId: _roomId,
+          onClose: _closePanel,
+          onBack: () => _openPlayerCard(cardId, fromList: _cameFromList),
+        );
+      case _Panel.noticeBoard:
+        return NoticeBoardPanel(roomId: _roomId, onClose: _closePanel);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -185,40 +299,86 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   }
 
   Widget _buildRoom() {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: GameWidget(game: _game, focusNode: _gameFocus),
-        ),
-        Positioned(
-          top: 12,
-          left: 12,
-          child: _RoomTitle(onBack: _leaveRoom, playerCount: _playersInRoom),
-        ),
-        Positioned(
-          top: 12,
-          right: 12,
-          child: Row(
-            children: [
-              if (kDebugMode) ...[
-                _HudButton(
-                  label: AppStrings.hitboxesButton,
-                  onPressed: () => setState(_game.toggleHitboxes),
-                  filled: _game.showingHitboxes,
+    final panel = _buildPanel();
+
+    return LayoutBuilder(
+      builder: (context, constraints) => Stack(
+        children: [
+          Positioned.fill(
+            child: GameWidget(game: _game, focusNode: _gameFocus),
+          ),
+          Positioned(
+            top: 12,
+            left: 12,
+            child: _RoomTitle(
+              onBack: _leaveRoom,
+              playerCount: _playersInRoom,
+              onShowPlayers: _openPlayers,
+            ),
+          ),
+          if (_nearNoticeBoard && _panel != _Panel.noticeBoard)
+            Positioned(
+              top: 62,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: _HudButton(
+                  label: AppStrings.readNoticeBoardKey,
+                  icon: Icons.push_pin_outlined,
+                  onPressed: _openNoticeBoard,
+                  filled: true,
                 ),
-                const SizedBox(width: 8),
-              ],
+              ),
+            ),
+          ..._buildHud(constraints, panel),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildHud(BoxConstraints constraints, Widget? panel) {
+    final panelWidth = constraints.maxWidth * 0.45 < 340
+        ? constraints.maxWidth * 0.45
+        : 340.0;
+
+    return [
+      Positioned(
+        top: 12,
+        right: 12,
+        // Stacked, not side by side, so the debug button never covers the
+        // title's player count on narrow phones.
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            _HudButton(
+              label: AppStrings.leaveRoomButton,
+              onPressed: _leaveRoom,
+            ),
+            if (kDebugMode && _panel == _Panel.none) ...[
+              const SizedBox(height: 6),
               _HudButton(
-                label: AppStrings.leaveRoomButton,
-                onPressed: _leaveRoom,
+                label: AppStrings.hitboxesButton,
+                onPressed: () => setState(_game.toggleHitboxes),
+                filled: _game.showingHitboxes,
               ),
             ],
-          ),
+          ],
         ),
+      ),
+      // An open panel takes the right side; chat returns when it closes.
+      if (panel != null)
+        Positioned(
+          top: 58,
+          right: 12,
+          bottom: 12,
+          width: panelWidth,
+          child: panel,
+        )
+      else
         Positioned(
           right: 12,
           bottom: 12,
-          width: 340,
+          width: panelWidth < 340 ? panelWidth + 40 : 340,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -231,30 +391,83 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                 ),
                 const SizedBox(height: 8),
               ],
+              if (_emotesOpen) ...[
+                _EmotePicker(onPick: _sendEmote),
+                const SizedBox(height: 8),
+              ],
               _ChatInput(
                 controller: _messageController,
                 isSending: _isSending,
                 onSend: _sendMessage,
+                emotesOpen: _emotesOpen,
+                onToggleEmotes: () =>
+                    setState(() => _emotesOpen = !_emotesOpen),
               ),
             ],
           ),
         ),
-      ],
+    ];
+  }
+}
+
+enum _Panel { none, players, playerCard, report, noticeBoard }
+
+/// The six reactions, as big tappable buttons above the chat box.
+class _EmotePicker extends StatelessWidget {
+  const _EmotePicker({required this.onPick});
+
+  final void Function(String emoji) onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.parchment,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.ink.withValues(alpha: 0.55)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          for (final emoji in RoomService.emotes)
+            Semantics(
+              button: true,
+              label: emoji,
+              child: InkWell(
+                onTap: () => onPick(emoji),
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Center(
+                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
 
 class _RoomTitle extends StatelessWidget {
-  const _RoomTitle({required this.onBack, required this.playerCount});
+  const _RoomTitle({
+    required this.onBack,
+    required this.playerCount,
+    required this.onShowPlayers,
+  });
 
   final VoidCallback onBack;
   final int playerCount;
+  final VoidCallback onShowPlayers;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       height: 40,
-      padding: const EdgeInsets.only(right: 14),
+      padding: const EdgeInsets.only(right: 4),
       decoration: BoxDecoration(
         color: AppColors.parchment.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(6),
@@ -277,19 +490,50 @@ class _RoomTitle extends StatelessWidget {
               color: AppColors.ink,
             ),
           ),
-          const SizedBox(width: 10),
-          Icon(
-            Icons.people_outline,
-            size: 16,
-            color: AppColors.ink.withValues(alpha: 0.7),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            AppStrings.playerCount(playerCount, RoomService.maxPlayers),
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.ink.withValues(alpha: 0.7),
+          const SizedBox(width: 6),
+          // The live count doubles as the "who's here" button.
+          Tooltip(
+            message: AppStrings.showPlayers,
+            child: InkWell(
+              onTap: onShowPlayers,
+              borderRadius: BorderRadius.circular(5),
+              child: Container(
+                height: 32,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(5),
+                  border: Border.all(
+                    color: AppColors.ink.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.people_outline,
+                      size: 16,
+                      color: AppColors.ink,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      AppStrings.playerCount(
+                        playerCount,
+                        RoomService.maxPlayers,
+                      ),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const Icon(
+                      Icons.expand_more,
+                      size: 16,
+                      color: AppColors.ink,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -303,14 +547,40 @@ class _HudButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.filled = false,
+    this.icon,
   });
 
   final String label;
   final VoidCallback onPressed;
   final bool filled;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
+    final style = GoogleFonts.inter(
+      fontSize: 11,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.6,
+    );
+    final buttonStyle = OutlinedButton.styleFrom(
+      backgroundColor: filled ? AppColors.ink : AppColors.parchment,
+      foregroundColor: filled ? Colors.white : AppColors.ink,
+      side: const BorderSide(color: AppColors.ink),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+    );
+    final iconData = icon;
+    if (iconData != null) {
+      return SizedBox(
+        height: 36,
+        child: OutlinedButton.icon(
+          style: buttonStyle,
+          onPressed: onPressed,
+          icon: Icon(iconData, size: 16),
+          label: Text(label, style: style),
+        ),
+      );
+    }
     return SizedBox(
       height: 34,
       child: OutlinedButton(
@@ -319,9 +589,7 @@ class _HudButton extends StatelessWidget {
           foregroundColor: filled ? Colors.white : AppColors.ink,
           side: const BorderSide(color: AppColors.ink),
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(5),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
         ),
         onPressed: onPressed,
         child: Text(
@@ -386,16 +654,48 @@ class _ChatInput extends StatelessWidget {
     required this.controller,
     required this.isSending,
     required this.onSend,
+    required this.emotesOpen,
+    required this.onToggleEmotes,
   });
 
   final TextEditingController controller;
   final bool isSending;
   final VoidCallback onSend;
+  final bool emotesOpen;
+  final VoidCallback onToggleEmotes;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
+        Semantics(
+          button: true,
+          selected: emotesOpen,
+          label: AppStrings.emotesButton,
+          excludeSemantics: true,
+          child: Tooltip(
+            message: AppStrings.emotesButton,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: emotesOpen
+                      ? AppColors.ink
+                      : AppColors.parchment,
+                  padding: EdgeInsets.zero,
+                  side: const BorderSide(color: AppColors.ink),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                onPressed: onToggleEmotes,
+                child: const Text('😊', style: TextStyle(fontSize: 20)),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
         Expanded(
           child: SizedBox(
             height: 40,

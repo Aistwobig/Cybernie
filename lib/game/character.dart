@@ -1,4 +1,5 @@
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
@@ -28,6 +29,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
   bool moving = false;
   late final TextComponent _nameTag;
   _ChatBubble? _bubble;
+  TextComponent? _emote;
 
   set name(String value) {
     _name = value;
@@ -95,6 +97,32 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
       ..anchor = Anchor.bottomCenter;
     _bubble = bubble;
     add(bubble);
+  }
+
+  /// Pops [emoji] up beside the head, floats it upward, then removes it.
+  void emote(String emoji) {
+    if (!isLoaded) return;
+    _emote?.removeFromParent();
+    final emote = TextComponent(
+      text: emoji,
+      anchor: Anchor.bottomCenter,
+      position: Vector2(size.x * 0.9, 14),
+      scale: Vector2.all(0.2),
+      textRenderer: TextPaint(style: const TextStyle(fontSize: 30)),
+    );
+    emote.addAll([
+      ScaleEffect.to(
+        Vector2.all(1),
+        EffectController(duration: 0.3, curve: Curves.easeOutBack),
+      ),
+      MoveByEffect(
+        Vector2(0, -18),
+        EffectController(duration: 2.2, curve: Curves.easeOutCubic),
+      ),
+      RemoveEffect(delay: 2.4),
+    ]);
+    _emote = emote;
+    add(emote);
   }
 }
 

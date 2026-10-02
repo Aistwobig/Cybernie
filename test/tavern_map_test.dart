@@ -27,6 +27,10 @@ void main() {
     }
   });
 
+  test('players can stand at the notice board', () {
+    expect(TavernMap.isBlocked(feetAt(TavernMap.noticeBoardSpot)), isFalse);
+  });
+
   test('walls and furniture block', () {
     for (final point in const [
       Offset(600, 200), // behind the bar

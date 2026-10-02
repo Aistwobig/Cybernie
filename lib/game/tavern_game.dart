@@ -40,11 +40,23 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
 
   late final Player player;
   late final JoystickComponent _joystick;
-  final _keyboardInput = _KeyboardInput();
+  late final _keyboardInput = _KeyboardInput(onInteract: interact);
   _HitboxOverlay? _hitboxOverlay;
 
   /// Called when our position should be sent to the other players.
   void Function(double x, double y, Facing facing, bool moving)? onLocalMove;
+
+  /// Called when another player is tapped (opens their player card).
+  void Function(String playerId)? onPlayerTap;
+
+  /// Called when the player steps up to or away from the notice board.
+  void Function(bool nearby)? onNoticeBoardNearby;
+
+  /// Called when the player presses E (interact) while at the notice board.
+  void Function()? onInteract;
+
+  bool _nearNoticeBoard = false;
+  bool get nearNoticeBoard => _nearNoticeBoard;
 
   final Map<String, RemotePlayer> _others = {};
   double _sinceLastSend = 0;
@@ -69,6 +81,8 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         continue;
       }
       final other = RemotePlayer(
+        playerId: p.id,
+        onTap: (id) => onPlayerTap?.call(id),
         sheetAsset: characterSheet,
         name: p.name,
         start: Vector2(p.x, p.y),
@@ -87,6 +101,18 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   }
 
   void otherPlayerSays(String id, String text) => _others[id]?.say(text);
+
+  void otherPlayerEmotes(String id, String emoji) => _others[id]?.emote(emoji);
+
+  /// Shows one of our own emotes over our head.
+  void emote(String emoji) {
+    if (isLoaded) player.emote(emoji);
+  }
+
+  /// E key: open the notice board when standing at it.
+  void interact() {
+    if (_nearNoticeBoard) onInteract?.call();
+  }
 
   int get otherPlayerCount => _others.length;
 
@@ -162,6 +188,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     // Cap dt so a dropped frame can't carry the player through a wall.
     player.walk(input, math.min(dt, 1 / 30));
     _maybeSendPosition(dt);
+    _checkNoticeBoard();
     _followPlayer();
   }
 
@@ -174,6 +201,17 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       size.y / _visibleMapHeight,
       size.x / TavernMap.width,
     );
+  }
+
+  void _checkNoticeBoard() {
+    final spot = TavernMap.noticeBoardSpot;
+    final near =
+        player.position.distanceTo(Vector2(spot.dx, spot.dy)) <=
+        TavernMap.noticeBoardReach;
+    if (near != _nearNoticeBoard) {
+      _nearNoticeBoard = near;
+      onNoticeBoardNearby?.call(near);
+    }
   }
 
   /// Centers the camera on the player without showing past the map's edges.
@@ -220,24 +258,49 @@ class _JoystickBase extends CircleComponent {
       ..strokeWidth = 2;
     const inner = 8.0;
     canvas
-      ..drawLine(center.translate(0, -radius + 4), center.translate(0, -radius + 4 + inner), tick)
-      ..drawLine(center.translate(0, radius - 4), center.translate(0, radius - 4 - inner), tick)
-      ..drawLine(center.translate(-radius + 4, 0), center.translate(-radius + 4 + inner, 0), tick)
-      ..drawLine(center.translate(radius - 4, 0), center.translate(radius - 4 - inner, 0), tick);
+      ..drawLine(
+        center.translate(0, -radius + 4),
+        center.translate(0, -radius + 4 + inner),
+        tick,
+      )
+      ..drawLine(
+        center.translate(0, radius - 4),
+        center.translate(0, radius - 4 - inner),
+        tick,
+      )
+      ..drawLine(
+        center.translate(-radius + 4, 0),
+        center.translate(-radius + 4 + inner, 0),
+        tick,
+      )
+      ..drawLine(
+        center.translate(radius - 4, 0),
+        center.translate(radius - 4 - inner, 0),
+        tick,
+      );
   }
 }
 
 /// Turns held WASD / arrow keys into a direction vector.
 class _KeyboardInput extends Component with KeyboardHandler {
+  _KeyboardInput({required this.onInteract});
+
+  final void Function() onInteract;
   final Vector2 direction = Vector2.zero();
 
   static final _left = {LogicalKeyboardKey.keyA, LogicalKeyboardKey.arrowLeft};
-  static final _right = {LogicalKeyboardKey.keyD, LogicalKeyboardKey.arrowRight};
+  static final _right = {
+    LogicalKeyboardKey.keyD,
+    LogicalKeyboardKey.arrowRight,
+  };
   static final _up = {LogicalKeyboardKey.keyW, LogicalKeyboardKey.arrowUp};
   static final _down = {LogicalKeyboardKey.keyS, LogicalKeyboardKey.arrowDown};
 
   @override
   bool onKeyEvent(KeyEvent event, Set<LogicalKeyboardKey> keysPressed) {
+    if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.keyE) {
+      onInteract();
+    }
     bool held(Set<LogicalKeyboardKey> keys) => keys.any(keysPressed.contains);
     direction.setValues(
       (held(_right) ? 1 : 0) - (held(_left) ? 1 : 0).toDouble(),

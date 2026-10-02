@@ -47,8 +47,31 @@ void main() {
       expect(game.otherPlayerCount, 1);
       game.moveOtherPlayer('friend', 700, 600, 3, true);
       game.otherPlayerSays('friend', 'hi!');
-      await tester.pump(const Duration(milliseconds: 16));
+      // Emotes from them and from us pop up and clear without errors.
+      game.otherPlayerEmotes('friend', '👋');
+      game.emote('🎉');
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 300));
+      }
       expect(tester.takeException(), isNull);
+
+      // Walking up to the notice board offers it, and E opens it.
+      final nearby = <bool>[];
+      var interacted = 0;
+      game
+        ..onNoticeBoardNearby = nearby.add
+        ..onInteract = () => interacted++;
+      game.interact();
+      expect(interacted, 0, reason: 'E does nothing away from the board');
+      game.player.position.setValues(
+        TavernMap.noticeBoardSpot.dx,
+        TavernMap.noticeBoardSpot.dy,
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(nearby, [true]);
+      expect(game.nearNoticeBoard, isTrue);
+      game.interact();
+      expect(interacted, 1);
 
       final sent = <double>[];
       game.onLocalMove = (x, y, facing, moving) => sent.add(x);
