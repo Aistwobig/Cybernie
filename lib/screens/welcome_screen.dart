@@ -324,6 +324,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
               height: frameHeight,
               child: _CharacterStage(
                 sheet: characterAt(_characterIndex).sheet,
+                sideSheet: characterAt(_characterIndex).horizontalRunSheet,
                 facing: facing,
                 onPrevious: () => _turn(_facings.length - 1),
                 onNext: () => _turn(1),
@@ -383,6 +384,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
 class _CharacterStage extends StatelessWidget {
   const _CharacterStage({
     required this.sheet,
+    this.sideSheet,
     required this.facing,
     required this.onPrevious,
     required this.onNext,
@@ -390,6 +392,9 @@ class _CharacterStage extends StatelessWidget {
 
   /// The chosen character's walk sheet.
   final String sheet;
+
+  /// Their left/right run sheet, if they have one.
+  final String? sideSheet;
   final SpriteDirection facing;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
@@ -422,8 +427,9 @@ class _CharacterStage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 18, 24, 10),
                     child: SpriteWalkPreview(
-                      key: ValueKey(sheet),
+                      key: ValueKey('$sheet|$sideSheet'),
                       assetPath: sheet,
+                      sideAssetPath: sideSheet,
                       facing: facing,
                     ),
                   ),

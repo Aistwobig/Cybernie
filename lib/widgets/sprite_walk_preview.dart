@@ -20,6 +20,7 @@ class SpriteWalkPreview extends StatefulWidget {
   const SpriteWalkPreview({
     super.key,
     required this.assetPath,
+    this.sideAssetPath,
     this.facing,
     this.animate = true,
     this.columns = 8,
@@ -34,6 +35,11 @@ class SpriteWalkPreview extends StatefulWidget {
   });
 
   final String assetPath;
+
+  /// Optional 8 x 2 sheet used when facing left (row 0) or right (row 1),
+  /// e.g. a character's dedicated side-run cycle. Its frames must be the
+  /// same size as [assetPath]'s.
+  final String? sideAssetPath;
 
   /// When set, the character keeps walking in place facing this way
   /// instead of turning through [directionOrder].
@@ -63,6 +69,7 @@ const Map<SpriteDirection, int> _rowForDirection = {
 
 class _SpriteWalkPreviewState extends State<SpriteWalkPreview> {
   ui.Image? _sheet;
+  ui.Image? _sideSheet;
   Timer? _timer;
 
   int _directionIndex = 0;
@@ -75,12 +82,22 @@ class _SpriteWalkPreviewState extends State<SpriteWalkPreview> {
   }
 
   Future<void> _loadImage() async {
-    final data = await rootBundle.load(widget.assetPath);
-    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-    final frame = await codec.getNextFrame();
+    final sheet = await _decode(widget.assetPath);
+    final side = widget.sideAssetPath == null
+        ? null
+        : await _decode(widget.sideAssetPath!);
     if (!mounted) return;
-    setState(() => _sheet = frame.image);
+    setState(() {
+      _sheet = sheet;
+      _sideSheet = side;
+    });
     _startLoop();
+  }
+
+  static Future<ui.Image> _decode(String asset) async {
+    final data = await rootBundle.load(asset);
+    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+    return (await codec.getNextFrame()).image;
   }
 
   void _startLoop() {
@@ -115,15 +132,20 @@ class _SpriteWalkPreviewState extends State<SpriteWalkPreview> {
 
     final direction =
         widget.facing ?? widget.directionOrder[_directionIndex];
-    final row = _rowForDirection[direction]!;
+    final side = _sideSheet;
+    final useSide =
+        side != null &&
+        (direction == SpriteDirection.west || direction == SpriteDirection.east);
 
     return CustomPaint(
       painter: _SpritePainter(
-        sheet: sheet,
+        sheet: useSide ? side : sheet,
         columns: widget.columns,
-        rows: widget.rows,
+        rows: useSide ? 2 : widget.rows,
         col: _frameIndex,
-        row: row,
+        row: useSide
+            ? (direction == SpriteDirection.west ? 0 : 1)
+            : _rowForDirection[direction]!,
       ),
       size: Size.infinite,
     );
