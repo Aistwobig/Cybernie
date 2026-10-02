@@ -1,7 +1,7 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 /// Plays a directional walk-cycle from a single sprite sheet.
@@ -16,15 +16,10 @@ import 'package:flutter/services.dart';
 /// looping forever. Drawn with a CustomPainter (nearest-neighbor / no
 /// filtering) so pixel art stays crisp instead of getting blurred by
 /// BoxFit scaling.
-///
-/// Driven by a [Ticker], so it pauses automatically while another screen
-/// covers it. With the system's reduce-motion setting on, it stands still
-/// facing south.
 class SpriteWalkPreview extends StatefulWidget {
   const SpriteWalkPreview({
     super.key,
     required this.assetPath,
-    this.semanticLabel,
     this.columns = 8,
     this.rows = 4,
     this.frameDuration = const Duration(milliseconds: 110),
@@ -37,9 +32,6 @@ class SpriteWalkPreview extends StatefulWidget {
   });
 
   final String assetPath;
-
-  /// Read out by screen readers; null hides the sprite from them.
-  final String? semanticLabel;
   final int columns;
   final int rows;
   final Duration frameDuration;
@@ -60,15 +52,12 @@ const Map<SpriteDirection, int> _rowForDirection = {
   SpriteDirection.east: 3,
 };
 
-class _SpriteWalkPreviewState extends State<SpriteWalkPreview>
-    with SingleTickerProviderStateMixin {
+class _SpriteWalkPreviewState extends State<SpriteWalkPreview> {
   ui.Image? _sheet;
-  bool _failed = false;
-  late final Ticker _ticker = createTicker(_onTick);
+  Timer? _timer;
 
   int _directionIndex = 0;
   int _frameIndex = 0;
-  int _stepsShown = 0;
 
   @override
   void initState() {
@@ -76,98 +65,54 @@ class _SpriteWalkPreviewState extends State<SpriteWalkPreview>
     _loadImage();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _syncMotion();
-  }
-
   Future<void> _loadImage() async {
-    try {
-      final data = await rootBundle.load(widget.assetPath);
-      final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-      final frame = await codec.getNextFrame();
-      if (!mounted) return;
-      setState(() => _sheet = frame.image);
-      _syncMotion();
-    } catch (_) {
-      if (mounted) setState(() => _failed = true);
-    }
+    final data = await rootBundle.load(widget.assetPath);
+    final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+    final frame = await codec.getNextFrame();
+    if (!mounted) return;
+    setState(() => _sheet = frame.image);
+    _startLoop();
   }
 
-  bool get _reduceMotion =>
-      MediaQuery.maybeDisableAnimationsOf(context) ?? false;
-
-  /// Walks only when the sheet is ready and motion is allowed.
-  void _syncMotion() {
-    if (_sheet == null) return;
-    if (_reduceMotion) {
-      // Called right before a rebuild (dependency change or just after the
-      // sheet loaded), so plain assignment is enough.
-      _ticker.stop();
-      _frameIndex = 0;
-      _directionIndex = 0;
-    } else if (!_ticker.isActive) {
-      _stepsShown = 0;
-      _ticker.start();
-    }
-  }
-
-  void _onTick(Duration elapsed) {
-    final steps = elapsed.inMicroseconds ~/ widget.frameDuration.inMicroseconds;
-    if (steps == _stepsShown) return;
-    final advance = steps - _stepsShown;
-    _stepsShown = steps;
-    setState(() {
-      for (var i = 0; i < advance; i++) {
+  void _startLoop() {
+    _timer?.cancel();
+    _timer = Timer.periodic(widget.frameDuration, (_) {
+      setState(() {
         _frameIndex++;
         if (_frameIndex >= widget.columns) {
           _frameIndex = 0;
-          _directionIndex =
-              (_directionIndex + 1) % widget.directionOrder.length;
+          _directionIndex = (_directionIndex + 1) % widget.directionOrder.length;
         }
-      }
+      });
     });
   }
 
   @override
   void dispose() {
-    _ticker.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final sheet = _sheet;
-    final Widget content;
-    if (_failed) {
-      content = const Center(
-        child: Icon(Icons.person, size: 72, color: Color(0x551B1712)),
-      );
-    } else {
-      final direction = widget.directionOrder[_directionIndex];
-      content = AnimatedOpacity(
-        opacity: sheet == null ? 0 : 1,
-        duration: const Duration(milliseconds: 280),
-        curve: Curves.easeOutCubic,
-        child: sheet == null
-            ? const SizedBox.expand()
-            : CustomPaint(
-                painter: _SpritePainter(
-                  sheet: sheet,
-                  columns: widget.columns,
-                  rows: widget.rows,
-                  col: _frameIndex,
-                  row: _rowForDirection[direction]!,
-                ),
-                size: Size.infinite,
-              ),
-      );
+    if (sheet == null) {
+      return const SizedBox.shrink();
     }
 
-    final label = widget.semanticLabel;
-    if (label == null) return ExcludeSemantics(child: content);
-    return Semantics(image: true, label: label, child: content);
+    final direction = widget.directionOrder[_directionIndex];
+    final row = _rowForDirection[direction]!;
+
+    return CustomPaint(
+      painter: _SpritePainter(
+        sheet: sheet,
+        columns: widget.columns,
+        rows: widget.rows,
+        col: _frameIndex,
+        row: row,
+      ),
+      size: Size.infinite,
+    );
   }
 }
 
@@ -198,18 +143,15 @@ class _SpritePainter extends CustomPainter {
       cellHeight,
     );
 
-    // BoxFit.contain the cell into the available size, centered. The scale
-    // snaps down to a quarter step: an odd scale like 0.82 makes
-    // nearest-neighbor pixels uneven, so edges shimmer as frames change.
-    final fit = (size.width / cellWidth < size.height / cellHeight)
+    // BoxFit.contain the cell into the available size, centered.
+    final scale = (size.width / cellWidth < size.height / cellHeight)
         ? size.width / cellWidth
         : size.height / cellHeight;
-    final scale = fit >= 0.25 ? (fit * 4).floorToDouble() / 4 : fit;
     final destWidth = cellWidth * scale;
     final destHeight = cellHeight * scale;
     final dstRect = Rect.fromLTWH(
-      ((size.width - destWidth) / 2).roundToDouble(),
-      ((size.height - destHeight) / 2).roundToDouble(),
+      (size.width - destWidth) / 2,
+      (size.height - destHeight) / 2,
       destWidth,
       destHeight,
     );
@@ -220,8 +162,6 @@ class _SpritePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SpritePainter oldDelegate) {
-    return oldDelegate.col != col ||
-        oldDelegate.row != row ||
-        oldDelegate.sheet != sheet;
+    return oldDelegate.col != col || oldDelegate.row != row || oldDelegate.sheet != sheet;
   }
 }

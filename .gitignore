@@ -28,7 +28,3 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/launch.json
-
-# Impeccable design skill: its engine binary is platform-specific and large;
-# reinstall with: npx impeccable install --providers=claude --scope=project
-.claude/skills/impeccable/scripts/bin/

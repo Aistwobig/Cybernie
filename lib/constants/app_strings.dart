@@ -20,23 +20,8 @@ class AppStrings {
 
   // Welcome / character screen
   static String welcomeGreeting(String name) => 'Welcome, $name!';
-  static const String welcomeGreetingNoName = 'Welcome!';
-  static const String moreMenu = 'More';
-  static String playingAs(String character) => 'Playing as $character';
-  static const String changeCharacter = 'Change';
-  static String characterFrameLabel(String character) =>
-      'Your character, $character. Double tap to change.';
-  static const String checkingFriends = "Checking who's around...";
-  static const String findFriendsPrompt = 'Find friends to hang out with';
-  static const String noFriendsOnline = 'No friends online right now';
-  static String friendsOnline(int count) =>
-      count == 1 ? '1 friend online' : '$count friends online';
-  static const String enterTavern = "ENTER BERNIE'S TAVERN";
-  static String tavernInside(int players, int max) => '$players / $max inside';
-  static const String tavernEmpty = 'Be the first one in';
-  static const String tavernFull = 'TAVERN FULL';
-  static const String tavernFullDetail = 'Every seat is taken. Try again soon';
-  static const String browseRooms = 'Browse rooms';
+  static const String characterPreviewLabel = 'CHARACTER PREVIEW';
+  static const String joinRoomButton = 'JOIN ROOM';
   static const String navHome = 'HOME';
   static const String navFriends = 'FRIENDS';
   static const String navProfile = 'PROFILE';
