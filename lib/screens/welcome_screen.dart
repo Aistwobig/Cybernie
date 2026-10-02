@@ -76,20 +76,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   TextStyle get _greetingStyle => GoogleFonts.cinzel(
     fontSize: 24,
     fontWeight: FontWeight.w700,
-    color: AppColors.ink,
+    color: AppColors.text,
   );
 
   TextStyle get _fieldLabelStyle => GoogleFonts.inter(
     fontSize: 11,
     fontWeight: FontWeight.w600,
     letterSpacing: 2.0,
-    color: AppColors.ink.withValues(alpha: 0.5),
+    color: AppColors.text.withValues(alpha: 0.5),
   );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.parchment,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         bottom: false, // Handled manually in our custom bottom nav
         child: Column(
@@ -114,16 +114,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   PopupMenuButton<void>(
                     icon: const Icon(
                       Icons.menu,
-                      color: AppColors.ink,
+                      color: AppColors.text,
                       size: 28,
                     ),
-                    color: AppColors.parchment,
+                    color: AppColors.background,
                     itemBuilder: (context) => [
                       PopupMenuItem(
                         onTap: _signOut,
                         child: Text(
                           AppStrings.signOut,
-                          style: GoogleFonts.inter(color: AppColors.ink),
+                          style: GoogleFonts.inter(color: AppColors.text),
                         ),
                       ),
                     ],
@@ -174,7 +174,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       height: 52,
                       child: FilledButton(
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.ink,
+                          backgroundColor: AppColors.accent,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
                           ),
@@ -186,7 +186,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           style: GoogleFonts.inter(
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1,
-                            color: Colors.white,
+                            color: AppColors.onAccent,
                           ),
                         ),
                       ),
@@ -206,7 +206,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Widget _buildCustomBottomNav() {
-    final dividerColor = AppColors.ink.withValues(alpha: 0.15);
+    final dividerColor = AppColors.text.withValues(alpha: 0.15);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -215,7 +215,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         const _OrnamentalDivider(isTop: false),
 
         Container(
-          color: AppColors.parchment,
+          color: AppColors.background,
           height: 60,
           child: Row(
             children: [
@@ -287,8 +287,8 @@ class _NavTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isActive
-        ? AppColors.ink
-        : AppColors.ink.withValues(alpha: 0.4);
+        ? AppColors.text
+        : AppColors.text.withValues(alpha: 0.4);
 
     return InkWell(
       onTap: onTap,
@@ -326,7 +326,7 @@ class _OrnamentalDivider extends StatelessWidget {
       child: CustomPaint(
         painter: _DividerPainter(
           isTop: isTop,
-          color: AppColors.ink.withValues(alpha: 0.15),
+          color: AppColors.text.withValues(alpha: 0.15),
         ),
       ),
     );

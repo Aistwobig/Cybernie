@@ -15,7 +15,7 @@ class CornerFramedBox extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             border: Border.all(
-              color: AppColors.ink.withValues(alpha: 0.25),
+              color: AppColors.text.withValues(alpha: 0.25),
               width: 1,
             ),
             borderRadius: BorderRadius.circular(10),
@@ -38,7 +38,7 @@ class _CornerBracket extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = AppColors.ink.withValues(alpha: 0.45);
+    final color = AppColors.text.withValues(alpha: 0.45);
     const double size = 8.0;
     const double strokeWidth = 1.5;
 

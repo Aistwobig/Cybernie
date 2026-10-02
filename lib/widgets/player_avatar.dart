@@ -26,12 +26,12 @@ class PlayerAvatar extends StatelessWidget {
     final placeholder = Container(
       width: size,
       height: size,
-      color: AppColors.parchmentDim,
+      color: AppColors.surfaceRaised,
       alignment: Alignment.center,
       child: Icon(
         Icons.person,
         size: radius * 1.25,
-        color: AppColors.ink.withValues(alpha: 0.45),
+        color: AppColors.text.withValues(alpha: 0.45),
       ),
     );
     final url = photoUrl;
@@ -68,8 +68,8 @@ class PlayerAvatar extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: online
                     ? onlineGreen
-                    : AppColors.ink.withValues(alpha: 0.35),
-                border: Border.all(color: AppColors.parchment, width: 2),
+                    : AppColors.text.withValues(alpha: 0.35),
+                border: Border.all(color: AppColors.background, width: 2),
               ),
             ),
           ),

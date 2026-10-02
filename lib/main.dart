@@ -58,16 +58,38 @@ class App extends StatelessWidget {
 
       // Signed-in players skip the splash and login screens.
       initialRoute: AuthService.isSignedIn ? '/welcome' : '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/welcome': (context) => const WelcomeScreen(),
-        '/friends': (context) => const FriendsScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/rooms': (context) => const SelectRoomScreen(),
-        '/rooms/tavern': (context) => const TavernRoomScreen(),
-        '/friends/add': (context) => const AddFriendsScreen(),
-      },
+      onGenerateInitialRoutes: _initialRoutes,
+      routes: _routes,
     );
+  }
+
+  static final Map<String, WidgetBuilder> _routes = {
+    '/': (context) => const SplashScreen(),
+    '/login': (context) => const LoginScreen(),
+    '/welcome': (context) => const WelcomeScreen(),
+    '/friends': (context) => const FriendsScreen(),
+    '/profile': (context) => const ProfileScreen(),
+    '/rooms': (context) => const SelectRoomScreen(),
+    '/rooms/tavern': (context) => const TavernRoomScreen(),
+    '/friends/add': (context) => const AddFriendsScreen(),
+  };
+
+  /// The screens the app opens with (also used when a web page is reloaded
+  /// on, say, #/friends). Flutter's default would put the splash screen
+  /// underneath, so "back" or Home could land on it. Instead:
+  /// signed out -> just the splash; signed in -> Welcome, plus the requested
+  /// screen on top of it.
+  static List<Route<dynamic>> _initialRoutes(String name) {
+    Route<dynamic> page(String route) => MaterialPageRoute(
+      settings: RouteSettings(name: route),
+      builder: _routes[route]!,
+    );
+
+    if (!AuthService.isSignedIn) return [page('/')];
+    const entryScreens = {'/', '/login', '/welcome'};
+    if (entryScreens.contains(name) || !_routes.containsKey(name)) {
+      return [page('/welcome')];
+    }
+    return [page('/welcome'), page(name)];
   }
 }

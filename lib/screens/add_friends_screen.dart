@@ -115,13 +115,13 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
     final now = DateTime.now();
 
     return Scaffold(
-      backgroundColor: AppColors.parchment,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildHeader(),
-            Container(height: 1, color: AppColors.ink.withValues(alpha: 0.18)),
+            Container(height: 1, color: AppColors.text.withValues(alpha: 0.18)),
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -133,7 +133,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
             ),
             Expanded(
               child: RefreshIndicator(
-                color: AppColors.ink,
+                color: AppColors.accent,
                 onRefresh: _loadConnections,
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -175,7 +175,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
             tooltip: 'Back',
             onPressed: () => Navigator.of(context).pop(),
             icon: const Icon(Icons.arrow_back, size: 22),
-            color: AppColors.ink,
+            color: AppColors.text,
           ),
           const SizedBox(width: 2),
           Text(
@@ -183,7 +183,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
             style: GoogleFonts.lora(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: AppColors.ink,
+              color: AppColors.text,
             ),
           ),
         ],
@@ -201,7 +201,7 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
           padding: EdgeInsets.all(24),
           child: Center(
             child: CircularProgressIndicator(
-              color: AppColors.ink,
+              color: AppColors.accent,
               strokeWidth: 2,
             ),
           ),
@@ -297,7 +297,7 @@ class _SectionLabel extends StatelessWidget {
           fontSize: 11,
           fontWeight: FontWeight.w600,
           letterSpacing: 1.2,
-          color: AppColors.ink.withValues(alpha: 0.55),
+          color: AppColors.text.withValues(alpha: 0.55),
         ),
       ),
     );
@@ -330,8 +330,8 @@ class _SmallButton extends StatelessWidget {
       child: filled
           ? FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.ink,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.accent,
+                foregroundColor: AppColors.onAccent,
                 padding: padding,
                 shape: shape,
               ),
@@ -340,8 +340,8 @@ class _SmallButton extends StatelessWidget {
             )
           : OutlinedButton(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.ink,
-                side: const BorderSide(color: AppColors.ink),
+                foregroundColor: AppColors.text,
+                side: const BorderSide(color: AppColors.text),
                 padding: padding,
                 shape: shape,
               ),
@@ -365,7 +365,7 @@ class _StatusText extends StatelessWidget {
         text,
         style: GoogleFonts.inter(
           fontSize: 11,
-          color: AppColors.ink.withValues(alpha: 0.45),
+          color: AppColors.text.withValues(alpha: 0.45),
         ),
       ),
     );
@@ -386,7 +386,7 @@ class _Hint extends StatelessWidget {
         textAlign: TextAlign.center,
         style: GoogleFonts.inter(
           fontSize: 13,
-          color: AppColors.ink.withValues(alpha: 0.5),
+          color: AppColors.text.withValues(alpha: 0.5),
         ),
       ),
     );
@@ -402,15 +402,15 @@ class _SafetyNote extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 12),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: AppColors.ink.withValues(alpha: 0.05),
+        color: AppColors.text.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.ink.withValues(alpha: 0.15)),
+        border: Border.all(color: AppColors.text.withValues(alpha: 0.15)),
       ),
       child: Text(
         AppStrings.friendSafetyNote,
         style: GoogleFonts.inter(
           fontSize: 10.5,
-          color: AppColors.ink.withValues(alpha: 0.6),
+          color: AppColors.text.withValues(alpha: 0.6),
           height: 1.4,
         ),
       ),

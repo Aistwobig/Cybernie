@@ -7,6 +7,7 @@ import '../models/profile.dart';
 import '../services/auth_service.dart';
 import '../services/friends_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_nav.dart';
 import '../utils/last_seen.dart';
 import '../widgets/player_avatar.dart';
 
@@ -100,7 +101,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Future<void> _showFriend(Profile friend) async {
     final removed = await showModalBottomSheet<bool>(
       context: context,
-      backgroundColor: AppColors.parchment,
+      backgroundColor: AppColors.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
@@ -111,12 +112,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   Future<void> _onNavTap(int index) async {
     if (index == 0) {
-      final navigator = Navigator.of(context);
-      if (navigator.canPop()) {
-        navigator.pop();
-      } else {
-        navigator.pushReplacementNamed('/welcome');
-      }
+      AppNav.goHome(context);
       return;
     }
 
@@ -124,7 +120,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
     setState(() => _navIndex = index);
 
     if (index == 2) {
-      await Navigator.of(context).pushNamed('/profile');
+      // Replaces this tab with Profile (Welcome stays underneath).
+      await AppNav.goToTab(context, '/profile');
       if (mounted) setState(() => _navIndex = 1);
     }
   }
@@ -144,13 +141,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
   TextStyle get _titleStyle => GoogleFonts.cinzel(
     fontSize: 22,
     fontWeight: FontWeight.w700,
-    color: AppColors.ink,
+    color: AppColors.text,
   );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.parchment,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -173,7 +170,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Container(height: 1, color: AppColors.ink.withValues(alpha: 0.18)),
+            Container(height: 1, color: AppColors.text.withValues(alpha: 0.18)),
             const SizedBox(height: 10),
 
             Padding(
@@ -198,7 +195,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget _buildList() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.ink, strokeWidth: 2),
+        child: CircularProgressIndicator(color: AppColors.text, strokeWidth: 2),
       );
     }
     if (_loadFailed && _friends.isEmpty) {
@@ -226,7 +223,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
     final now = DateTime.now();
     return RefreshIndicator(
-      color: AppColors.ink,
+      color: AppColors.accent,
       onRefresh: _loadFriends,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -242,7 +239,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             trailing: Icon(
               Icons.chevron_right,
               size: 20,
-              color: AppColors.ink.withValues(alpha: 0.35),
+              color: AppColors.text.withValues(alpha: 0.35),
             ),
           );
         },
@@ -251,12 +248,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Widget _buildCustomBottomNav() {
-    final dividerColor = AppColors.ink.withValues(alpha: 0.15);
+    final dividerColor = AppColors.text.withValues(alpha: 0.15);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(height: 1, color: AppColors.ink.withValues(alpha: 0.2)),
+        Container(height: 1, color: AppColors.text.withValues(alpha: 0.2)),
         SizedBox(
           height: 2,
           child: Row(
@@ -264,7 +261,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               return Expanded(
                 child: ColoredBox(
                   color: index == _navIndex
-                      ? AppColors.ink.withValues(alpha: 0.55)
+                      ? AppColors.text.withValues(alpha: 0.55)
                       : Colors.transparent,
                 ),
               );
@@ -272,7 +269,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
         ),
         Container(
-          color: AppColors.parchment,
+          color: AppColors.background,
           height: 58,
           child: Row(
             children: [
@@ -330,14 +327,14 @@ class SearchField extends StatelessWidget {
     return Container(
       height: 40,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.ink.withValues(alpha: 0.65)),
+        border: Border.all(color: AppColors.border),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink),
+        style: GoogleFonts.inter(fontSize: 14, color: AppColors.text),
         decoration: InputDecoration(
           isDense: true,
           border: InputBorder.none,
@@ -347,12 +344,12 @@ class SearchField extends StatelessWidget {
           hintText: hintText,
           hintStyle: GoogleFonts.inter(
             fontSize: 14,
-            color: AppColors.ink.withValues(alpha: 0.35),
+            color: AppColors.text.withValues(alpha: 0.35),
           ),
           prefixIcon: Icon(
             Icons.search,
             size: 19,
-            color: AppColors.ink.withValues(alpha: 0.65),
+            color: AppColors.text.withValues(alpha: 0.65),
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
         ),
@@ -387,7 +384,7 @@ class PlayerRow extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: AppColors.ink.withValues(alpha: 0.1),
+              color: AppColors.text.withValues(alpha: 0.1),
               width: 1,
             ),
           ),
@@ -414,7 +411,7 @@ class PlayerRow extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
+                      color: AppColors.text,
                     ),
                   ),
                   const SizedBox(height: 1),
@@ -426,8 +423,8 @@ class PlayerRow extends StatelessWidget {
                       fontSize: 11.5,
                       fontWeight: isOnline ? FontWeight.w600 : FontWeight.w400,
                       color: isOnline
-                          ? const Color(0xFF1E9E5A)
-                          : AppColors.ink.withValues(alpha: 0.55),
+                          ? AppColors.online
+                          : AppColors.text.withValues(alpha: 0.55),
                     ),
                   ),
                 ],
@@ -465,9 +462,9 @@ class _AddFriendButton extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: AppColors.ink.withValues(alpha: 0.55)),
+                border: Border.all(color: AppColors.text.withValues(alpha: 0.55)),
               ),
-              child: const Icon(Icons.add, size: 18, color: AppColors.ink),
+              child: const Icon(Icons.add, size: 18, color: AppColors.text),
             ),
             if (badgeCount > 0)
               Positioned(
@@ -479,7 +476,7 @@ class _AddFriendButton extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFC62828),
+                    color: AppColors.danger,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -555,7 +552,7 @@ class _FriendSheetState extends State<_FriendSheet> {
               style: GoogleFonts.lora(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppColors.ink,
+                color: AppColors.text,
               ),
             ),
             if (friend.username.isNotEmpty)
@@ -563,7 +560,7 @@ class _FriendSheetState extends State<_FriendSheet> {
                 '@${friend.username}',
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: AppColors.ink.withValues(alpha: 0.55),
+                  color: AppColors.text.withValues(alpha: 0.55),
                 ),
               ),
             const SizedBox(height: 4),
@@ -573,8 +570,8 @@ class _FriendSheetState extends State<_FriendSheet> {
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: online
-                    ? const Color(0xFF1E9E5A)
-                    : AppColors.ink.withValues(alpha: 0.6),
+                    ? AppColors.online
+                    : AppColors.text.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 20),
@@ -583,8 +580,8 @@ class _FriendSheetState extends State<_FriendSheet> {
               height: 42,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFC62828),
-                  side: const BorderSide(color: Color(0xFFC62828)),
+                  foregroundColor: AppColors.danger,
+                  side: const BorderSide(color: AppColors.danger),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -628,7 +625,7 @@ class _Message extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: AppColors.ink.withValues(alpha: 0.55),
+                color: AppColors.text.withValues(alpha: 0.55),
                 height: 1.4,
               ),
             ),
@@ -636,8 +633,8 @@ class _Message extends StatelessWidget {
               const SizedBox(height: 12),
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.ink,
-                  side: const BorderSide(color: AppColors.ink),
+                  foregroundColor: AppColors.text,
+                  side: const BorderSide(color: AppColors.text),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -677,8 +674,8 @@ class _NavTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isActive
-        ? AppColors.ink
-        : AppColors.ink.withValues(alpha: 0.4);
+        ? AppColors.text
+        : AppColors.text.withValues(alpha: 0.4);
 
     return InkWell(
       onTap: onTap,

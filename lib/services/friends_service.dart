@@ -33,18 +33,38 @@ class FriendsService {
 
   static String get myId => _client.auth.currentUser!.id;
 
-  static const String _profileColumns =
-      'id, username, display_name, avatar_url, last_seen_at';
+  static const String _baseColumns = 'id, username, display_name, avatar_url';
+
+  /// last_seen_at comes from supabase/migrations/20261001000000_*.sql. If
+  /// that hasn't been run yet, friends and search still work, just without
+  /// online status.
+  static bool _hasLastSeen = true;
+
+  static String get _profileColumns =>
+      _hasLastSeen ? '$_baseColumns, last_seen_at' : _baseColumns;
+
+  static Future<T> _withLastSeenFallback<T>(Future<T> Function() query) async {
+    try {
+      return await query();
+    } on PostgrestException catch (error) {
+      // 42703 = undefined column.
+      if (!_hasLastSeen || error.code != '42703') rethrow;
+      _hasLastSeen = false;
+      return query();
+    }
+  }
 
   /// Everyone we're connected to: friends plus pending requests both ways.
   static Future<List<FriendEntry>> fetchAll() async {
-    final rows = await _client
-        .from('friendships')
-        .select(
-          'requester_id, addressee_id, status, '
-          'requester:profiles!friendships_requester_id_fkey($_profileColumns), '
-          'addressee:profiles!friendships_addressee_id_fkey($_profileColumns)',
-        );
+    final rows = await _withLastSeenFallback(
+      () => _client
+          .from('friendships')
+          .select(
+            'requester_id, addressee_id, status, '
+            'requester:profiles!friendships_requester_id_fkey($_profileColumns), '
+            'addressee:profiles!friendships_addressee_id_fkey($_profileColumns)',
+          ),
+    );
 
     final me = myId;
     return [
@@ -74,13 +94,15 @@ class FriendsService {
     final term = query.replaceAll(RegExp(r'[^\w\s.-]'), '').trim();
     if (term.isEmpty) return [];
 
-    final rows = await _client
-        .from('profiles')
-        .select(_profileColumns)
-        .or('display_name.ilike.%$term%,username.ilike.%$term%')
-        .neq('id', myId)
-        .order('display_name')
-        .limit(20);
+    final rows = await _withLastSeenFallback(
+      () => _client
+          .from('profiles')
+          .select(_profileColumns)
+          .or('display_name.ilike.%$term%,username.ilike.%$term%')
+          .neq('id', myId)
+          .order('display_name')
+          .limit(20),
+    );
     return [for (final row in rows) Profile.fromMap(row)];
   }
 
