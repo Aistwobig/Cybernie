@@ -473,10 +473,11 @@ class _CharacterTile extends StatelessWidget {
                   child: Column(
                     children: [
                       Expanded(
-                        // The portrait files are 8x4 walk sheets: show the
+                        // The portrait files are walk sheets: show the
                         // front-facing standing frame.
                         child: SpriteWalkPreview(
                           assetPath: character.sheet,
+                          columns: character.frames,
                           facing: SpriteDirection.south,
                           animate: false,
                         ),

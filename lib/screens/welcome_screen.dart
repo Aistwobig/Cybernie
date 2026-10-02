@@ -325,6 +325,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
               child: _CharacterStage(
                 sheet: characterAt(_characterIndex).sheet,
                 sideSheet: characterAt(_characterIndex).horizontalRunSheet,
+                frames: characterAt(_characterIndex).frames,
                 facing: facing,
                 onPrevious: () => _turn(_facings.length - 1),
                 onNext: () => _turn(1),
@@ -385,6 +386,7 @@ class _CharacterStage extends StatelessWidget {
   const _CharacterStage({
     required this.sheet,
     this.sideSheet,
+    this.frames = 8,
     required this.facing,
     required this.onPrevious,
     required this.onNext,
@@ -395,6 +397,9 @@ class _CharacterStage extends StatelessWidget {
 
   /// Their left/right run sheet, if they have one.
   final String? sideSheet;
+
+  /// Frames per row in [sheet].
+  final int frames;
   final SpriteDirection facing;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
@@ -431,6 +436,11 @@ class _CharacterStage extends StatelessWidget {
                       assetPath: sheet,
                       sideAssetPath: sideSheet,
                       facing: facing,
+                      columns: frames,
+                      // Same cycle length whatever the frame count.
+                      frameDuration: Duration(
+                        microseconds: 110000 * 8 ~/ frames,
+                      ),
                     ),
                   ),
                 ],

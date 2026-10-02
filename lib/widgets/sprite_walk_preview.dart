@@ -36,9 +36,9 @@ class SpriteWalkPreview extends StatefulWidget {
 
   final String assetPath;
 
-  /// Optional 8 x 2 sheet used when facing left (row 0) or right (row 1),
-  /// e.g. a character's dedicated side-run cycle. Its frames must be the
-  /// same size as [assetPath]'s.
+  /// Optional sheet used when facing left (row 0) or right (row 1), e.g. a
+  /// character's dedicated side-run cycle, with [columns] frames per row.
+  /// Its frames must be the same size as [assetPath]'s.
   final String? sideAssetPath;
 
   /// When set, the character keeps walking in place facing this way

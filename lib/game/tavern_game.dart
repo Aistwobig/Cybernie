@@ -38,6 +38,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         _character.feetFraction,
         idleSheetAsset: _character.idleSheet,
         horizontalRunSheetAsset: _character.horizontalRunSheet,
+        frames: _character.frames,
       );
     }
   }
@@ -101,6 +102,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
           look.feetFraction,
           idleSheetAsset: look.idleSheet,
           horizontalRunSheetAsset: look.horizontalRunSheet,
+          frames: look.frames,
         );
         continue;
       }
@@ -111,6 +113,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         feetFraction: look.feetFraction,
         idleSheetAsset: look.idleSheet,
         horizontalRunSheetAsset: look.horizontalRunSheet,
+        frames: look.frames,
         name: p.name,
         start: Vector2(p.x, p.y),
       );
@@ -191,6 +194,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       name: _playerName,
       idleSheetAsset: _character.idleSheet,
       horizontalRunSheetAsset: _character.horizontalRunSheet,
+      frames: _character.frames,
     )..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy);
 
     world.addAll([map, player, _keyboardInput]);

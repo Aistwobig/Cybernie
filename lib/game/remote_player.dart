@@ -14,6 +14,7 @@ class RemotePlayer extends Character with TapCallbacks {
     super.idleSheetAsset,
     super.horizontalRunSheetAsset,
     super.feetFraction,
+    super.frames,
     required Vector2 start,
     this.onTap,
   }) : _target = start.clone() {

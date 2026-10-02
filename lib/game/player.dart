@@ -17,6 +17,7 @@ class Player extends Character {
     super.idleSheetAsset,
     super.horizontalRunSheetAsset,
     super.feetFraction,
+    super.frames,
   });
 
   static const double speed = 170; // map pixels per second

@@ -12,6 +12,7 @@ class GameCharacter {
     this.idleSheet,
     this.horizontalRunSheet,
     this.feetFraction = 0.963,
+    this.frames = 8,
   });
 
   final String name;
@@ -28,6 +29,10 @@ class GameCharacter {
   /// Where the feet sit inside a cell, as a fraction of the cell's height.
   /// Characters stand on this point in the tavern.
   final double feetFraction;
+
+  /// Frames per row in the walk and idle sheets (the columns). More frames
+  /// play faster, so a cycle takes the same time whatever the count.
+  final int frames;
 }
 
 /// The choosable characters, in the order `profiles.character_index` uses.
@@ -63,12 +68,14 @@ const List<GameCharacter> gameCharacters = [
     idleSheet: AppImages.boyIdleSheet,
   ),
   // His sheets bake in the bounce: stretched frames are drawn in the air
-  // above a shadow on the ground.
+  // above a shadow on the ground. 16 frames: every drawn pose is followed
+  // by an in-between for a smoother hop.
   GameCharacter(
     name: AppStrings.characterSlime,
     sheet: AppImages.slimeSheet,
     idleSheet: AppImages.slimeIdleSheet,
     feetFraction: 246 / 256,
+    frames: 16,
   ),
 ];
 

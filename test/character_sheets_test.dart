@@ -18,12 +18,13 @@ void main() {
   for (final character in gameCharacters) {
     test('${character.name}: idle and run frames match the walk frames', () {
       final (walkW, walkH) = pngSize(character.sheet);
-      final walkCell = (walkW / 8, walkH / 4);
+      final frames = character.frames;
+      final walkCell = (walkW / frames, walkH / 4);
 
       final idle = character.idleSheet;
       if (idle != null) {
         final (w, h) = pngSize(idle);
-        expect((w / 8, h / 4), walkCell, reason: '$idle (8 x 4)');
+        expect((w / frames, h / 4), walkCell, reason: '$idle ($frames x 4)');
       }
 
       final run = character.horizontalRunSheet;

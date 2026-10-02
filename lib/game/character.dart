@@ -19,10 +19,12 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     String? idleSheetAsset,
     String? horizontalRunSheetAsset,
     double feetFraction = 0.963,
+    int frames = 8,
   }) : _sheetAsset = sheetAsset,
        _idleSheetAsset = idleSheetAsset,
        _horizontalRunSheetAsset = horizontalRunSheetAsset,
        _feetFraction = feetFraction,
+       _frames = frames,
        _name = name,
        super(anchor: Anchor(0.5, feetFraction));
 
@@ -30,6 +32,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
   String? _idleSheetAsset;
   String? _horizontalRunSheetAsset;
   double _feetFraction;
+  int _frames;
   String _name;
 
   String get sheetAsset => _sheetAsset;
@@ -76,32 +79,38 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     double feetFraction, {
     String? idleSheetAsset,
     String? horizontalRunSheetAsset,
+    int frames = 8,
   }) async {
     if (asset == _sheetAsset &&
         feetFraction == _feetFraction &&
         idleSheetAsset == _idleSheetAsset &&
-        horizontalRunSheetAsset == _horizontalRunSheetAsset) {
+        horizontalRunSheetAsset == _horizontalRunSheetAsset &&
+        frames == _frames) {
       return;
     }
     _sheetAsset = asset;
     _idleSheetAsset = idleSheetAsset;
     _horizontalRunSheetAsset = horizontalRunSheetAsset;
     _feetFraction = feetFraction;
+    _frames = frames;
     if (!isLoaded) return; // onLoad will pick up the new sheet.
     await _loadSheet();
     _nameTag.position = Vector2(size.x / 2, 2);
   }
 
-  /// Builds animations from the 8 x 4 walk sheet, plus an optional 8 x 4
-  /// idle sheet and an optional 8 x 2 left/right run sheet.
+  /// Builds animations from the walk sheet ([_frames] columns x 4 rows),
+  /// plus an optional idle sheet of the same layout and an optional 8 x 2
+  /// left/right run sheet.
   ///
   /// The idle and run sheets must use the same cell size and feet line as
   /// the walk sheet (assets/sheets has the tool notes), so switching between
   /// walking, running and standing never makes the character jump or resize.
   Future<void> _loadSheet() async {
     final image = await game.images.load(_sheetAsset);
-    final cell = Vector2(image.width / 8, image.height / 4);
+    final cell = Vector2(image.width / _frames, image.height / 4);
     final walkSheet = SpriteSheet(image: image, srcSize: cell);
+    // A whole cycle lasts as long as 8 frames would, however many there are.
+    final perFrame = 8 / _frames;
 
     final idleImage = _idleSheetAsset == null
         ? null
@@ -110,7 +119,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
         ? null
         : SpriteSheet(
             image: idleImage,
-            srcSize: Vector2(idleImage.width / 8, idleImage.height / 4),
+            srcSize: Vector2(idleImage.width / _frames, idleImage.height / 4),
           );
     final runImage = _horizontalRunSheetAsset == null
         ? null
@@ -126,12 +135,15 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     for (final facing in Facing.values) {
       builtAnimations[(facing, true)] = walkSheet.createAnimation(
         row: facing.index,
-        stepTime: 0.09,
+        stepTime: 0.09 * perFrame,
       );
       // Standing still: the idle cycle if there is one, otherwise the first
       // walk frame held still (not the whole walk played slowly).
       builtAnimations[(facing, false)] = idleSheet != null
-          ? idleSheet.createAnimation(row: facing.index, stepTime: 0.2)
+          ? idleSheet.createAnimation(
+              row: facing.index,
+              stepTime: 0.2 * perFrame,
+            )
           : walkSheet.createAnimation(row: facing.index, stepTime: 1, to: 1);
     }
     if (runSheet != null) {
