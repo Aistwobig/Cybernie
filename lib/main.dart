@@ -61,8 +61,20 @@ class App extends StatelessWidget {
       initialRoute: AuthService.isSignedIn ? '/welcome' : '/',
       onGenerateInitialRoutes: _initialRoutes,
       navigatorObservers: [AppNav.routeObserver],
-      routes: _routes,
+      onGenerateRoute: _page,
     );
+  }
+
+  /// Bottom-nav tabs cross-fade (see AppNav.tabRoute); other screens use
+  /// the normal page transition.
+  static const Set<String> _tabs = {'/friends', '/profile'};
+
+  static Route<dynamic>? _page(RouteSettings settings) {
+    final builder = _routes[settings.name];
+    if (builder == null) return null;
+    return _tabs.contains(settings.name)
+        ? AppNav.tabRoute(settings, builder)
+        : MaterialPageRoute<void>(settings: settings, builder: builder);
   }
 
   static final Map<String, WidgetBuilder> _routes = {
@@ -82,10 +94,7 @@ class App extends StatelessWidget {
   /// signed out -> just the splash; signed in -> Welcome, plus the requested
   /// screen on top of it.
   static List<Route<dynamic>> _initialRoutes(String name) {
-    Route<dynamic> page(String route) => MaterialPageRoute(
-      settings: RouteSettings(name: route),
-      builder: _routes[route]!,
-    );
+    Route<dynamic> page(String route) => _page(RouteSettings(name: route))!;
 
     if (!AuthService.isSignedIn) return [page('/')];
     const entryScreens = {'/', '/login', '/welcome'};
