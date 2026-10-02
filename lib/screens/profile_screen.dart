@@ -1,8 +1,6 @@
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,7 +11,9 @@ import '../services/auth_service.dart';
 import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_nav.dart';
+import '../widgets/fantasy_ui.dart';
 import '../widgets/player_avatar.dart';
+import '../widgets/sprite_walk_preview.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -48,6 +48,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   int _selectedCharacter = 1;
   String _playerName = AppStrings.profilePlayerName;
+  int _level = 1;
+  double _levelProgress = 0;
+  bool _saving = false;
+
   /// A photo picked on this screen (shown immediately, before any upload).
   Uint8List? _profilePhotoBytes;
 
@@ -60,7 +64,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const String _photoKey = 'profile_photo';
   static const String _nameKey = 'profile_name';
   static const String _characterKey = 'profile_character';
-
 
   @override
   void initState() {
@@ -81,6 +84,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _playerName = profile.displayName;
           }
           _profilePhotoUrl = profile.avatarUrl;
+          _level = profile.level;
+          _levelProgress = profile.levelProgress;
           if (profile.characterIndex < _characters.length) {
             _selectedCharacter = profile.characterIndex;
           }
@@ -109,7 +114,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
+    if (_saving) return;
     if (AuthService.isSignedIn) {
+      setState(() => _saving = true);
       try {
         await ProfileService.updateMine(
           displayName: _playerName,
@@ -118,6 +125,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } catch (_) {
         _showSnack(AppStrings.profileSaveError);
         return;
+      } finally {
+        if (mounted) setState(() => _saving = false);
       }
     } else {
       final prefs = await SharedPreferences.getInstance();
@@ -138,9 +147,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildAvatarImage() {
     final bytes = _profilePhotoBytes;
     if (bytes != null) {
-      return Image.memory(bytes, width: 60, height: 60, fit: BoxFit.cover);
+      return Image.memory(bytes, width: 76, height: 76, fit: BoxFit.cover);
     }
-    return PlayerAvatar(photoUrl: _profilePhotoUrl, radius: 30);
+    return PlayerAvatar(photoUrl: _profilePhotoUrl, radius: 38);
   }
 
   void _showSnack(String text) {
@@ -222,48 +231,63 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _returnToWelcome() => AppNav.goHome(context);
-
-  void _openFriends() => AppNav.goToTab(context, '/friends');
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.parchment,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(),
-            _buildRule(),
-            _buildPlayerSummary(),
-            _buildRule(),
-            Expanded(child: _buildCharacterPicker()),
-            _buildBottomNavigation(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return SizedBox(
-      height: 48,
-      child: Row(
+      body: Stack(
         children: [
-          IconButton(
-            tooltip: 'Back',
-            onPressed: () => AppNav.back(context),
-            icon: const Icon(Icons.arrow_back, size: 21),
-            color: AppColors.ink,
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CastleBackdrop(height: 200),
           ),
-          Text(
-            AppStrings.profileTitle,
-            style: GoogleFonts.cinzel(
-              fontSize: 19,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink,
+          SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FantasyTitleBar(
+                  title: AppStrings.profileTitle,
+                  leading: FramedIconButton(
+                    icon: Icons.arrow_back,
+                    tooltip: AppStrings.backButton,
+                    onPressed: () => AppNav.back(context),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.card.withValues(alpha: 0.9),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
+                      children: [
+                        _buildPlayerCard(),
+                        const SizedBox(height: 12),
+                        const StarBanner(
+                          title: AppStrings.chooseCharacter,
+                          subtitle: AppStrings.chooseCharacterSubtitle,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildCharacterGrid(),
+                        const SizedBox(height: 18),
+                        FantasyButton(
+                          label: AppStrings.saveButton,
+                          busy: _saving,
+                          onPressed: _saveProfile,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const FantasyBottomNav(currentIndex: 2),
+              ],
             ),
           ),
         ],
@@ -271,62 +295,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildRule() =>
-      Container(height: 1, color: AppColors.ink.withValues(alpha: 0.18));
-
-  Widget _buildPlayerSummary() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+  /// Photo (tap to import), name with an edit button, level and its bar.
+  Widget _buildPlayerCard() {
+    return FantasyCard(
+      padding: const EdgeInsets.fromLTRB(18, 18, 14, 18),
       child: Row(
         children: [
-          Tooltip(
-            message: AppStrings.editProfilePicture,
-            child: InkWell(
-              onTap: _pickProfilePhoto,
-              customBorder: const CircleBorder(),
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: AppColors.parchmentSoft,
-                    child: ClipOval(
-                      child: _buildAvatarImage(),
-                    ),
-                  ),
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Container(
-                      width: 21,
-                      height: 21,
-                      decoration: BoxDecoration(
-                        color: AppColors.ink,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.parchment,
-                          width: 2,
+          Semantics(
+            button: true,
+            label: AppStrings.editProfilePicture,
+            excludeSemantics: true,
+            child: Tooltip(
+              message: AppStrings.editProfilePicture,
+              child: InkWell(
+                onTap: _pickProfilePhoto,
+                customBorder: const CircleBorder(),
+                child: SizedBox.square(
+                  dimension: 92,
+                  child: Stack(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.card,
+                          border: Border.all(
+                            color: AppColors.frameBrown,
+                            width: 2.5,
+                          ),
+                        ),
+                        child: ClipOval(
+                          child: SizedBox.square(
+                            dimension: 76,
+                            child: _buildAvatarImage(),
+                          ),
                         ),
                       ),
-                      child: _isPickingProfilePhoto
-                          ? const Padding(
-                              padding: EdgeInsets.all(4),
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.5,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Icon(
-                              Icons.edit,
-                              color: Colors.white,
-                              size: 11,
-                            ),
-                    ),
+                      Positioned(
+                        right: 0,
+                        bottom: 2,
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: AppColors.ink,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppColors.card, width: 2),
+                          ),
+                          child: _isPickingProfilePhoto
+                              ? const Padding(
+                                  padding: EdgeInsets.all(7),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 1.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.edit,
+                                  color: Colors.white,
+                                  size: 15,
+                                ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -338,43 +375,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         _playerName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.ink,
-                        ),
+                        style: FantasyText.name(size: 22),
                       ),
                     ),
-                    IconButton(
+                    FramedIconButton(
+                      icon: Icons.edit,
                       tooltip: AppStrings.editPlayerName,
+                      size: 40,
                       onPressed: _editPlayerName,
-                      visualDensity: VisualDensity.compact,
-                      constraints: const BoxConstraints.tightFor(
-                        width: 32,
-                        height: 32,
-                      ),
-                      padding: EdgeInsets.zero,
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      color: AppColors.ink,
                     ),
                   ],
                 ),
                 Text(
-                  AppStrings.profileLevel,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: AppColors.ink.withValues(alpha: 0.58),
-                  ),
+                  AppStrings.levelLabel(_level),
+                  style: FantasyText.mono(size: 14, color: AppColors.inkMuted),
                 ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: 0.5,
-                    minHeight: 8,
-                    backgroundColor: AppColors.parchmentDim,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.ink,
+                const SizedBox(height: 12),
+                Semantics(
+                  label: AppStrings.levelProgress(_level, _levelProgress),
+                  child: Container(
+                    height: 14,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.parchmentDim,
+                      borderRadius: BorderRadius.circular(7),
+                      border: Border.all(
+                        color: AppColors.ink.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: _levelProgress.clamp(0.0, 1.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.ink,
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -386,125 +423,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildCharacterPicker() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 10, 24, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            AppStrings.chooseCharacter,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: AppColors.ink.withValues(alpha: 0.82),
-            ),
-          ),
-          const SizedBox(height: 8),
-          GridView.count(
-            crossAxisCount: 3,
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 8,
-            mainAxisExtent: 72,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              for (var index = 0; index < _characters.length; index++)
-                _CharacterTile(
-                  character: _characters[index],
-                  isSelected: index == _selectedCharacter,
-                  onTap: () => setState(() => _selectedCharacter = index),
-                ),
-              _MoreCharactersTile(
-                onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(AppStrings.moreCharactersComingSoon),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const Spacer(),
-          SizedBox(
-            height: 36,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.ink,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(5),
-                ),
-              ),
-              onPressed: _saveProfile,
-              child: Text(
-                AppStrings.saveButton,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigation() {
-    final dividerColor = AppColors.ink.withValues(alpha: 0.15);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+  Widget _buildCharacterGrid() {
+    return GridView.count(
+      crossAxisCount: 3,
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 0.9,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       children: [
-        _buildRule(),
-        SizedBox(
-          height: 2,
-          child: Row(
-            children: List.generate(
-              3,
-              (index) => Expanded(
-                child: ColoredBox(
-                  color: index == 2
-                      ? AppColors.ink.withValues(alpha: 0.55)
-                      : Colors.transparent,
-                ),
-              ),
-            ),
+        for (var index = 0; index < _characters.length; index++)
+          _CharacterTile(
+            character: _characters[index],
+            isSelected: index == _selectedCharacter,
+            onTap: () => setState(() => _selectedCharacter = index),
+          ),
+        _MoreCharactersTile(
+          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text(AppStrings.moreCharactersComingSoon)),
           ),
         ),
-        SizedBox(
-          height: 58,
-          child: Row(
-            children: [
-              Expanded(
-                child: _ProfileNavTab(
-                  icon: Icons.home_outlined,
-                  label: AppStrings.navHome,
-                  onTap: _returnToWelcome,
-                ),
-              ),
-              Container(width: 1, height: 42, color: dividerColor),
-              Expanded(
-                child: _ProfileNavTab(
-                  icon: Icons.people_outline,
-                  label: AppStrings.navFriends,
-                  onTap: _openFriends,
-                ),
-              ),
-              Container(width: 1, height: 42, color: dividerColor),
-              Expanded(
-                child: _ProfileNavTab(
-                  icon: Icons.person,
-                  label: AppStrings.navProfile,
-                  isActive: true,
-                  onTap: () {},
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: MediaQuery.of(context).padding.bottom),
       ],
     );
   }
@@ -517,6 +455,7 @@ class _ProfileCharacter {
   final String imagePath;
 }
 
+/// A character in its ornate frame with sparkles; the chosen one is dark.
 class _CharacterTile extends StatelessWidget {
   const _CharacterTile({
     required this.character,
@@ -530,53 +469,81 @@ class _CharacterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = isSelected ? Colors.white : AppColors.ink;
-
-    return Material(
-      color: isSelected ? AppColors.ink : AppColors.parchment,
-      borderRadius: BorderRadius.circular(6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Container(
-          decoration: BoxDecoration(
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: character.name,
+      excludeSemantics: true,
+      child: FantasyCard(
+        fill: isSelected ? const Color(0xFF241A13) : AppColors.card,
+        padding: EdgeInsets.zero,
+        cornerSize: 18,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: isSelected
-                  ? AppColors.ink.withValues(alpha: 0.8)
-                  : AppColors.ink.withValues(alpha: 0.72),
-              width: 1,
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 3),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                character.imagePath,
-                width: 30,
-                height: 34,
-                fit: BoxFit.cover,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                character.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: foreground,
+            child: Stack(
+              children: [
+                Positioned(
+                  left: 12,
+                  top: 12,
+                  child: _sparkle(14, isSelected ? 0.5 : 0.75),
                 ),
-              ),
-            ],
+                Positioned(
+                  right: 12,
+                  top: 18,
+                  child: _sparkle(11, isSelected ? 0.4 : 0.6),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        // The portrait files are 8x4 walk sheets: show the
+                        // front-facing standing frame.
+                        child: SpriteWalkPreview(
+                          assetPath: character.imagePath,
+                          facing: SpriteDirection.south,
+                          animate: false,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        character.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: FantasyText.name(
+                          size: 14,
+                          color: isSelected
+                              ? AppColors.parchment
+                              : AppColors.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  static Widget _sparkle(double size, double opacity) => IgnorePointer(
+    child: Opacity(
+      opacity: opacity,
+      child: Image.asset(
+        AppImages.sparkle,
+        width: size,
+        filterQuality: FilterQuality.medium,
+      ),
+    ),
+  );
 }
 
+/// Dashed "+ MORE" placeholder for characters that aren't out yet.
 class _MoreCharactersTile extends StatelessWidget {
   const _MoreCharactersTile({required this.onTap});
 
@@ -584,30 +551,33 @@ class _MoreCharactersTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: CustomPaint(
-          painter: _DashedBorderPainter(),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.add,
-                size: 16,
-                color: AppColors.ink.withValues(alpha: 0.65),
-              ),
-              Text(
-                AppStrings.moreCharacters,
-                style: GoogleFonts.inter(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.ink.withValues(alpha: 0.72),
+    return Semantics(
+      button: true,
+      label: AppStrings.moreCharacters,
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: CustomPaint(
+            painter: _DashedBorderPainter(),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.add, size: 30, color: AppColors.ink),
+                const SizedBox(height: 4),
+                Text(
+                  AppStrings.moreCharacters,
+                  style: FantasyText.mono(
+                    size: 12.5,
+                    color: AppColors.inkMuted,
+                    weight: FontWeight.w700,
+                    spacing: 1.5,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -619,64 +589,27 @@ class _DashedBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.ink.withValues(alpha: 0.35)
-      ..strokeWidth = 1
+      ..color = AppColors.frameBrown.withValues(alpha: 0.6)
+      ..strokeWidth = 1.4
       ..style = PaintingStyle.stroke;
     final border = Path()
       ..addRRect(
-        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(6)),
+        RRect.fromRectAndRadius(
+          (Offset.zero & size).deflate(3),
+          const Radius.circular(8),
+        ),
       );
 
     for (final metric in border.computeMetrics()) {
       var distance = 0.0;
       while (distance < metric.length) {
-        final end = distance + 4 < metric.length ? distance + 4 : metric.length;
+        final end = distance + 5 < metric.length ? distance + 5 : metric.length;
         canvas.drawPath(metric.extractPath(distance, end), paint);
-        distance += 7;
+        distance += 9;
       }
     }
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _ProfileNavTab extends StatelessWidget {
-  const _ProfileNavTab({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.isActive = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isActive;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive
-        ? AppColors.ink
-        : AppColors.ink.withValues(alpha: 0.5);
-
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 21),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

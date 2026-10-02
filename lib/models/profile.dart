@@ -7,6 +7,7 @@ class Profile {
     required this.avatarUrl,
     required this.characterIndex,
     required this.level,
+    this.xp = 0,
     this.lastSeenAt,
   });
 
@@ -16,6 +17,14 @@ class Profile {
   final String? avatarUrl;
   final int characterIndex;
   final int level;
+
+  /// Progress toward the next level, out of [xpPerLevel].
+  final int xp;
+
+  static const int xpPerLevel = 100;
+
+  /// 0..1, for the level bar.
+  double get levelProgress => (xp % xpPerLevel) / xpPerLevel;
 
   /// When the player last had the app open (see PresenceService).
   final DateTime? lastSeenAt;
@@ -37,6 +46,7 @@ class Profile {
     avatarUrl: map['avatar_url'] as String?,
     characterIndex: map['character_index'] as int? ?? 0,
     level: map['level'] as int? ?? 1,
+    xp: map['xp'] as int? ?? 0,
     lastSeenAt: map['last_seen_at'] == null
         ? null
         : DateTime.parse(map['last_seen_at'] as String).toLocal(),

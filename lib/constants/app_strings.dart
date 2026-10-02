@@ -20,6 +20,15 @@ class AppStrings {
 
   // Welcome / character screen
   static String welcomeGreeting(String name) => 'Welcome, $name!';
+  static const String welcomeLabel = 'WELCOME,';
+  static const String menuButton = 'Menu';
+  static const String characterPreviewTitle = 'Character Preview';
+  static const String characterPreviewSubtitle =
+      'Customize your look and join the adventure.';
+  static const String turnLeft = 'Turn left';
+  static const String turnRight = 'Turn right';
+  static String tavernAdventurers(int players, int max) =>
+      '$players / $max adventurers in the tavern';
   static const String characterPreviewLabel = 'CHARACTER PREVIEW';
   static const String joinRoomButton = 'JOIN ROOM';
   static const String navHome = 'HOME';
@@ -31,6 +40,11 @@ class AppStrings {
   static const String profilePlayerName = 'Player';
   static const String profileLevel = 'Level 12';
   static const String chooseCharacter = 'Choose a Character';
+  static const String chooseCharacterSubtitle =
+      'Select and customize your adventure look.';
+  static String levelLabel(int level) => 'Level $level';
+  static String levelProgress(int level, double progress) =>
+      'Level $level, ${(progress * 100).round()}% to next level';
   static const String characterLuna = 'Luna';
   static const String characterRogue = 'Rogue';
   static const String characterMage = 'Mage';
@@ -54,11 +68,17 @@ class AppStrings {
 
   // Friends screens
   static const String friendsTitle = 'Friends';
+  static String viewFriend(String name) => 'View $name';
   static const String searchFriendsHint = 'Search friends...';
   static const String noFriendsYet =
       'No friends yet. Find players and send them a friend request.';
   static String noFriendsMatch(String query) => 'No friends match "$query"';
   static const String findPlayersButton = 'FIND PLAYERS';
+  static const String noFriendsYetShort = 'No friends yet. Add someone below!';
+  static String yourFriendsHeader(int count) => 'YOUR FRIENDS ($count)';
+  static const String suggestedHeader = 'SUGGESTED FOR YOU';
+  static const String noSuggestions =
+      "You're connected with everyone who's joined so far.";
   static const String friendsLoadError = "Couldn't load your friends.";
   static const String retryButton = 'TRY AGAIN';
   static const String removeFriendButton = 'REMOVE FRIEND';
@@ -133,5 +153,10 @@ class AppStrings {
       "The notice board isn't set up yet. Run the notice board SQL in Supabase.";
   static const String takeDownNote = 'Take down note';
   static const String emotesButton = 'Emotes';
+  static const String chatTitle = 'CHAT';
+  static String chatNewMessages(int count) =>
+      count == 1 ? '1 NEW MESSAGE' : '$count NEW MESSAGES';
+  static const String hideChat = 'Hide chat';
+  static const String showChat = 'Show chat';
   static const String moreRoomsComingSoon = 'MORE ROOMS — COMING SOON';
 }

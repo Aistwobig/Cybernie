@@ -20,6 +20,8 @@ class SpriteWalkPreview extends StatefulWidget {
   const SpriteWalkPreview({
     super.key,
     required this.assetPath,
+    this.facing,
+    this.animate = true,
     this.columns = 8,
     this.rows = 4,
     this.frameDuration = const Duration(milliseconds: 110),
@@ -32,6 +34,13 @@ class SpriteWalkPreview extends StatefulWidget {
   });
 
   final String assetPath;
+
+  /// When set, the character keeps walking in place facing this way
+  /// instead of turning through [directionOrder].
+  final SpriteDirection? facing;
+
+  /// False shows a still standing frame (e.g. character picker tiles).
+  final bool animate;
   final int columns;
   final int rows;
   final Duration frameDuration;
@@ -76,12 +85,16 @@ class _SpriteWalkPreviewState extends State<SpriteWalkPreview> {
 
   void _startLoop() {
     _timer?.cancel();
+    if (!widget.animate) return;
     _timer = Timer.periodic(widget.frameDuration, (_) {
       setState(() {
         _frameIndex++;
         if (_frameIndex >= widget.columns) {
           _frameIndex = 0;
-          _directionIndex = (_directionIndex + 1) % widget.directionOrder.length;
+          if (widget.facing == null) {
+            _directionIndex =
+                (_directionIndex + 1) % widget.directionOrder.length;
+          }
         }
       });
     });
@@ -100,7 +113,8 @@ class _SpriteWalkPreviewState extends State<SpriteWalkPreview> {
       return const SizedBox.shrink();
     }
 
-    final direction = widget.directionOrder[_directionIndex];
+    final direction =
+        widget.facing ?? widget.directionOrder[_directionIndex];
     final row = _rowForDirection[direction]!;
 
     return CustomPaint(

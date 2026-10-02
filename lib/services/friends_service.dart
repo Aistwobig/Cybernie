@@ -106,6 +106,26 @@ class FriendsService {
     return [for (final row in rows) Profile.fromMap(row)];
   }
 
+  /// Everyone who has signed in to Cybernie, newest first, except us and
+  /// the players in [exclude] (people we're already connected to).
+  static Future<List<Profile>> suggestions({
+    required Set<String> exclude,
+    int limit = 30,
+  }) async {
+    final rows = await _withLastSeenFallback(
+      () => _client
+          .from('profiles')
+          .select(_profileColumns)
+          .neq('id', myId)
+          .order('created_at', ascending: false)
+          .limit(limit + exclude.length),
+    );
+    return [
+      for (final row in rows)
+        if (!exclude.contains(row['id'])) Profile.fromMap(row),
+    ].take(limit).toList();
+  }
+
   static Future<void> sendRequest(String otherId) => _client
       .from('friendships')
       .insert({'requester_id': myId, 'addressee_id': otherId});

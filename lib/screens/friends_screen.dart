@@ -2,13 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
 import '../models/profile.dart';
 import '../services/auth_service.dart';
 import '../services/friends_service.dart';
 import '../theme/app_theme.dart';
-import '../utils/app_nav.dart';
 import '../utils/last_seen.dart';
+import '../widgets/fantasy_ui.dart';
 import '../widgets/player_avatar.dart';
 
 /// Friends list: real players you've added, with their photo, an online dot
@@ -22,8 +23,6 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
-  int _navIndex = 1; // Friends tab active on this screen
-
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
 
@@ -32,6 +31,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
   bool _isLoading = true;
   bool _loadFailed = false;
   Timer? _refreshTimer;
+
+  /// Players we're not connected to yet. Null while loading.
+  List<Profile>? _suggestions;
+
+  /// Suggested players we just sent a request to (shown as "Pending").
+  final Set<String> _requested = {};
+  final Set<String> _sending = {};
 
   @override
   void initState() {
@@ -72,6 +78,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
         _isLoading = false;
         _loadFailed = false;
       });
+      await _loadSuggestions({for (final e in entries) e.profile.id});
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -80,6 +87,50 @@ class _FriendsScreenState extends State<FriendsScreen> {
         });
       }
     }
+  }
+
+  /// Everyone else who has signed in, minus [connected] (friends and
+  /// requests either way). Players we just added stay listed as Pending.
+  Future<void> _loadSuggestions(Set<String> connected) async {
+    try {
+      final exclude = connected.difference(_requested);
+      final players = await FriendsService.suggestions(exclude: exclude);
+      if (!mounted) return;
+      final now = DateTime.now();
+      setState(() {
+        _suggestions = players..sort((a, b) => _compareFriends(a, b, now));
+      });
+    } catch (_) {
+      if (mounted && _suggestions == null) {
+        setState(() => _suggestions = const []);
+      }
+    }
+  }
+
+  Future<void> _sendRequest(Profile player) async {
+    if (_sending.contains(player.id)) return;
+    setState(() => _sending.add(player.id));
+    try {
+      await FriendsService.sendRequest(player.id);
+      if (mounted) setState(() => _requested.add(player.id));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text(AppStrings.friendActionError)),
+        );
+      }
+      // They may have sent us a request at the same moment; refresh.
+      _loadFriends();
+    } finally {
+      if (mounted) setState(() => _sending.remove(player.id));
+    }
+  }
+
+  bool _matchesQuery(Profile p) {
+    final q = _query.trim().toLowerCase();
+    return q.isEmpty ||
+        p.displayName.toLowerCase().contains(q) ||
+        p.username.toLowerCase().contains(q);
   }
 
   /// Online first, then most recently active, then by name.
@@ -110,84 +161,93 @@ class _FriendsScreenState extends State<FriendsScreen> {
     if (removed == true) _loadFriends();
   }
 
-  Future<void> _onNavTap(int index) async {
-    if (index == 0) {
-      AppNav.goHome(context);
-      return;
-    }
-
-    if (index == _navIndex) return;
-    setState(() => _navIndex = index);
-
-    if (index == 2) {
-      // Replaces this tab with Profile (Welcome stays underneath).
-      await AppNav.goToTab(context, '/profile');
-      if (mounted) setState(() => _navIndex = 1);
-    }
-  }
-
-  List<Profile> get _filteredFriends {
-    final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return _friends;
-    return _friends
-        .where(
-          (f) =>
-              f.displayName.toLowerCase().contains(q) ||
-              f.username.toLowerCase().contains(q),
-        )
-        .toList();
-  }
-
-  TextStyle get _titleStyle => GoogleFonts.cinzel(
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    color: AppColors.ink,
-  );
+  List<Profile> get _filteredFriends => _friends.where(_matchesQuery).toList();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.parchment,
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 12),
-
-            // Top bar: "Friends" title + add-friend button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(AppStrings.friendsTitle, style: _titleStyle),
-                  _AddFriendButton(
+      body: Stack(
+        children: [
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: CastleBackdrop(height: 200),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FantasyTitleBar(
+                  title: AppStrings.friendsTitle,
+                  trailing: FramedIconButton(
+                    icon: Icons.add,
+                    tooltip: AppStrings.addFriendsTitle,
                     badgeCount: _pendingRequests,
-                    onTap: _openAddFriends,
+                    onPressed: _openAddFriends,
                   ),
-                ],
-              ),
+                ),
+                Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppColors.card.withValues(alpha: 0.9),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24),
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        // The lamp-post terrace sits behind the list.
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: IgnorePointer(
+                            child: Opacity(
+                              opacity: 0.45,
+                              child: ShaderMask(
+                                shaderCallback: (rect) => const LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [Colors.transparent, Colors.white],
+                                  stops: [0, 0.35],
+                                ).createShader(rect),
+                                blendMode: BlendMode.dstIn,
+                                child: Image.asset(
+                                  AppImages.friendsFooterScene,
+                                  fit: BoxFit.fitWidth,
+                                  filterQuality: FilterQuality.medium,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
+                              child: SearchField(
+                                controller: _searchController,
+                                hintText: AppStrings.searchFriendsHint,
+                                onChanged: (v) => setState(() => _query = v),
+                              ),
+                            ),
+                            Expanded(child: _buildList()),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const FantasyBottomNav(currentIndex: 1),
+              ],
             ),
-            const SizedBox(height: 8),
-            Container(height: 1, color: AppColors.ink.withValues(alpha: 0.18)),
-            const SizedBox(height: 10),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: SearchField(
-                controller: _searchController,
-                hintText: AppStrings.searchFriendsHint,
-                onChanged: (v) => setState(() => _query = v),
-              ),
-            ),
-            const SizedBox(height: 4),
-
-            Expanded(child: _buildList()),
-
-            _buildCustomBottomNav(),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -208,108 +268,97 @@ class _FriendsScreenState extends State<FriendsScreen> {
         },
       );
     }
-    if (_friends.isEmpty) {
-      return _Message(
-        text: AppStrings.noFriendsYet,
-        actionLabel: AppStrings.findPlayersButton,
-        onAction: _openAddFriends,
-      );
-    }
-
-    final friends = _filteredFriends;
-    if (friends.isEmpty) {
-      return _Message(text: AppStrings.noFriendsMatch(_query.trim()));
-    }
-
     final now = DateTime.now();
+    final friends = _filteredFriends;
+    final suggestions = _suggestions?.where(_matchesQuery).toList();
+    final searching = _query.trim().isNotEmpty;
+
     return RefreshIndicator(
       color: AppColors.ink,
       onRefresh: _loadFriends,
-      child: ListView.builder(
+      child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-        itemCount: friends.length,
-        itemBuilder: (context, index) {
-          final friend = friends[index];
-          return PlayerRow(
-            profile: friend,
-            subtitle: lastSeenLabel(friend, now),
-            isOnline: friend.isOnline(now),
-            onTap: () => _showFriend(friend),
-            trailing: Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: AppColors.ink.withValues(alpha: 0.35),
-            ),
-          );
-        },
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
+        children: [
+          // --- Your friends ---
+          if (_friends.isEmpty)
+            _InlineNote(
+              text: AppStrings.noFriendsYetShort,
+              actionLabel: AppStrings.findPlayersButton,
+              onAction: _openAddFriends,
+            )
+          else ...[
+            _SectionLabel(AppStrings.yourFriendsHeader(_friends.length)),
+            if (friends.isEmpty)
+              _InlineNote(text: AppStrings.noFriendsMatch(_query.trim()))
+            else
+              for (final friend in friends)
+                PlayerRow(
+                  profile: friend,
+                  subtitle: lastSeenLabel(friend, now),
+                  isOnline: friend.isOnline(now),
+                  onTap: () => _showFriend(friend),
+                  trailing: FramedIconButton(
+                    icon: Icons.chevron_right,
+                    tooltip: AppStrings.viewFriend(friend.displayName),
+                    dark: true,
+                    size: 40,
+                    onPressed: () => _showFriend(friend),
+                  ),
+                ),
+          ],
+
+          // --- Everyone else who has signed in ---
+          const SizedBox(height: 12),
+          _SectionLabel(AppStrings.suggestedHeader),
+          if (suggestions == null)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+            )
+          else if (suggestions.isEmpty)
+            _InlineNote(
+              text: searching
+                  ? AppStrings.noPlayersMatch(_query.trim())
+                  : AppStrings.noSuggestions,
+            )
+          else
+            for (final player in suggestions)
+              PlayerRow(
+                profile: player,
+                subtitle: lastSeenLabel(player, now),
+                isOnline: player.isOnline(now),
+                trailing: _requested.contains(player.id)
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          AppStrings.pendingLabel,
+                          style: FantasyText.mono(size: 13),
+                        ),
+                      )
+                    : FramedTextButton(
+                        label: AppStrings.addButton,
+                        onPressed: _sending.contains(player.id)
+                            ? null
+                            : () => _sendRequest(player),
+                      ),
+              ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildCustomBottomNav() {
-    final dividerColor = AppColors.ink.withValues(alpha: 0.15);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(height: 1, color: AppColors.ink.withValues(alpha: 0.2)),
-        SizedBox(
-          height: 2,
-          child: Row(
-            children: List.generate(3, (index) {
-              return Expanded(
-                child: ColoredBox(
-                  color: index == _navIndex
-                      ? AppColors.ink.withValues(alpha: 0.55)
-                      : Colors.transparent,
-                ),
-              );
-            }),
-          ),
-        ),
-        Container(
-          color: AppColors.parchment,
-          height: 58,
-          child: Row(
-            children: [
-              Expanded(
-                child: _NavTab(
-                  icon: _navIndex == 0 ? Icons.home : Icons.home_outlined,
-                  label: AppStrings.navHome,
-                  isActive: _navIndex == 0,
-                  onTap: () => _onNavTap(0),
-                ),
-              ),
-              Container(width: 1, height: 42, color: dividerColor),
-              Expanded(
-                child: _NavTab(
-                  icon: _navIndex == 1 ? Icons.people : Icons.people_outline,
-                  label: AppStrings.navFriends,
-                  isActive: _navIndex == 1,
-                  onTap: () => _onNavTap(1),
-                ),
-              ),
-              Container(width: 1, height: 42, color: dividerColor),
-              Expanded(
-                child: _NavTab(
-                  icon: _navIndex == 2 ? Icons.person : Icons.person_outline,
-                  label: AppStrings.navProfile,
-                  isActive: _navIndex == 2,
-                  onTap: () => _onNavTap(2),
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: MediaQuery.of(context).padding.bottom),
-      ],
     );
   }
 }
 
-/// Search field with the fine, squared outline used in the mockup.
-/// Shared with the Add Friends screen.
+/// Search box in its ornate frame. Shared with the Add Friends screen.
 class SearchField extends StatelessWidget {
   const SearchField({
     super.key,
@@ -324,17 +373,12 @@ class SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.ink.withValues(alpha: 0.65)),
-      ),
+    return FantasyCard(
+      padding: const EdgeInsets.fromLTRB(14, 8, 14, 8),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink),
+        style: FantasyText.mono(size: 15, color: AppColors.ink),
         decoration: InputDecoration(
           isDense: true,
           border: InputBorder.none,
@@ -342,24 +386,19 @@ class SearchField extends StatelessWidget {
           focusedBorder: InputBorder.none,
           filled: false,
           hintText: hintText,
-          hintStyle: GoogleFonts.inter(
-            fontSize: 14,
-            color: AppColors.ink.withValues(alpha: 0.35),
-          ),
-          prefixIcon: Icon(
-            Icons.search,
-            size: 19,
-            color: AppColors.ink.withValues(alpha: 0.65),
-          ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+          hintStyle: FantasyText.mono(size: 15),
+          prefixIcon: const Icon(Icons.search, size: 24, color: AppColors.ink),
+          prefixIconConstraints: const BoxConstraints(minWidth: 44),
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
     );
   }
 }
 
-/// One player row: photo with online dot, name, a status line and whatever
-/// [trailing] is (a chevron, or buttons on the Add Friends screen).
+/// One player in an ornate frame: photo in a brown ring with a status dot,
+/// name, a status line, and [trailing] (a chevron, ADD, or request buttons).
+/// A faint castle watermark sits behind the right side.
 class PlayerRow extends StatelessWidget {
   const PlayerRow({
     super.key,
@@ -378,119 +417,138 @@ class PlayerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: AppColors.ink.withValues(alpha: 0.1),
-              width: 1,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: FantasyCard(
+        padding: EdgeInsets.zero,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(6),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: 56,
+                  top: 6,
+                  bottom: 6,
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: 0.22,
+                      child: Image.asset(
+                        AppImages.rowCastleWatermark,
+                        fit: BoxFit.fitHeight,
+                        filterQuality: FilterQuality.medium,
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
+                  child: Row(
+                    children: [
+                      _RingedAvatar(
+                        photoUrl: profile.avatarUrl,
+                        isOnline: isOnline,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              profile.displayName.isEmpty
+                                  ? AppStrings.profilePlayerName
+                                  : profile.displayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: FantasyText.name(size: 20),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isOnline
+                                        ? AppColors.online
+                                        : AppColors.parchmentDim,
+                                    border: isOnline
+                                        ? null
+                                        : Border.all(
+                                            color: AppColors.navMuted,
+                                            width: 1,
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(width: 7),
+                                Expanded(
+                                  child: Text(
+                                    subtitle,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: FantasyText.mono(size: 12.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (trailing != null) ...[
+                        const SizedBox(width: 8),
+                        trailing!,
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            PlayerAvatar(
-              photoUrl: profile.avatarUrl,
-              radius: 20,
-              isOnline: isOnline,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    profile.displayName.isEmpty
-                        ? AppStrings.profilePlayerName
-                        : profile.displayName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 1),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 11.5,
-                      fontWeight: isOnline ? FontWeight.w600 : FontWeight.w400,
-                      color: isOnline
-                          ? const Color(0xFF1E9E5A)
-                          : AppColors.ink.withValues(alpha: 0.55),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            ?trailing,
-          ],
         ),
       ),
     );
   }
 }
 
-/// Small bordered square "+" button that opens Add Friends, with a badge
-/// showing how many friend requests are waiting.
-class _AddFriendButton extends StatelessWidget {
-  const _AddFriendButton({required this.onTap, required this.badgeCount});
+/// Round photo in a warm brown ring, with a small status dot.
+class _RingedAvatar extends StatelessWidget {
+  const _RingedAvatar({required this.photoUrl, required this.isOnline});
 
-  final VoidCallback onTap;
-  final int badgeCount;
+  final String? photoUrl;
+  final bool isOnline;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: AppStrings.addFriendsTitle,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: AppColors.ink.withValues(alpha: 0.55)),
-              ),
-              child: const Icon(Icons.add, size: 18, color: AppColors.ink),
+    return SizedBox.square(
+      dimension: 64,
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.card,
+              border: Border.all(color: AppColors.frameBrown, width: 2),
             ),
-            if (badgeCount > 0)
-              Positioned(
-                top: -6,
-                right: -6,
-                child: Container(
-                  constraints: const BoxConstraints(minWidth: 16),
-                  height: 16,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFC62828),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    '$badgeCount',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+            child: PlayerAvatar(photoUrl: photoUrl, radius: 27),
+          ),
+          Positioned(
+            right: 2,
+            bottom: 2,
+            child: Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isOnline ? AppColors.online : AppColors.parchmentDim,
+                border: Border.all(color: AppColors.card, width: 2),
               ),
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -605,6 +663,72 @@ class _FriendSheetState extends State<_FriendSheet> {
   }
 }
 
+/// Small tracked heading above a group of players.
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+      child: Text(
+        text,
+        style: FantasyText.mono(
+          size: 12.5,
+          color: AppColors.ink,
+          weight: FontWeight.w700,
+          spacing: 2.5,
+        ),
+      ),
+    );
+  }
+}
+
+/// A one-line note inside the list, with an optional action.
+class _InlineNote extends StatelessWidget {
+  const _InlineNote({required this.text, this.actionLabel, this.onAction});
+
+  final String text;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.courierPrime(
+                fontSize: 13,
+                color: AppColors.ink.withValues(alpha: 0.6),
+                height: 1.4,
+              ),
+            ),
+          ),
+          if (actionLabel != null)
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: AppColors.ink),
+              onPressed: onAction,
+              child: Text(
+                actionLabel!,
+                style: GoogleFonts.courierPrime(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Message extends StatelessWidget {
   const _Message({required this.text, this.actionLabel, this.onAction});
 
@@ -623,7 +747,7 @@ class _Message extends StatelessWidget {
             Text(
               text,
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.courierPrime(
                 fontSize: 13,
                 color: AppColors.ink.withValues(alpha: 0.55),
                 height: 1.4,
@@ -642,7 +766,7 @@ class _Message extends StatelessWidget {
                 onPressed: onAction,
                 child: Text(
                   actionLabel!,
-                  style: GoogleFonts.inter(
+                  style: GoogleFonts.courierPrime(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.5,
@@ -652,48 +776,6 @@ class _Message extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// Custom Bottom Nav Tab Item (same look as WelcomeScreen's).
-class _NavTab extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _NavTab({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive
-        ? AppColors.ink
-        : AppColors.ink.withValues(alpha: 0.4);
-
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-              letterSpacing: 0.5,
-              color: color,
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -73,8 +73,9 @@ void main() {
     expect(timeAgo(now.subtract(const Duration(days: 2)), now), '2 days ago');
   });
 
-  test('only the six emotes are accepted from other players', () {
+  test('only the seven emotes are accepted from other players', () {
     expect(RoomService.isEmote('👋'), isTrue);
+    expect(RoomService.isEmote('😠'), isTrue);
     expect(RoomService.isEmote('🍕'), isFalse);
     expect(RoomService.isEmote('<script>'), isFalse);
   });

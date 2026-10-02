@@ -45,6 +45,7 @@ void main() {
       await tester.tap(find.byTooltip('Emotes'));
       await tester.pump();
       expect(find.text('🎉'), findsOneWidget);
+      expect(find.text('😠'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       // Leave the screen so the game's timers stop.

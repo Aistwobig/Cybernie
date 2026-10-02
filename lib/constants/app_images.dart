@@ -11,6 +11,17 @@ class AppImages {
   static const String profileMage = 'assets/images/5.png';
   static const String tavernRoom = 'assets/images/tavern.png';
 
-  // Add more as you build the other screens, e.g.:
-  // static const String tavernRoomThumb = 'assets/images/tavern_room.png';
+  // Fantasy UI kit, cut from assets/sheets/ui_sheet.png.
+  static const String headerCastle = 'assets/images/header_castle.png';
+  static const String compassStar = 'assets/images/icon_compass_star.png';
+  static const String sparkle = 'assets/images/icon_sparkle.png';
+  static const String ornamentDivider = 'assets/images/ornament_divider.png';
+  static const String frameCard = 'assets/images/frame_card.png';
+  static const String frameButton = 'assets/images/frame_button.png';
+  static const String sword = 'assets/images/icon_sword.png';
+  static const String rowCastleWatermark =
+      'assets/images/row_castle_watermark.png';
+  static const String homePreviewScene = 'assets/images/home_preview_scene.png';
+  static const String friendsFooterScene =
+      'assets/images/friends_footer_scene.png';
 }

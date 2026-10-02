@@ -9,6 +9,11 @@ class AppNav {
 
   static const String home = '/welcome';
 
+  /// Lets a screen know when it becomes visible again (RouteAware), e.g.
+  /// Home refreshing your name after Profile, or the tavern count.
+  static final RouteObserver<ModalRoute<void>> routeObserver =
+      RouteObserver<ModalRoute<void>>();
+
   /// Back to the Welcome screen: reuses it if it's underneath, otherwise
   /// makes it the only screen.
   static void goHome(BuildContext context) {

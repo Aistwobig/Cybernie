@@ -155,7 +155,7 @@ class RoomService {
   }
 
   /// The reactions players can send. Anything else received is ignored.
-  static const List<String> emotes = ['👋', '😂', '❤️', '👍', '🎉', '😮'];
+  static const List<String> emotes = ['👋', '😂', '❤️', '👍', '🎉', '😮', '😠'];
 
   static bool isEmote(String emoji) => emotes.contains(emoji);
 

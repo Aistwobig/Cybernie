@@ -52,6 +52,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   bool _cameFromList = false;
   bool _nearNoticeBoard = false;
   bool _emotesOpen = false;
+  bool _chatCollapsed = false;
+  int _unreadMessages = 0;
 
   @override
   void initState() {
@@ -149,7 +151,10 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _chat = chat;
     chat.subscribe((message) {
       if (!mounted || _messages.any((m) => m.id == message.id)) return;
-      setState(() => _messages.add(message));
+      setState(() {
+        _messages.add(message);
+        if (_chatCollapsed && message.senderId != chat.myId) _unreadMessages++;
+      });
       // Our own bubble is shown as soon as we send; show everyone else's.
       if (message.senderId != chat.myId) {
         _game.otherPlayerSays(message.senderId, message.body);
@@ -388,6 +393,12 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                   messages: _messages.length > _visibleMessages
                       ? _messages.sublist(_messages.length - _visibleMessages)
                       : _messages,
+                  collapsed: _chatCollapsed,
+                  unread: _unreadMessages,
+                  onToggle: () => setState(() {
+                    _chatCollapsed = !_chatCollapsed;
+                    if (!_chatCollapsed) _unreadMessages = 0;
+                  }),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -605,46 +616,123 @@ class _HudButton extends StatelessWidget {
   }
 }
 
+/// Recent chat with a header bar that folds the messages down out of the way
+/// (to see more of the tavern) and opens them back up.
 class _ChatLog extends StatelessWidget {
-  const _ChatLog({required this.messages});
+  const _ChatLog({
+    required this.messages,
+    required this.collapsed,
+    required this.unread,
+    required this.onToggle,
+  });
 
   final List<ChatMessage> messages;
+  final bool collapsed;
+
+  /// Messages from others that arrived while folded.
+  final int unread;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
+    final label = collapsed && unread > 0
+        ? AppStrings.chatNewMessages(unread)
+        : AppStrings.chatTitle;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.ink.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          for (final message in messages)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 1.5),
-              child: Text.rich(
-                TextSpan(
-                  children: [
-                    TextSpan(
-                      text: '${message.senderName}: ',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    TextSpan(text: message.body),
-                  ],
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AppColors.parchment,
-                  height: 1.3,
+          Semantics(
+            button: true,
+            expanded: !collapsed,
+            label: collapsed ? AppStrings.showChat : AppStrings.hideChat,
+            excludeSemantics: true,
+            child: InkWell(
+              onTap: onToggle,
+              borderRadius: BorderRadius.circular(6),
+              child: SizedBox(
+                height: 32,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 4),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.chat_bubble_outline,
+                        size: 14,
+                        color: AppColors.parchment.withValues(alpha: 0.85),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.4,
+                            color: AppColors.parchment,
+                          ),
+                        ),
+                      ),
+                      Tooltip(
+                        message: collapsed
+                            ? AppStrings.showChat
+                            : AppStrings.hideChat,
+                        child: Icon(
+                          collapsed
+                              ? Icons.keyboard_arrow_up
+                              : Icons.keyboard_arrow_down,
+                          size: 22,
+                          color: AppColors.parchment,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
+          ),
+          if (!collapsed)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+              child: _messageList(),
+            ),
         ],
       ),
+    );
+  }
+
+  Widget _messageList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final message in messages)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 1.5),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: '${message.senderName}: ',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  TextSpan(text: message.body),
+                ],
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: AppColors.parchment,
+                height: 1.3,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/supabase_config.dart';
 import 'services/auth_service.dart';
 import 'services/presence_service.dart';
+import 'utils/app_nav.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -59,6 +60,7 @@ class App extends StatelessWidget {
       // Signed-in players skip the splash and login screens.
       initialRoute: AuthService.isSignedIn ? '/welcome' : '/',
       onGenerateInitialRoutes: _initialRoutes,
+      navigatorObservers: [AppNav.routeObserver],
       routes: _routes,
     );
   }
