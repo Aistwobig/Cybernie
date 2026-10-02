@@ -7,8 +7,8 @@ import '../models/profile.dart';
 import '../services/auth_service.dart';
 import '../services/friends_service.dart';
 import '../theme/app_theme.dart';
-import '../utils/app_nav.dart';
 import '../utils/last_seen.dart';
+import '../widgets/cybernie_bottom_nav.dart';
 import '../widgets/player_avatar.dart';
 
 /// Friends list: real players you've added, with their photo, an online dot
@@ -22,8 +22,6 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
-  int _navIndex = 1; // Friends tab active on this screen
-
   final TextEditingController _searchController = TextEditingController();
   String _query = '';
 
@@ -110,22 +108,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
     if (removed == true) _loadFriends();
   }
 
-  Future<void> _onNavTap(int index) async {
-    if (index == 0) {
-      AppNav.goHome(context);
-      return;
-    }
-
-    if (index == _navIndex) return;
-    setState(() => _navIndex = index);
-
-    if (index == 2) {
-      // Replaces this tab with Profile (Welcome stays underneath).
-      await AppNav.goToTab(context, '/profile');
-      if (mounted) setState(() => _navIndex = 1);
-    }
-  }
-
   List<Profile> get _filteredFriends {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return _friends;
@@ -185,7 +167,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
             Expanded(child: _buildList()),
 
-            _buildCustomBottomNav(),
+            const CybernieBottomNav(currentIndex: 1),
           ],
         ),
       ),
@@ -247,65 +229,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 
-  Widget _buildCustomBottomNav() {
-    final dividerColor = AppColors.ink.withValues(alpha: 0.15);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(height: 1, color: AppColors.ink.withValues(alpha: 0.2)),
-        SizedBox(
-          height: 2,
-          child: Row(
-            children: List.generate(3, (index) {
-              return Expanded(
-                child: ColoredBox(
-                  color: index == _navIndex
-                      ? AppColors.ink.withValues(alpha: 0.55)
-                      : Colors.transparent,
-                ),
-              );
-            }),
-          ),
-        ),
-        Container(
-          color: AppColors.parchment,
-          height: 58,
-          child: Row(
-            children: [
-              Expanded(
-                child: _NavTab(
-                  icon: _navIndex == 0 ? Icons.home : Icons.home_outlined,
-                  label: AppStrings.navHome,
-                  isActive: _navIndex == 0,
-                  onTap: () => _onNavTap(0),
-                ),
-              ),
-              Container(width: 1, height: 42, color: dividerColor),
-              Expanded(
-                child: _NavTab(
-                  icon: _navIndex == 1 ? Icons.people : Icons.people_outline,
-                  label: AppStrings.navFriends,
-                  isActive: _navIndex == 1,
-                  onTap: () => _onNavTap(1),
-                ),
-              ),
-              Container(width: 1, height: 42, color: dividerColor),
-              Expanded(
-                child: _NavTab(
-                  icon: _navIndex == 2 ? Icons.person : Icons.person_outline,
-                  label: AppStrings.navProfile,
-                  isActive: _navIndex == 2,
-                  onTap: () => _onNavTap(2),
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: MediaQuery.of(context).padding.bottom),
-      ],
-    );
-  }
 }
 
 /// Search field with the fine, squared outline used in the mockup.
@@ -657,44 +580,3 @@ class _Message extends StatelessWidget {
   }
 }
 
-/// Custom Bottom Nav Tab Item (same look as WelcomeScreen's).
-class _NavTab extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _NavTab({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive
-        ? AppColors.ink
-        : AppColors.ink.withValues(alpha: 0.4);
-
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-              letterSpacing: 0.5,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

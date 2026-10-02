@@ -7,12 +7,13 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../constants/app_images.dart';
+import '../constants/characters.dart';
 import '../constants/app_strings.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_nav.dart';
+import '../widgets/cybernie_bottom_nav.dart';
 import '../widgets/player_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -23,30 +24,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const List<_ProfileCharacter> _characters = [
-    _ProfileCharacter(
-      name: AppStrings.characterLuna,
-      imagePath: AppImages.profileLuna,
-    ),
-    _ProfileCharacter(
-      name: AppStrings.characterRogue,
-      imagePath: AppImages.profileRogue,
-    ),
-    _ProfileCharacter(
-      name: AppStrings.characterMage,
-      imagePath: AppImages.profileMage,
-    ),
-    _ProfileCharacter(
-      name: AppStrings.characterLily,
-      imagePath: AppImages.profileLuna,
-    ),
-    _ProfileCharacter(
-      name: AppStrings.characterDancer,
-      imagePath: AppImages.profileRogue,
-    ),
-  ];
+  static const List<GameCharacter> _characters = gameCharacters;
 
-  int _selectedCharacter = 1;
+  int _selectedCharacter = defaultCharacterIndex;
   String _playerName = AppStrings.profilePlayerName;
   /// A photo picked on this screen (shown immediately, before any upload).
   Uint8List? _profilePhotoBytes;
@@ -222,10 +202,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  void _returnToWelcome() => AppNav.goHome(context);
-
-  void _openFriends() => AppNav.goToTab(context, '/friends');
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -240,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildPlayerSummary(),
             _buildRule(),
             Expanded(child: _buildCharacterPicker()),
-            _buildBottomNavigation(),
+            const CybernieBottomNav(currentIndex: 2),
           ],
         ),
       ),
@@ -451,70 +427,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildBottomNavigation() {
-    final dividerColor = AppColors.ink.withValues(alpha: 0.15);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildRule(),
-        SizedBox(
-          height: 2,
-          child: Row(
-            children: List.generate(
-              3,
-              (index) => Expanded(
-                child: ColoredBox(
-                  color: index == 2
-                      ? AppColors.ink.withValues(alpha: 0.55)
-                      : Colors.transparent,
-                ),
-              ),
-            ),
-          ),
-        ),
-        SizedBox(
-          height: 58,
-          child: Row(
-            children: [
-              Expanded(
-                child: _ProfileNavTab(
-                  icon: Icons.home_outlined,
-                  label: AppStrings.navHome,
-                  onTap: _returnToWelcome,
-                ),
-              ),
-              Container(width: 1, height: 42, color: dividerColor),
-              Expanded(
-                child: _ProfileNavTab(
-                  icon: Icons.people_outline,
-                  label: AppStrings.navFriends,
-                  onTap: _openFriends,
-                ),
-              ),
-              Container(width: 1, height: 42, color: dividerColor),
-              Expanded(
-                child: _ProfileNavTab(
-                  icon: Icons.person,
-                  label: AppStrings.navProfile,
-                  isActive: true,
-                  onTap: () {},
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: MediaQuery.of(context).padding.bottom),
-      ],
-    );
-  }
-}
-
-class _ProfileCharacter {
-  const _ProfileCharacter({required this.name, required this.imagePath});
-
-  final String name;
-  final String imagePath;
 }
 
 class _CharacterTile extends StatelessWidget {
@@ -524,7 +436,7 @@ class _CharacterTile extends StatelessWidget {
     required this.onTap,
   });
 
-  final _ProfileCharacter character;
+  final GameCharacter character;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -553,7 +465,7 @@ class _CharacterTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                character.imagePath,
+                character.portrait,
                 width: 30,
                 height: 34,
                 fit: BoxFit.cover,
@@ -641,42 +553,3 @@ class _DashedBorderPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _ProfileNavTab extends StatelessWidget {
-  const _ProfileNavTab({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.isActive = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isActive;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isActive
-        ? AppColors.ink
-        : AppColors.ink.withValues(alpha: 0.5);
-
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 21),
-          const SizedBox(height: 3),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 9,
-              fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
