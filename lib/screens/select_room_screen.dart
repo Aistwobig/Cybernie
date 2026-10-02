@@ -63,13 +63,13 @@ class _SelectRoomScreenState extends State<SelectRoomScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.parchment,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildHeader(context),
-            Container(height: 1, color: AppColors.text.withValues(alpha: 0.18)),
+            Container(height: 1, color: AppColors.ink.withValues(alpha: 0.18)),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
@@ -104,7 +104,7 @@ class _SelectRoomScreenState extends State<SelectRoomScreen> {
             tooltip: 'Back',
             onPressed: () => AppNav.back(context),
             icon: const Icon(Icons.arrow_back, size: 22),
-            color: AppColors.text,
+            color: AppColors.ink,
           ),
           const SizedBox(width: 2),
           Text(
@@ -112,7 +112,7 @@ class _SelectRoomScreenState extends State<SelectRoomScreen> {
             style: GoogleFonts.lora(
               fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: AppColors.text,
+              color: AppColors.ink,
             ),
           ),
         ],
@@ -143,10 +143,10 @@ class _RoomCard extends StatelessWidget {
       children: [
         Container(
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: AppColors.parchment,
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: AppColors.text.withValues(alpha: 0.55),
+              color: AppColors.ink.withValues(alpha: 0.55),
               width: 1,
             ),
           ),
@@ -163,7 +163,7 @@ class _RoomCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(3),
                       border: Border.all(
-                        color: AppColors.text.withValues(alpha: 0.35),
+                        color: AppColors.ink.withValues(alpha: 0.35),
                         width: 1,
                       ),
                     ),
@@ -185,7 +185,7 @@ class _RoomCard extends StatelessWidget {
                     inset: 2,
                     size: 6,
                     stroke: 1.2,
-                    color: AppColors.background.withValues(alpha: 0.8),
+                    color: AppColors.parchment.withValues(alpha: 0.8),
                   ),
                 ],
               ),
@@ -195,7 +195,7 @@ class _RoomCard extends StatelessWidget {
                 style: GoogleFonts.lora(
                   fontSize: 19,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.text,
+                  color: AppColors.ink,
                 ),
               ),
               const SizedBox(height: 2),
@@ -204,7 +204,7 @@ class _RoomCard extends StatelessWidget {
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.text.withValues(alpha: 0.82),
+                  color: AppColors.ink.withValues(alpha: 0.82),
                 ),
               ),
               const SizedBox(height: 12),
@@ -212,8 +212,8 @@ class _RoomCard extends StatelessWidget {
                 height: 46,
                 child: FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: AppColors.onAccent,
+                    backgroundColor: AppColors.ink,
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
                     ),
@@ -239,7 +239,7 @@ class _RoomCard extends StatelessWidget {
           inset: -1,
           size: 9,
           stroke: 2,
-          color: AppColors.text,
+          color: AppColors.ink,
         ),
       ],
     );
@@ -295,7 +295,7 @@ class _ComingSoonTile extends StatelessWidget {
               fontSize: 12,
               fontWeight: FontWeight.w500,
               letterSpacing: 0.4,
-              color: AppColors.text.withValues(alpha: 0.5),
+              color: AppColors.ink.withValues(alpha: 0.5),
             ),
           ),
         ),
@@ -308,7 +308,7 @@ class _DashedBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.text.withValues(alpha: 0.3)
+      ..color = AppColors.ink.withValues(alpha: 0.3)
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
     final border = Path()

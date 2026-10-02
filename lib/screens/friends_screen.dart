@@ -101,7 +101,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Future<void> _showFriend(Profile friend) async {
     final removed = await showModalBottomSheet<bool>(
       context: context,
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.parchment,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
@@ -141,13 +141,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
   TextStyle get _titleStyle => GoogleFonts.cinzel(
     fontSize: 22,
     fontWeight: FontWeight.w700,
-    color: AppColors.text,
+    color: AppColors.ink,
   );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.parchment,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -170,7 +170,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            Container(height: 1, color: AppColors.text.withValues(alpha: 0.18)),
+            Container(height: 1, color: AppColors.ink.withValues(alpha: 0.18)),
             const SizedBox(height: 10),
 
             Padding(
@@ -195,7 +195,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Widget _buildList() {
     if (_isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: AppColors.text, strokeWidth: 2),
+        child: CircularProgressIndicator(color: AppColors.ink, strokeWidth: 2),
       );
     }
     if (_loadFailed && _friends.isEmpty) {
@@ -223,7 +223,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
     final now = DateTime.now();
     return RefreshIndicator(
-      color: AppColors.accent,
+      color: AppColors.ink,
       onRefresh: _loadFriends,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -239,7 +239,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             trailing: Icon(
               Icons.chevron_right,
               size: 20,
-              color: AppColors.text.withValues(alpha: 0.35),
+              color: AppColors.ink.withValues(alpha: 0.35),
             ),
           );
         },
@@ -248,12 +248,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Widget _buildCustomBottomNav() {
-    final dividerColor = AppColors.text.withValues(alpha: 0.15);
+    final dividerColor = AppColors.ink.withValues(alpha: 0.15);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(height: 1, color: AppColors.text.withValues(alpha: 0.2)),
+        Container(height: 1, color: AppColors.ink.withValues(alpha: 0.2)),
         SizedBox(
           height: 2,
           child: Row(
@@ -261,7 +261,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               return Expanded(
                 child: ColoredBox(
                   color: index == _navIndex
-                      ? AppColors.text.withValues(alpha: 0.55)
+                      ? AppColors.ink.withValues(alpha: 0.55)
                       : Colors.transparent,
                 ),
               );
@@ -269,7 +269,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ),
         ),
         Container(
-          color: AppColors.background,
+          color: AppColors.parchment,
           height: 58,
           child: Row(
             children: [
@@ -327,14 +327,14 @@ class SearchField extends StatelessWidget {
     return Container(
       height: 40,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.ink.withValues(alpha: 0.65)),
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: GoogleFonts.inter(fontSize: 14, color: AppColors.text),
+        style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink),
         decoration: InputDecoration(
           isDense: true,
           border: InputBorder.none,
@@ -344,12 +344,12 @@ class SearchField extends StatelessWidget {
           hintText: hintText,
           hintStyle: GoogleFonts.inter(
             fontSize: 14,
-            color: AppColors.text.withValues(alpha: 0.35),
+            color: AppColors.ink.withValues(alpha: 0.35),
           ),
           prefixIcon: Icon(
             Icons.search,
             size: 19,
-            color: AppColors.text.withValues(alpha: 0.65),
+            color: AppColors.ink.withValues(alpha: 0.65),
           ),
           contentPadding: const EdgeInsets.symmetric(vertical: 10),
         ),
@@ -384,7 +384,7 @@ class PlayerRow extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: AppColors.text.withValues(alpha: 0.1),
+              color: AppColors.ink.withValues(alpha: 0.1),
               width: 1,
             ),
           ),
@@ -411,7 +411,7 @@ class PlayerRow extends StatelessWidget {
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.text,
+                      color: AppColors.ink,
                     ),
                   ),
                   const SizedBox(height: 1),
@@ -423,8 +423,8 @@ class PlayerRow extends StatelessWidget {
                       fontSize: 11.5,
                       fontWeight: isOnline ? FontWeight.w600 : FontWeight.w400,
                       color: isOnline
-                          ? AppColors.online
-                          : AppColors.text.withValues(alpha: 0.55),
+                          ? const Color(0xFF1E9E5A)
+                          : AppColors.ink.withValues(alpha: 0.55),
                     ),
                   ),
                 ],
@@ -462,9 +462,9 @@ class _AddFriendButton extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: AppColors.text.withValues(alpha: 0.55)),
+                border: Border.all(color: AppColors.ink.withValues(alpha: 0.55)),
               ),
-              child: const Icon(Icons.add, size: 18, color: AppColors.text),
+              child: const Icon(Icons.add, size: 18, color: AppColors.ink),
             ),
             if (badgeCount > 0)
               Positioned(
@@ -476,7 +476,7 @@ class _AddFriendButton extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.danger,
+                    color: const Color(0xFFC62828),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -552,7 +552,7 @@ class _FriendSheetState extends State<_FriendSheet> {
               style: GoogleFonts.lora(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: AppColors.text,
+                color: AppColors.ink,
               ),
             ),
             if (friend.username.isNotEmpty)
@@ -560,7 +560,7 @@ class _FriendSheetState extends State<_FriendSheet> {
                 '@${friend.username}',
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: AppColors.text.withValues(alpha: 0.55),
+                  color: AppColors.ink.withValues(alpha: 0.55),
                 ),
               ),
             const SizedBox(height: 4),
@@ -570,8 +570,8 @@ class _FriendSheetState extends State<_FriendSheet> {
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: online
-                    ? AppColors.online
-                    : AppColors.text.withValues(alpha: 0.6),
+                    ? const Color(0xFF1E9E5A)
+                    : AppColors.ink.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 20),
@@ -580,8 +580,8 @@ class _FriendSheetState extends State<_FriendSheet> {
               height: 42,
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.danger,
-                  side: const BorderSide(color: AppColors.danger),
+                  foregroundColor: const Color(0xFFC62828),
+                  side: const BorderSide(color: Color(0xFFC62828)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -625,7 +625,7 @@ class _Message extends StatelessWidget {
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: AppColors.text.withValues(alpha: 0.55),
+                color: AppColors.ink.withValues(alpha: 0.55),
                 height: 1.4,
               ),
             ),
@@ -633,8 +633,8 @@ class _Message extends StatelessWidget {
               const SizedBox(height: 12),
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.text,
-                  side: const BorderSide(color: AppColors.text),
+                  foregroundColor: AppColors.ink,
+                  side: const BorderSide(color: AppColors.ink),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
                   ),
@@ -674,8 +674,8 @@ class _NavTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isActive
-        ? AppColors.text
-        : AppColors.text.withValues(alpha: 0.4);
+        ? AppColors.ink
+        : AppColors.ink.withValues(alpha: 0.4);
 
     return InkWell(
       onTap: onTap,

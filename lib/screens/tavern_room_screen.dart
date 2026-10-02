@@ -256,9 +256,9 @@ class _RoomTitle extends StatelessWidget {
       height: 40,
       padding: const EdgeInsets.only(right: 14),
       decoration: BoxDecoration(
-        color: AppColors.background.withValues(alpha: 0.94),
+        color: AppColors.parchment.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.text.withValues(alpha: 0.55)),
+        border: Border.all(color: AppColors.ink.withValues(alpha: 0.55)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -267,21 +267,21 @@ class _RoomTitle extends StatelessWidget {
             tooltip: AppStrings.leaveRoomButton,
             onPressed: onBack,
             icon: const Icon(Icons.arrow_back, size: 20),
-            color: AppColors.text,
+            color: AppColors.ink,
           ),
           Text(
             AppStrings.tavernRoomName,
             style: GoogleFonts.lora(
               fontSize: 17,
               fontWeight: FontWeight.w700,
-              color: AppColors.text,
+              color: AppColors.ink,
             ),
           ),
           const SizedBox(width: 10),
           Icon(
             Icons.people_outline,
             size: 16,
-            color: AppColors.text.withValues(alpha: 0.7),
+            color: AppColors.ink.withValues(alpha: 0.7),
           ),
           const SizedBox(width: 4),
           Text(
@@ -289,7 +289,7 @@ class _RoomTitle extends StatelessWidget {
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.text.withValues(alpha: 0.7),
+              color: AppColors.ink.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -315,9 +315,9 @@ class _HudButton extends StatelessWidget {
       height: 34,
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
-          backgroundColor: filled ? AppColors.accent : AppColors.surface,
-          foregroundColor: filled ? AppColors.onAccent : AppColors.text,
-          side: const BorderSide(color: AppColors.text),
+          backgroundColor: filled ? AppColors.ink : AppColors.parchment,
+          foregroundColor: filled ? Colors.white : AppColors.ink,
+          side: const BorderSide(color: AppColors.ink),
           padding: const EdgeInsets.symmetric(horizontal: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(5),
@@ -347,9 +347,8 @@ class _ChatLog extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.background.withValues(alpha: 0.78),
+        color: AppColors.ink.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -362,10 +361,7 @@ class _ChatLog extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: '${message.senderName}: ',
-                      style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.accent,
-                    ),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     TextSpan(text: message.body),
                   ],
@@ -374,7 +370,7 @@ class _ChatLog extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: AppColors.text,
+                  color: AppColors.parchment,
                   height: 1.3,
                 ),
               ),
@@ -408,7 +404,7 @@ class _ChatInput extends StatelessWidget {
               maxLength: 200,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => onSend(),
-              style: GoogleFonts.inter(fontSize: 13, color: AppColors.text),
+              style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
               decoration: InputDecoration(
                 hintText: AppStrings.chatHint,
                 counterText: '',
@@ -420,7 +416,7 @@ class _ChatInput extends StatelessWidget {
                 prefixIcon: Icon(
                   Icons.chat_bubble_outline,
                   size: 17,
-                  color: AppColors.text.withValues(alpha: 0.5),
+                  color: AppColors.ink.withValues(alpha: 0.5),
                 ),
                 prefixIconConstraints: const BoxConstraints(minWidth: 36),
               ),
@@ -433,7 +429,7 @@ class _ChatInput extends StatelessWidget {
           height: 40,
           child: FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.accent,
+              backgroundColor: AppColors.ink,
               padding: EdgeInsets.zero,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(6),
@@ -446,10 +442,10 @@ class _ChatInput extends StatelessWidget {
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppColors.onAccent,
+                      color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.send, size: 18, color: AppColors.onAccent),
+                : const Icon(Icons.send, size: 18, color: Colors.white),
           ),
         ),
       ],

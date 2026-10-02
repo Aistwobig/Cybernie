@@ -229,7 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.parchment,
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -256,14 +256,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
             tooltip: 'Back',
             onPressed: () => AppNav.back(context),
             icon: const Icon(Icons.arrow_back, size: 21),
-            color: AppColors.text,
+            color: AppColors.ink,
           ),
           Text(
             AppStrings.profileTitle,
             style: GoogleFonts.cinzel(
               fontSize: 19,
               fontWeight: FontWeight.w700,
-              color: AppColors.text,
+              color: AppColors.ink,
             ),
           ),
         ],
@@ -272,7 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildRule() =>
-      Container(height: 1, color: AppColors.text.withValues(alpha: 0.18));
+      Container(height: 1, color: AppColors.ink.withValues(alpha: 0.18));
 
   Widget _buildPlayerSummary() {
     return Padding(
@@ -288,7 +288,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundColor: AppColors.surface,
+                    backgroundColor: AppColors.parchmentSoft,
                     child: ClipOval(
                       child: _buildAvatarImage(),
                     ),
@@ -300,10 +300,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       width: 21,
                       height: 21,
                       decoration: BoxDecoration(
-                        color: AppColors.accent,
+                        color: AppColors.ink,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: AppColors.background,
+                          color: AppColors.parchment,
                           width: 2,
                         ),
                       ),
@@ -312,12 +312,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               padding: EdgeInsets.all(4),
                               child: CircularProgressIndicator(
                                 strokeWidth: 1.5,
-                                color: AppColors.onAccent,
+                                color: Colors.white,
                               ),
                             )
                           : const Icon(
                               Icons.edit,
-                              color: AppColors.onAccent,
+                              color: Colors.white,
                               size: 11,
                             ),
                     ),
@@ -341,7 +341,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.text,
+                          color: AppColors.ink,
                         ),
                       ),
                     ),
@@ -355,7 +355,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       padding: EdgeInsets.zero,
                       icon: const Icon(Icons.edit_outlined, size: 18),
-                      color: AppColors.text,
+                      color: AppColors.ink,
                     ),
                   ],
                 ),
@@ -363,7 +363,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   AppStrings.profileLevel,
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: AppColors.text.withValues(alpha: 0.58),
+                    color: AppColors.ink.withValues(alpha: 0.58),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -372,9 +372,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: LinearProgressIndicator(
                     value: 0.5,
                     minHeight: 8,
-                    backgroundColor: AppColors.surfaceRaised,
+                    backgroundColor: AppColors.parchmentDim,
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.accent,
+                      AppColors.ink,
                     ),
                   ),
                 ),
@@ -397,7 +397,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: AppColors.text.withValues(alpha: 0.82),
+              color: AppColors.ink.withValues(alpha: 0.82),
             ),
           ),
           const SizedBox(height: 8),
@@ -429,8 +429,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             height: 36,
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: AppColors.onAccent,
+                backgroundColor: AppColors.ink,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(5),
                 ),
@@ -452,7 +452,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildBottomNavigation() {
-    final dividerColor = AppColors.text.withValues(alpha: 0.15);
+    final dividerColor = AppColors.ink.withValues(alpha: 0.15);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -466,7 +466,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               (index) => Expanded(
                 child: ColoredBox(
                   color: index == 2
-                      ? AppColors.text.withValues(alpha: 0.55)
+                      ? AppColors.ink.withValues(alpha: 0.55)
                       : Colors.transparent,
                 ),
               ),
@@ -530,10 +530,10 @@ class _CharacterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final foreground = isSelected ? AppColors.onAccent : AppColors.text;
+    final foreground = isSelected ? Colors.white : AppColors.ink;
 
     return Material(
-      color: isSelected ? AppColors.accent : AppColors.surface,
+      color: isSelected ? AppColors.ink : AppColors.parchment,
       borderRadius: BorderRadius.circular(6),
       child: InkWell(
         onTap: onTap,
@@ -543,8 +543,8 @@ class _CharacterTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
               color: isSelected
-                  ? AppColors.text.withValues(alpha: 0.8)
-                  : AppColors.text.withValues(alpha: 0.72),
+                  ? AppColors.ink.withValues(alpha: 0.8)
+                  : AppColors.ink.withValues(alpha: 0.72),
               width: 1,
             ),
           ),
@@ -597,14 +597,14 @@ class _MoreCharactersTile extends StatelessWidget {
               Icon(
                 Icons.add,
                 size: 16,
-                color: AppColors.text.withValues(alpha: 0.65),
+                color: AppColors.ink.withValues(alpha: 0.65),
               ),
               Text(
                 AppStrings.moreCharacters,
                 style: GoogleFonts.inter(
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.text.withValues(alpha: 0.72),
+                  color: AppColors.ink.withValues(alpha: 0.72),
                 ),
               ),
             ],
@@ -619,7 +619,7 @@ class _DashedBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.text.withValues(alpha: 0.35)
+      ..color = AppColors.ink.withValues(alpha: 0.35)
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
     final border = Path()
@@ -657,8 +657,8 @@ class _ProfileNavTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isActive
-        ? AppColors.text
-        : AppColors.text.withValues(alpha: 0.5);
+        ? AppColors.ink
+        : AppColors.ink.withValues(alpha: 0.5);
 
     return InkWell(
       onTap: onTap,

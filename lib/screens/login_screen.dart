@@ -71,21 +71,21 @@ class _LoginScreenState extends State<LoginScreen> {
   TextStyle get _titleStyle => GoogleFonts.cinzel(
         fontSize: 26,
         fontWeight: FontWeight.w700,
-        color: AppColors.text,
+        color: AppColors.ink,
         letterSpacing: 2,
       );
 
   TextStyle get _subtitleStyle => GoogleFonts.cinzel(
         fontSize: 11,
         fontWeight: FontWeight.w500,
-        color: AppColors.text.withValues(alpha: 0.7),
+        color: AppColors.ink.withValues(alpha: 0.7),
         letterSpacing: 2,
       );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.parchment,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         ColorFiltered(
                           colorFilter: ColorFilter.mode(
-                            AppColors.text,
+                            AppColors.ink,
                             BlendMode.srcIn,
                           ),
                           child: Image.asset(
@@ -122,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: AppColors.text.withValues(alpha: 0.7),
+                      color: AppColors.ink.withValues(alpha: 0.7),
                       height: 1.4,
                     ),
                   ),
@@ -131,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 48,
                     child: FilledButton(
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.accent,
+                        backgroundColor: AppColors.ink,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -143,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: AppColors.onAccent,
+                                color: Colors.white,
                               ),
                             )
                           : Row(
@@ -156,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   style: GoogleFonts.inter(
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: 1,
-                                    color: AppColors.onAccent,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ],
@@ -167,10 +167,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.text.withValues(alpha: 0.05),
+                      color: AppColors.ink.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: AppColors.text.withValues(alpha: 0.15),
+                        color: AppColors.ink.withValues(alpha: 0.15),
                       ),
                     ),
                     child: Text(
@@ -178,7 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       textAlign: TextAlign.center,
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: AppColors.text.withValues(alpha: 0.6),
+                        color: AppColors.ink.withValues(alpha: 0.6),
                         height: 1.4,
                       ),
                     ),
@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       AppStrings.noAccountPrompt,
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: AppColors.text.withValues(alpha: 0.6),
+                        color: AppColors.ink.withValues(alpha: 0.6),
                       ),
                     ),
                   ),
@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 44,
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppColors.text),
+                        side: BorderSide(color: AppColors.ink),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(6),
                         ),
@@ -209,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1,
-                          color: AppColors.text,
+                          color: AppColors.ink,
                         ),
                       ),
                     ),
@@ -243,7 +243,7 @@ class _GoogleBadge extends StatelessWidget {
         style: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: FontWeight.w800,
-          color: AppColors.onAccent,
+          color: AppColors.ink,
           height: 1,
         ),
       ),
