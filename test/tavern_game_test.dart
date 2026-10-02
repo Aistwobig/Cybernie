@@ -9,10 +9,7 @@ void main() {
   testWidgets(
     'the tavern loads and the player can walk',
     (tester) async {
-      final game = TavernGame(
-        playerName: 'Tester',
-        characterSheet: AppImages.characterMenAnim,
-      );
+      final game = TavernGame(playerName: 'Tester');
       await tester.pumpWidget(MaterialApp(home: GameWidget(game: game)));
 
       // Keep drawing frames while the images decode. Frames that run before
@@ -37,7 +34,10 @@ void main() {
       expect(game.player.position.y, lessThan(start.y));
 
       // Other players appear, move and leave.
-      game.syncOtherPlayers([(id: 'friend', name: 'Luna', x: 690, y: 615)]);
+      // The friend plays as the Mage (character 2).
+      game.syncOtherPlayers([
+        (id: 'friend', name: 'Luna', character: 2, x: 690.0, y: 615.0),
+      ]);
       for (var i = 0; i < 20; i++) {
         await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 20)),
@@ -45,6 +45,17 @@ void main() {
         await tester.pump(const Duration(milliseconds: 16));
       }
       expect(game.otherPlayerCount, 1);
+
+      // Switching our own character to the Mage loads her sheet.
+      game.playerCharacter = 2;
+      for (var i = 0; i < 10; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(game.player.sheetAsset, AppImages.mageSheet);
+      expect(game.player.size.y, closeTo(87, 0.01));
       game.moveOtherPlayer('friend', 700, 600, 3, true);
       game.otherPlayerSays('friend', 'hi!');
       // Emotes from them and from us pop up and clear without errors.

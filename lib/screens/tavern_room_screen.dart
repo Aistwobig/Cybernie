@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
+import '../constants/characters.dart';
 import '../game/tavern_game.dart';
 import '../services/auth_service.dart';
 import '../services/chat_service.dart';
@@ -33,8 +33,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 
   late final TavernGame _game = TavernGame(
     playerName: AppStrings.profilePlayerName,
-    characterSheet: AppImages.characterMenAnim,
   );
+  int _myCharacter = defaultCharacterIndex;
   final FocusNode _gameFocus = FocusNode();
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [];
@@ -98,6 +98,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       final profile = await ProfileService.fetchMine();
       if (profile.displayName.isNotEmpty) name = profile.displayName;
       _myAvatarUrl = profile.avatarUrl;
+      _myCharacter = profile.characterIndex;
+      _game.playerCharacter = _myCharacter;
     } catch (_) {
       // Keep the default name.
     }
@@ -120,11 +122,19 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     await room.join(
       name: name,
       avatarUrl: _myAvatarUrl,
+      character: _myCharacter,
       x: TavernMap.spawnPoint.dx,
       y: TavernMap.spawnPoint.dy,
       onPlayers: (others) {
         _game.syncOtherPlayers([
-          for (final p in others) (id: p.id, name: p.name, x: p.x, y: p.y),
+          for (final p in others)
+            (
+              id: p.id,
+              name: p.name,
+              character: p.character,
+              x: p.x,
+              y: p.y,
+            ),
         ]);
         if (!mounted) return;
         setState(() {
@@ -347,29 +357,18 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         : 340.0;
 
     return [
-      Positioned(
-        top: 12,
-        right: 12,
-        // Stacked, not side by side, so the debug button never covers the
-        // title's player count on narrow phones.
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _HudButton(
-              label: AppStrings.leaveRoomButton,
-              onPressed: _leaveRoom,
-            ),
-            if (kDebugMode && _panel == _Panel.none) ...[
-              const SizedBox(height: 6),
-              _HudButton(
-                label: AppStrings.hitboxesButton,
-                onPressed: () => setState(_game.toggleHitboxes),
-                filled: _game.showingHitboxes,
-              ),
-            ],
-          ],
+      // Leaving is the back arrow in the room title. In debug builds only,
+      // the top-right corner holds the hitbox toggle.
+      if (kDebugMode && _panel == _Panel.none)
+        Positioned(
+          top: 12,
+          right: 12,
+          child: _HudButton(
+            label: AppStrings.hitboxesButton,
+            onPressed: () => setState(_game.toggleHitboxes),
+            filled: _game.showingHitboxes,
+          ),
         ),
-      ),
       // An open panel takes the right side; chat returns when it closes.
       if (panel != null)
         Positioned(

@@ -6,24 +6,31 @@ import 'package:flutter/material.dart';
 enum Facing { south, north, west, east }
 
 /// Anyone standing in the tavern: drawn from an 8-column x 4-row walk sheet
-/// (menanim.png: rows are South, North, West, East), with a name tag and
+/// (rows face South, North, West, East) of any size, with a name tag and
 /// chat bubbles. [Player] (you) and [RemotePlayer] (everyone else) build on
 /// this.
 ///
 /// [position] is the point between the character's feet.
 abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     with HasGameReference {
-  Character({required this.sheetAsset, required String name})
-    : _name = name,
-      super(anchor: const Anchor(0.5, _feetY / _cellHeight));
+  Character({
+    required String sheetAsset,
+    required String name,
+    double feetFraction = 0.963,
+  }) : _sheetAsset = sheetAsset,
+       _feetFraction = feetFraction,
+       _name = name,
+       super(anchor: Anchor(0.5, feetFraction));
 
-  final String sheetAsset;
+  String _sheetAsset;
+  double _feetFraction;
   String _name;
 
-  static const double _cellWidth = 265;
-  static const double _cellHeight = 378;
-  static const double _feetY = 345; // where the shoes sit inside a cell
-  static const double _scale = 0.23; // cell size -> size on the map
+  String get sheetAsset => _sheetAsset;
+
+  /// Every character is drawn this tall on the map, whatever its sheet's
+  /// cell size, so different sprites stand at the same height.
+  static const double displayHeight = 87;
 
   Facing facing = Facing.south;
   bool moving = false;
@@ -38,29 +45,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
 
   @override
   Future<void> onLoad() async {
-    final image = await game.images.load(sheetAsset);
-    final sheet = SpriteSheet(
-      image: image,
-      srcSize: Vector2(_cellWidth, _cellHeight),
-    );
-
-    animations = {
-      for (final facing in Facing.values) ...{
-        (facing, true): sheet.createAnimation(
-          row: facing.index,
-          stepTime: 0.09,
-        ),
-        (facing, false): sheet.createAnimation(
-          row: facing.index,
-          stepTime: 1,
-          to: 1,
-        ),
-      },
-    };
-    current = (facing, moving);
-    size = Vector2(_cellWidth, _cellHeight) * _scale;
-    // Keep pixel art crisp when scaled.
-    paint.filterQuality = FilterQuality.none;
+    await _loadSheet();
 
     _nameTag = TextComponent(
       text: _name,
@@ -76,6 +61,44 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
       ),
     );
     add(_nameTag);
+  }
+
+  /// Switches to another character's sheet (e.g. once a player's chosen
+  /// character is known).
+  Future<void> useSheet(String asset, double feetFraction) async {
+    if (asset == _sheetAsset && feetFraction == _feetFraction) return;
+    _sheetAsset = asset;
+    _feetFraction = feetFraction;
+    if (!isLoaded) return; // onLoad will pick up the new sheet.
+    await _loadSheet();
+    _nameTag.position = Vector2(size.x / 2, 2);
+  }
+
+  /// Builds the walk and idle animations from [_sheetAsset]. The cell size
+  /// comes from the image itself (8 x 4 grid).
+  Future<void> _loadSheet() async {
+    final image = await game.images.load(_sheetAsset);
+    final cell = Vector2(image.width / 8, image.height / 4);
+    final sheet = SpriteSheet(image: image, srcSize: cell);
+
+    animations = {
+      for (final facing in Facing.values) ...{
+        (facing, true): sheet.createAnimation(
+          row: facing.index,
+          stepTime: 0.09,
+        ),
+        (facing, false): sheet.createAnimation(
+          row: facing.index,
+          stepTime: 1,
+          to: 1,
+        ),
+      },
+    };
+    current = (facing, moving);
+    size = cell * (displayHeight / cell.y);
+    anchor = Anchor(0.5, _feetFraction);
+    // Keep pixel art crisp when scaled.
+    paint.filterQuality = FilterQuality.none;
   }
 
   @override

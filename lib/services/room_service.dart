@@ -10,11 +10,15 @@ class RoomPlayer {
     required this.x,
     required this.y,
     this.avatarUrl,
+    this.character = 1,
   });
 
   final String id;
   final String name;
   final String? avatarUrl;
+
+  /// Their chosen character (index into gameCharacters).
+  final int character;
 
   /// Where they were when they joined. Live positions arrive as [PlayerMove].
   final double x;
@@ -92,6 +96,7 @@ class RoomService {
   Future<void> join({
     required String name,
     required String? avatarUrl,
+    required int character,
     required double x,
     required double y,
     required void Function(List<RoomPlayer> others) onPlayers,
@@ -144,6 +149,7 @@ class RoomService {
             await channel.track({
               'name': name,
               'avatar': ?avatarUrl,
+              'char': character,
               'x': x.round(),
               'y': y.round(),
             });
@@ -187,6 +193,7 @@ class RoomService {
         id: id,
         name: (data['name'] as String?) ?? 'Player',
         avatarUrl: data['avatar'] as String?,
+        character: (data['char'] as num?)?.toInt() ?? 1,
         x: (data['x'] as num?)?.toDouble() ?? 0,
         y: (data['y'] as num?)?.toDouble() ?? 0,
       );

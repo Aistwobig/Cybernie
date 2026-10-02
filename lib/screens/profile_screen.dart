@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_images.dart';
+import '../constants/characters.dart';
 import '../constants/app_strings.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
@@ -23,28 +24,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  static const List<_ProfileCharacter> _characters = [
-    _ProfileCharacter(
-      name: AppStrings.characterLuna,
-      imagePath: AppImages.profileLuna,
-    ),
-    _ProfileCharacter(
-      name: AppStrings.characterRogue,
-      imagePath: AppImages.profileRogue,
-    ),
-    _ProfileCharacter(
-      name: AppStrings.characterMage,
-      imagePath: AppImages.profileMage,
-    ),
-    _ProfileCharacter(
-      name: AppStrings.characterLily,
-      imagePath: AppImages.profileLuna,
-    ),
-    _ProfileCharacter(
-      name: AppStrings.characterDancer,
-      imagePath: AppImages.profileRogue,
-    ),
-  ];
+  static const List<GameCharacter> _characters = gameCharacters;
 
   int _selectedCharacter = 1;
   String _playerName = AppStrings.profilePlayerName;
@@ -448,13 +428,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-class _ProfileCharacter {
-  const _ProfileCharacter({required this.name, required this.imagePath});
-
-  final String name;
-  final String imagePath;
-}
-
 /// A character in its ornate frame with sparkles; the chosen one is dark.
 class _CharacterTile extends StatelessWidget {
   const _CharacterTile({
@@ -463,7 +436,7 @@ class _CharacterTile extends StatelessWidget {
     required this.onTap,
   });
 
-  final _ProfileCharacter character;
+  final GameCharacter character;
   final bool isSelected;
   final VoidCallback onTap;
 
@@ -503,7 +476,7 @@ class _CharacterTile extends StatelessWidget {
                         // The portrait files are 8x4 walk sheets: show the
                         // front-facing standing frame.
                         child: SpriteWalkPreview(
-                          assetPath: character.imagePath,
+                          assetPath: character.sheet,
                           facing: SpriteDirection.south,
                           animate: false,
                         ),

@@ -11,7 +11,11 @@ export 'character.dart' show Facing;
 /// Only a small box around the feet collides, so the character can stand in
 /// front of tall furniture like in a top-down RPG.
 class Player extends Character {
-  Player({required super.sheetAsset, required super.name});
+  Player({
+    required super.sheetAsset,
+    required super.name,
+    super.feetFraction,
+  });
 
   static const double speed = 170; // map pixels per second
 

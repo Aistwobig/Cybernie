@@ -187,21 +187,6 @@ class _RoomCard extends StatelessWidget {
             cornerSize: 16,
             child: Stack(
               children: [
-                Positioned(
-                  right: 8,
-                  top: 4,
-                  bottom: 4,
-                  child: IgnorePointer(
-                    child: Opacity(
-                      opacity: 0.2,
-                      child: Image.asset(
-                        AppImages.rowCastleWatermark,
-                        fit: BoxFit.fitHeight,
-                        filterQuality: FilterQuality.medium,
-                      ),
-                    ),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
                   child: Row(
@@ -271,37 +256,6 @@ class _ComingSoonTile extends StatelessWidget {
           height: 170,
           child: Stack(
             children: [
-              // Faint castles on both sides.
-              Positioned(
-                left: 6,
-                bottom: 8,
-                height: 64,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 0.16,
-                    child: Image.asset(
-                      AppImages.rowCastleWatermark,
-                      fit: BoxFit.fitHeight,
-                      filterQuality: FilterQuality.medium,
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                right: 6,
-                bottom: 8,
-                height: 78,
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 0.16,
-                    child: Image.asset(
-                      AppImages.rowCastleWatermark,
-                      fit: BoxFit.fitHeight,
-                      filterQuality: FilterQuality.medium,
-                    ),
-                  ),
-                ),
-              ),
               Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../constants/app_images.dart';
+import '../constants/characters.dart';
 import '../constants/app_strings.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
@@ -35,6 +36,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
   ];
 
   String _playerName = AppStrings.profilePlayerName;
+  int _characterIndex = defaultCharacterIndex;
   int _facingIndex = 0;
 
   int? _tavernPlayers;
@@ -90,9 +92,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
     if (!AuthService.isSignedIn) return;
     try {
       final profile = await ProfileService.fetchMine();
-      if (mounted && profile.displayName.isNotEmpty) {
-        setState(() => _playerName = profile.displayName);
-      }
+      if (!mounted) return;
+      setState(() {
+        if (profile.displayName.isNotEmpty) _playerName = profile.displayName;
+        _characterIndex = profile.characterIndex;
+      });
     } catch (_) {
       // Keep the default name if the profile can't be loaded.
     }
@@ -319,6 +323,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
             SizedBox(
               height: frameHeight,
               child: _CharacterStage(
+                sheet: characterAt(_characterIndex).sheet,
                 facing: facing,
                 onPrevious: () => _turn(_facings.length - 1),
                 onNext: () => _turn(1),
@@ -377,11 +382,14 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
 /// the octagonal arrows that turn the character.
 class _CharacterStage extends StatelessWidget {
   const _CharacterStage({
+    required this.sheet,
     required this.facing,
     required this.onPrevious,
     required this.onNext,
   });
 
+  /// The chosen character's walk sheet.
+  final String sheet;
   final SpriteDirection facing;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
@@ -414,7 +422,8 @@ class _CharacterStage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(24, 18, 24, 10),
                     child: SpriteWalkPreview(
-                      assetPath: AppImages.characterMenAnim,
+                      key: ValueKey(sheet),
+                      assetPath: sheet,
                       facing: facing,
                     ),
                   ),

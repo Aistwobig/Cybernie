@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../constants/app_images.dart';
+import '../constants/characters.dart';
 import 'player.dart';
 import 'remote_player.dart';
 import 'tavern_map.dart';
@@ -15,15 +16,26 @@ import 'tavern_map.dart';
 /// WASD / arrow-key movement. Chat and the rest of the UI are Flutter
 /// widgets layered on top (see TavernRoomScreen).
 class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
-  /// [characterSheet] is a full asset path, like the ones in AppImages.
-  TavernGame({required String playerName, required this.characterSheet})
-    : _playerName = playerName {
+  /// [characterIndex] is the player's chosen character (see gameCharacters).
+  TavernGame({
+    required String playerName,
+    int characterIndex = defaultCharacterIndex,
+  }) : _playerName = playerName,
+       _character = characterAt(characterIndex) {
     // Use full asset paths (AppImages) instead of Flame's assets/images/.
     images.prefix = '';
   }
 
-  final String characterSheet;
+  GameCharacter _character;
   String _playerName;
+
+  /// Switches our character, e.g. once the profile has loaded.
+  set playerCharacter(int index) {
+    _character = characterAt(index);
+    if (isLoaded) {
+      player.useSheet(_character.sheet, _character.feetFraction);
+    }
+  }
 
   /// Updates the name tag, e.g. once the player's profile has loaded.
   set playerName(String value) {
@@ -68,7 +80,8 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   /// Makes the other players on screen match [players]: adds newcomers,
   /// removes whoever left and updates renamed ones.
   void syncOtherPlayers(
-    List<({String id, String name, double x, double y})> players,
+    List<({String id, String name, int character, double x, double y})>
+    players,
   ) {
     final ids = {for (final p in players) p.id};
     for (final id in _others.keys.toList()) {
@@ -76,14 +89,17 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     }
     for (final p in players) {
       final existing = _others[p.id];
+      final look = characterAt(p.character);
       if (existing != null) {
         existing.name = p.name;
+        existing.useSheet(look.sheet, look.feetFraction);
         continue;
       }
       final other = RemotePlayer(
         playerId: p.id,
         onTap: (id) => onPlayerTap?.call(id),
-        sheetAsset: characterSheet,
+        sheetAsset: look.sheet,
+        feetFraction: look.feetFraction,
         name: p.name,
         start: Vector2(p.x, p.y),
       );
@@ -158,7 +174,11 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       priority: -1,
     )..paint.filterQuality = FilterQuality.none;
 
-    player = Player(sheetAsset: characterSheet, name: _playerName)
+    player = Player(
+      sheetAsset: _character.sheet,
+      feetFraction: _character.feetFraction,
+      name: _playerName,
+    )
       ..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy);
 
     world.addAll([map, player, _keyboardInput]);

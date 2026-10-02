@@ -415,6 +415,9 @@ class PlayerRow extends StatelessWidget {
   final Widget? trailing;
   final VoidCallback? onTap;
 
+  /// flower_banner.png is 2169 x 725.
+  static const double _bannerAspect = 2169 / 725;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -426,85 +429,95 @@ class PlayerRow extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(6),
-            child: Stack(
-              children: [
-                Positioned(
-                  right: 56,
-                  top: 6,
-                  bottom: 6,
-                  child: IgnorePointer(
-                    child: Opacity(
-                      opacity: 0.22,
-                      child: Image.asset(
-                        AppImages.rowCastleWatermark,
-                        fit: BoxFit.fitHeight,
-                        filterQuality: FilterQuality.medium,
+            child: LayoutBuilder(
+              // Rows take the flower banner's 3:1 shape so its flowers,
+              // gold line and lantern sit where they were drawn.
+              builder: (context, constraints) => ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxWidth / _bannerAspect,
+                ),
+                child: Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: Padding(
+                          padding: const EdgeInsets.all(5),
+                          child: Opacity(
+                            opacity: 0.9,
+                            child: Image.asset(
+                              AppImages.flowerBanner,
+                              fit: BoxFit.fill,
+                              filterQuality: FilterQuality.medium,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
-                  child: Row(
-                    children: [
-                      _RingedAvatar(
-                        photoUrl: profile.avatarUrl,
-                        isOnline: isOnline,
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              profile.displayName.isEmpty
-                                  ? AppStrings.profilePlayerName
-                                  : profile.displayName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: FantasyText.name(size: 20),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 14, 24),
+                      child: Row(
+                        children: [
+                          _RingedAvatar(
+                            photoUrl: profile.avatarUrl,
+                            isOnline: isOnline,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  width: 10,
-                                  height: 10,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: isOnline
-                                        ? AppColors.online
-                                        : AppColors.parchmentDim,
-                                    border: isOnline
-                                        ? null
-                                        : Border.all(
-                                            color: AppColors.navMuted,
-                                            width: 1,
-                                          ),
-                                  ),
+                                Text(
+                                  profile.displayName.isEmpty
+                                      ? AppStrings.profilePlayerName
+                                      : profile.displayName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: FantasyText.name(size: 20),
                                 ),
-                                const SizedBox(width: 7),
-                                Expanded(
-                                  child: Text(
-                                    subtitle,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: FantasyText.mono(size: 12.5),
-                                  ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: isOnline
+                                            ? AppColors.online
+                                            : AppColors.parchmentDim,
+                                        border: isOnline
+                                            ? null
+                                            : Border.all(
+                                                color: AppColors.navMuted,
+                                                width: 1,
+                                              ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 7),
+                                    Expanded(
+                                      child: Text(
+                                        subtitle,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: FantasyText.mono(size: 12.5),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
+                          ),
+                          if (trailing != null) ...[
+                            const SizedBox(width: 8),
+                            trailing!,
                           ],
-                        ),
+                        ],
                       ),
-                      if (trailing != null) ...[
-                        const SizedBox(width: 8),
-                        trailing!,
-                      ],
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
