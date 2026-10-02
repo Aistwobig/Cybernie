@@ -92,19 +92,26 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     _nameTag.position = Vector2(size.x / 2, 2);
   }
 
-  /// Builds animations from 8 x 4 walk/idle sheets and an optional 8 x 2
-  /// horizontal run sheet.
+  /// Builds animations from the 8 x 4 walk sheet, plus an optional 8 x 4
+  /// idle sheet and an optional 8 x 2 left/right run sheet.
+  ///
+  /// The idle and run sheets must use the same cell size and feet line as
+  /// the walk sheet (assets/sheets has the tool notes), so switching between
+  /// walking, running and standing never makes the character jump or resize.
   Future<void> _loadSheet() async {
     final image = await game.images.load(_sheetAsset);
     final cell = Vector2(image.width / 8, image.height / 4);
     final walkSheet = SpriteSheet(image: image, srcSize: cell);
+
     final idleImage = _idleSheetAsset == null
-        ? image
+        ? null
         : await game.images.load(_idleSheetAsset!);
-    final idleSheet = SpriteSheet(
-      image: idleImage,
-      srcSize: Vector2(idleImage.width / 8, idleImage.height / 4),
-    );
+    final idleSheet = idleImage == null
+        ? null
+        : SpriteSheet(
+            image: idleImage,
+            srcSize: Vector2(idleImage.width / 8, idleImage.height / 4),
+          );
     final runImage = _horizontalRunSheetAsset == null
         ? null
         : await game.images.load(_horizontalRunSheetAsset!);
@@ -121,10 +128,11 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
         row: facing.index,
         stepTime: 0.09,
       );
-      builtAnimations[(facing, false)] = idleSheet.createAnimation(
-        row: facing.index,
-        stepTime: 0.2,
-      );
+      // Standing still: the idle cycle if there is one, otherwise the first
+      // walk frame held still (not the whole walk played slowly).
+      builtAnimations[(facing, false)] = idleSheet != null
+          ? idleSheet.createAnimation(row: facing.index, stepTime: 0.2)
+          : walkSheet.createAnimation(row: facing.index, stepTime: 1, to: 1);
     }
     if (runSheet != null) {
       builtAnimations[(Facing.west, true)] = runSheet.createAnimation(

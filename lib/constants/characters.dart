@@ -38,10 +38,12 @@ const List<GameCharacter> gameCharacters = [
   GameCharacter(
     name: AppStrings.characterLuna,
     sheet: AppImages.characterMenAnim,
+    idleSheet: AppImages.boyIdleSheet,
   ),
   GameCharacter(
     name: AppStrings.characterRogue,
     sheet: AppImages.characterMenAnim,
+    idleSheet: AppImages.boyIdleSheet,
   ),
   GameCharacter(
     name: AppStrings.characterMage,
@@ -53,10 +55,12 @@ const List<GameCharacter> gameCharacters = [
   GameCharacter(
     name: AppStrings.characterLily,
     sheet: AppImages.characterMenAnim,
+    idleSheet: AppImages.boyIdleSheet,
   ),
   GameCharacter(
     name: AppStrings.characterDancer,
     sheet: AppImages.characterMenAnim,
+    idleSheet: AppImages.boyIdleSheet,
   ),
 ];
 

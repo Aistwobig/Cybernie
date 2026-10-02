@@ -1,4 +1,5 @@
 import 'package:final_project/constants/app_images.dart';
+import 'package:final_project/game/player.dart';
 import 'package:final_project/game/tavern_game.dart';
 import 'package:final_project/game/tavern_map.dart';
 import 'package:flame/game.dart';
@@ -55,6 +56,17 @@ void main() {
         await tester.pump(const Duration(milliseconds: 16));
       }
       expect(game.player.sheetAsset, AppImages.mageSheet);
+      // Her left/right run frames are the same size as her walk frames,
+      // and standing still plays her idle cycle (8 frames), not the walk.
+      final anims = game.player.animations!;
+      expect(
+        anims[(Facing.west, true)]!.frames.first.sprite.srcSize,
+        anims[(Facing.south, true)]!.frames.first.sprite.srcSize,
+      );
+      expect(anims[(Facing.south, false)]!.frames, hasLength(8));
+      game.player.walk(Vector2.zero(), 1 / 60);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(game.player.current, (game.player.facing, false));
       expect(game.player.size.y, closeTo(87, 0.01));
       game.moveOtherPlayer('friend', 700, 600, 3, true);
       game.otherPlayerSays('friend', 'hi!');
