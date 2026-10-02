@@ -218,64 +218,101 @@ class FantasyButton extends StatelessWidget {
       enabled: enabled,
       label: label,
       excludeSemantics: true,
-      child: SizedBox(
-        height: height,
-        child: _AssetImageBuilder(
-          asset: AppImages.frameButton,
-          builder: (frame) => CustomPaint(
-            painter: _ButtonFramePainter(frame),
-            child: Material(
-              type: MaterialType.transparency,
-              child: InkWell(
-                onTap: enabled ? onPressed : null,
-                borderRadius: BorderRadius.circular(height * 0.2),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: height * 0.5),
-                  child: Row(
-                    children: [
-                      SizedBox(width: height * 0.55, child: leading),
-                      Expanded(
-                        child: busy
-                            ? Center(
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
+      child: _PressScale(
+        enabled: enabled,
+        child: SizedBox(
+          height: height,
+          child: _AssetImageBuilder(
+            asset: AppImages.frameButton,
+            builder: (frame) => CustomPaint(
+              painter: _ButtonFramePainter(frame),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: enabled ? onPressed : null,
+                  borderRadius: BorderRadius.circular(height * 0.2),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: height * 0.5),
+                    child: Row(
+                      children: [
+                        SizedBox(width: height * 0.55, child: leading),
+                        Expanded(
+                          child: busy
+                              ? Center(
+                                  child: SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                )
+                              : Text(
+                                  label,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.cinzel(
+                                    fontSize: height * 0.3,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: height * 0.08,
                                     color: textColor,
                                   ),
                                 ),
-                              )
-                            : Text(
-                                label,
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.cinzel(
-                                  fontSize: height * 0.3,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: height * 0.08,
+                        ),
+                        SizedBox(
+                          width: height * 0.55,
+                          child: showChevron
+                              ? Icon(
+                                  Icons.chevron_right,
+                                  size: height * 0.42,
                                   color: textColor,
-                                ),
-                              ),
-                      ),
-                      SizedBox(
-                        width: height * 0.55,
-                        child: showChevron
-                            ? Icon(
-                                Icons.chevron_right,
-                                size: height * 0.42,
-                                color: textColor,
-                              )
-                            : null,
-                      ),
-                    ],
+                                )
+                              : null,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Shrinks its child slightly while pressed, so buttons feel physical.
+class _PressScale extends StatefulWidget {
+  const _PressScale({required this.enabled, required this.child});
+
+  final bool enabled;
+  final Widget child;
+
+  @override
+  State<_PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<_PressScale> {
+  bool _down = false;
+
+  void _set(bool down) {
+    if (widget.enabled && down != _down) setState(() => _down = down);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Listener(
+      onPointerDown: (_) => _set(true),
+      onPointerUp: (_) => _set(false),
+      onPointerCancel: (_) => _set(false),
+      child: AnimatedScale(
+        scale: _down ? 0.96 : 1,
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOut,
+        child: widget.child,
       ),
     );
   }
@@ -432,11 +469,22 @@ class FramedIconButton extends StatelessWidget {
 // --- Header -------------------------------------------------------------------
 
 /// The castle skyline across the top of a screen, fading into the parchment.
+///
+/// The castle sits on the right; the art fades out toward the left (behind
+/// the screen title) and toward the bottom, so text never sits on top of
+/// busy art.
 class CastleBackdrop extends StatelessWidget {
-  const CastleBackdrop({super.key, this.height = 190, this.opacity = 0.38});
+  const CastleBackdrop({super.key, this.height = 190, this.opacity = 0.5});
 
   final double height;
   final double opacity;
+
+  /// header_castle.png is 1165 x 374; the main castle's centre is at 71%.
+  static const double _imageAspect = 1165 / 374;
+  static const double _castleCentre = 0.712;
+
+  /// Where the castle's centre lands, as a fraction of the screen width.
+  static const double _castleTarget = 0.8;
 
   @override
   Widget build(BuildContext context) {
@@ -444,24 +492,54 @@ class CastleBackdrop extends StatelessWidget {
       child: SizedBox(
         height: height,
         width: double.infinity,
-        child: ShaderMask(
-          // Fade the bottom edge into the page.
-          shaderCallback: (rect) => const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.white, Colors.white, Colors.transparent],
-            stops: [0, 0.6, 1],
-          ).createShader(rect),
-          blendMode: BlendMode.dstIn,
-          child: Opacity(
-            opacity: opacity,
-            child: Image.asset(
-              AppImages.headerCastle,
-              fit: BoxFit.cover,
-              alignment: Alignment.topRight,
-              filterQuality: FilterQuality.medium,
-            ),
-          ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final imageWidth = height * _imageAspect;
+            final left =
+                constraints.maxWidth * _castleTarget -
+                imageWidth * _castleCentre;
+            return ShaderMask(
+              // Fade the bottom edge into the page...
+              shaderCallback: (rect) => const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.white, Colors.white, Colors.transparent],
+                stops: [0, 0.55, 1],
+              ).createShader(rect),
+              blendMode: BlendMode.dstIn,
+              child: ShaderMask(
+                // ...and the left side, where the title is.
+                shaderCallback: (rect) => LinearGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.12),
+                    Colors.white.withValues(alpha: 0.12),
+                    Colors.white,
+                  ],
+                  stops: const [0, 0.42, 0.68],
+                ).createShader(rect),
+                blendMode: BlendMode.dstIn,
+                child: Opacity(
+                  opacity: opacity,
+                  child: Stack(
+                    clipBehavior: Clip.hardEdge,
+                    children: [
+                      Positioned(
+                        left: left,
+                        top: 0,
+                        width: imageWidth,
+                        height: height,
+                        child: Image.asset(
+                          AppImages.headerCastle,
+                          fit: BoxFit.fill,
+                          filterQuality: FilterQuality.medium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );

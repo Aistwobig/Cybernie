@@ -21,6 +21,8 @@ class AppStrings {
   // Welcome / character screen
   static String welcomeGreeting(String name) => 'Welcome, $name!';
   static const String welcomeLabel = 'WELCOME,';
+  static const String enteringTavern = 'Opening the tavern doors...';
+  static const String enteringTavernSubtitle = "Bernie's Tavern awaits.";
   static const String menuButton = 'Menu';
   static const String characterPreviewTitle = 'Character Preview';
   static const String characterPreviewSubtitle =

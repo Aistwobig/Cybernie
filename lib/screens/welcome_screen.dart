@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../utils/app_nav.dart';
 import '../widgets/fantasy_ui.dart';
 import '../widgets/sprite_walk_preview.dart';
+import 'select_room_screen.dart';
 
 /// Home: greeting, your character in its framed scene (turn it with the
 /// arrows), the live tavern count and JOIN ROOM.
@@ -38,6 +40,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
   int? _tavernPlayers;
   StreamSubscription<int>? _countSubscription;
   bool _routeSubscribed = false;
+
+  /// True while the "opening the tavern doors" moment plays.
+  bool _joining = false;
 
   @override
   void initState() {
@@ -95,12 +100,49 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
 
   void _watchTavern() {
     if (!AuthService.isSignedIn || _countSubscription != null) return;
-    _countSubscription = RoomService.watchPlayerCount(_tavernId).listen(
-      (count) {
-        if (mounted) setState(() => _tavernPlayers = count);
-      },
-      onError: (_) {},
+    _countSubscription = RoomService.watchPlayerCount(_tavernId).listen((
+      count,
+    ) {
+      if (mounted) setState(() => _tavernPlayers = count);
+    }, onError: (_) {});
+  }
+
+  /// JOIN ROOM: a short "opening the tavern doors" moment, then Select Room
+  /// fades in. Skipped when the system asks for reduced motion.
+  Future<void> _joinRoom() async {
+    if (_joining) return;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final navigator = Navigator.of(context);
+    if (!reduceMotion) {
+      setState(() => _joining = true);
+      await Future<void>.delayed(const Duration(milliseconds: 1100));
+      if (!mounted) return;
+    }
+    await navigator.push(
+      PageRouteBuilder<void>(
+        settings: const RouteSettings(name: '/rooms'),
+        transitionDuration: Duration(milliseconds: reduceMotion ? 0 : 450),
+        reverseTransitionDuration: const Duration(milliseconds: 250),
+        pageBuilder: (_, _, _) => const SelectRoomScreen(),
+        transitionsBuilder: (_, animation, _, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween(
+                begin: const Offset(0, 0.04),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      ),
     );
+    if (mounted) setState(() => _joining = false);
   }
 
   void _turn(int step) => setState(() {
@@ -141,6 +183,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
               ],
             ),
           ),
+          if (_joining) const Positioned.fill(child: _EnteringTavern()),
         ],
       ),
     );
@@ -223,12 +266,24 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
                 ),
               ),
             ],
-            child: const IgnorePointer(
-              child: FramedIconButton(
-                icon: Icons.menu,
-                tooltip: AppStrings.menuButton,
-                onPressed: null,
+            // A soft rounded button, lighter than the framed ones, so the
+            // greeting stays the focus.
+            child: Container(
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.card.withValues(alpha: 0.85),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.ink.withValues(alpha: 0.08),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
+              child: const Icon(Icons.menu, size: 26, color: AppColors.ink),
             ),
           ),
         ],
@@ -309,7 +364,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
                 filterQuality: FilterQuality.medium,
               ),
               showChevron: true,
-              onPressed: () => Navigator.of(context).pushNamed('/rooms'),
+              onPressed: _joinRoom,
             ),
           ],
         ),
@@ -449,10 +504,7 @@ class _Sparkles extends StatelessWidget {
             alignment: const Alignment(0.62, -0.45),
             child: sparkle(16, 0.6),
           ),
-          Align(
-            alignment: const Alignment(0.5, 0.05),
-            child: sparkle(14, 0.7),
-          ),
+          Align(alignment: const Alignment(0.5, 0.05), child: sparkle(14, 0.7)),
           Align(
             alignment: const Alignment(-0.72, 0.15),
             child: sparkle(12, 0.45),
@@ -573,6 +625,135 @@ class _FacingDots extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// The moment between JOIN ROOM and Select Room: the page dims to
+/// parchment, the compass star turns and pulses, sparkles twinkle, and the
+/// tavern's doors "open".
+class _EnteringTavern extends StatefulWidget {
+  const _EnteringTavern();
+
+  @override
+  State<_EnteringTavern> createState() => _EnteringTavernState();
+}
+
+class _EnteringTavernState extends State<_EnteringTavern>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      liveRegion: true,
+      label: AppStrings.enteringTavern,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOut,
+        builder: (context, fadeIn, child) =>
+            Opacity(opacity: fadeIn, child: child),
+        child: ColoredBox(
+          color: AppColors.parchment.withValues(alpha: 0.97),
+          child: Stack(
+            children: [
+              const Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: CastleBackdrop(height: 260, opacity: 0.4),
+              ),
+              Center(
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, _) {
+                    final t = _controller.value;
+                    // One gentle pulse per turn.
+                    final pulse = 1 + 0.08 * math.sin(t * 2 * math.pi);
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox.square(
+                          dimension: 150,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              _twinkle(t, 0.0, const Alignment(-0.9, -0.7), 22),
+                              _twinkle(t, 0.33, const Alignment(0.9, -0.5), 16),
+                              _twinkle(
+                                t,
+                                0.66,
+                                const Alignment(0.75, 0.85),
+                                18,
+                              ),
+                              _twinkle(t, 0.5, const Alignment(-0.8, 0.8), 13),
+                              Transform.rotate(
+                                angle: t * 2 * math.pi / 4,
+                                child: Transform.scale(
+                                  scale: pulse,
+                                  child: Image.asset(
+                                    AppImages.compassStar,
+                                    width: 84,
+                                    filterQuality: FilterQuality.medium,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          AppStrings.enteringTavern,
+                          textAlign: TextAlign.center,
+                          style: FantasyText.title(size: 19),
+                        ),
+                        const SizedBox(height: 8),
+                        Image.asset(
+                          AppImages.ornamentDivider,
+                          width: 170,
+                          filterQuality: FilterQuality.medium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          AppStrings.enteringTavernSubtitle,
+                          textAlign: TextAlign.center,
+                          style: FantasyText.mono(size: 13),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A sparkle that fades in and out, offset in time by [phase].
+  Widget _twinkle(double t, double phase, Alignment at, double size) {
+    final wave = (math.sin((t + phase) * 2 * math.pi) + 1) / 2;
+    return Align(
+      alignment: at,
+      child: Opacity(
+        opacity: 0.25 + 0.75 * wave,
+        child: Image.asset(
+          AppImages.sparkle,
+          width: size,
+          filterQuality: FilterQuality.medium,
+        ),
       ),
     );
   }
