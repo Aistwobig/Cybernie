@@ -62,6 +62,14 @@ const List<GameCharacter> gameCharacters = [
     sheet: AppImages.characterMenAnim,
     idleSheet: AppImages.boyIdleSheet,
   ),
+  // His sheets bake in the bounce: stretched frames are drawn in the air
+  // above a shadow on the ground.
+  GameCharacter(
+    name: AppStrings.characterSlime,
+    sheet: AppImages.slimeSheet,
+    idleSheet: AppImages.slimeIdleSheet,
+    feetFraction: 246 / 256,
+  ),
 ];
 
 /// Matches the database default for `profiles.character_index`.

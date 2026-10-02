@@ -52,6 +52,7 @@ class AppStrings {
   static const String characterMage = 'Mage';
   static const String characterLily = 'Lily';
   static const String characterDancer = 'Dancer';
+  static const String characterSlime = 'Slime';
   static const String moreCharacters = '+ MORE';
   static const String saveButton = 'SAVE';
   static const String editPlayerName = 'Edit player name';
