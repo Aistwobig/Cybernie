@@ -3,6 +3,8 @@ import 'package:flame/effects.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/emotes.dart';
+
 enum Facing { south, north, west, east }
 
 /// Anyone standing in the tavern: drawn from an 8-column x 4-row walk sheet
@@ -45,7 +47,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
   bool moving = false;
   late final TextComponent _nameTag;
   _ChatBubble? _bubble;
-  TextComponent? _emote;
+  SpriteComponent? _emote;
 
   set name(String value) {
     _name = value;
@@ -185,16 +187,23 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     add(bubble);
   }
 
-  /// Pops [emoji] up beside the head, floats it upward, then removes it.
-  void emote(String emoji) {
-    if (!isLoaded) return;
+  /// How big emotes are drawn on the map.
+  static const double emoteSize = 34;
+
+  /// Pops the emote sent as [id] (see emotes.dart) up beside the head,
+  /// floats it upward, then removes it.
+  Future<void> emote(String id) async {
+    final picked = emoteById(id);
+    if (!isLoaded || picked == null) return;
+    final image = await game.images.load(picked.asset);
+    if (!isMounted) return;
     _emote?.removeFromParent();
-    final emote = TextComponent(
-      text: emoji,
+    final emote = SpriteComponent(
+      sprite: Sprite(image),
+      size: Vector2.all(emoteSize),
       anchor: Anchor.bottomCenter,
       position: Vector2(size.x * 0.9, 14),
       scale: Vector2.all(0.2),
-      textRenderer: TextPaint(style: const TextStyle(fontSize: 30)),
     );
     emote.addAll([
       ScaleEffect.to(

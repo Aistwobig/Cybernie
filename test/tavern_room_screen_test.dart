@@ -44,8 +44,10 @@ void main() {
       await tester.pump();
       await tester.tap(find.byTooltip('Emotes'));
       await tester.pump();
-      expect(find.text('🎉'), findsOneWidget);
-      expect(find.text('😠'), findsOneWidget);
+      // All eight pictures fit in the row at this size.
+      expect(find.byTooltip('Wave'), findsOneWidget);
+      expect(find.byTooltip('Crying'), findsOneWidget);
+      expect(find.byType(Image), findsNWidgets(8));
       expect(tester.takeException(), isNull);
 
       // Leave the screen so the game's timers stop.

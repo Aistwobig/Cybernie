@@ -72,7 +72,7 @@ void main() {
       game.otherPlayerSays('friend', 'hi!');
       // Emotes from them and from us pop up and clear without errors.
       game.otherPlayerEmotes('friend', '👋');
-      game.emote('🎉');
+      game.emote('😵');
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 300));
       }

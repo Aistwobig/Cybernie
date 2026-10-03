@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../constants/emotes.dart';
+
 /// Someone currently in a room, as shared through Realtime Presence.
 class RoomPlayer {
   const RoomPlayer({
@@ -160,10 +162,9 @@ class RoomService {
         });
   }
 
-  /// The reactions players can send. Anything else received is ignored.
-  static const List<String> emotes = ['👋', '😂', '❤️', '👍', '🎉', '😮', '😠'];
-
-  static bool isEmote(String emoji) => emotes.contains(emoji);
+  /// Only the reactions in [emotes] are sent; anything else received is
+  /// ignored.
+  static bool isEmote(String emoji) => emoteById(emoji) != null;
 
   Future<void> sendEmote(String emoji) async {
     if (!isEmote(emoji)) return;

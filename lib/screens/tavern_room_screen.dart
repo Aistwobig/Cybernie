@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_strings.dart';
 import '../constants/characters.dart';
+import '../constants/emotes.dart';
 import '../game/tavern_game.dart';
 import '../services/auth_service.dart';
 import '../services/chat_service.dart';
@@ -416,7 +417,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 
 enum _Panel { none, players, playerCard, report, noticeBoard }
 
-/// The six reactions, as big tappable buttons above the chat box.
+/// The reactions, as big tappable pictures above the chat box. They share
+/// the row's width, up to 48 px each.
 class _EmotePicker extends StatelessWidget {
   const _EmotePicker({required this.onPick});
 
@@ -434,18 +436,30 @@ class _EmotePicker extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          for (final emoji in RoomService.emotes)
-            Semantics(
-              button: true,
-              label: emoji,
-              child: InkWell(
-                onTap: () => onPick(emoji),
-                borderRadius: BorderRadius.circular(6),
-                child: SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: Center(
-                    child: Text(emoji, style: const TextStyle(fontSize: 24)),
+          for (final emote in emotes)
+            Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 48),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Tooltip(
+                    message: emote.label,
+                    child: Semantics(
+                      button: true,
+                      label: emote.label,
+                      excludeSemantics: true,
+                      child: InkWell(
+                        onTap: () => onPick(emote.id),
+                        borderRadius: BorderRadius.circular(6),
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: Image.asset(
+                            emote.asset,
+                            filterQuality: FilterQuality.medium,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),
