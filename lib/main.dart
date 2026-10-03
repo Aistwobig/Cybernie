@@ -61,14 +61,12 @@ class App extends StatefulWidget {
     '/friends/add': (context) => const AddFriendsScreen(),
   };
 
-  /// Bottom-nav tabs cross-fade (see AppNav.tabRoute); other screens use
-  /// the normal page transition.
-  static const Set<String> _tabs = {'/friends', '/profile'};
-
+  /// Bottom-nav tabs slide between each other (see AppNav.tabRoute); other
+  /// screens use the normal page transition.
   static Route<dynamic>? _page(RouteSettings settings) {
     final builder = _routes[settings.name];
     if (builder == null) return null;
-    return _tabs.contains(settings.name)
+    return AppNav.tabs.contains(settings.name)
         ? AppNav.tabRoute(settings, builder)
         : MaterialPageRoute<void>(settings: settings, builder: builder);
   }

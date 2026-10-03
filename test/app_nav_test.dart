@@ -85,31 +85,57 @@ void main() {
     expect(find.text('screen:welcome'), findsOneWidget);
   });
 
-  testWidgets('tabs cross-fade without showing Home in between', (
+  testWidgets('tabs slide toward the side of the tab you pick', (
     tester,
   ) async {
     await tester.pumpWidget(
       MaterialApp(
         initialRoute: '/welcome',
-        onGenerateRoute: (settings) {
-          final label = settings.name!.substring(1);
-          Widget build(BuildContext _) => _Screen(label);
-          return settings.name == '/welcome'
-              ? MaterialPageRoute<void>(settings: settings, builder: build)
-              : AppNav.tabRoute(settings, build);
-        },
+        onGenerateRoute: (settings) => AppNav.tabRoute(
+          settings,
+          (_) => _Screen(settings.name!.substring(1)),
+        ),
       ),
     );
-    await tap(tester, 'friends');
-    await tester.tap(find.text('profile').last);
-    await tester.pump();
-    // Halfway through the fade, Friends is still underneath, so Home
-    // (which sits below Friends) is still hidden.
-    await tester.pump(AppNav.tabTransition ~/ 2);
-    expect(find.text('screen:friends'), findsOneWidget);
+    double x(String screen) => tester.getTopLeft(find.text(screen)).dx;
+
+    // Starts a switch and stops halfway through it.
+    Future<void> halfway(String button) async {
+      await tester.tap(find.text(button).last);
+      await tester.pump();
+      await tester.pump(AppNav.tabTransition ~/ 2);
+    }
+
+    Future<void> finish() async {
+      await tester.pumpAndSettle();
+      await tester.pump(AppNav.tabTransition * 2);
+    }
+
+    // Home -> Friends: Friends comes in from the right, Home leaves left.
+    await halfway('friends');
+    expect(x('screen:friends'), greaterThan(0));
+    expect(x('screen:welcome'), lessThan(0));
+    await finish();
+
+    // Friends -> Profile: same way. Home never shows in between.
+    await halfway('profile');
+    expect(x('screen:profile'), greaterThan(0));
+    expect(x('screen:friends'), lessThan(0));
     expect(find.text('screen:welcome'), findsNothing);
-    await tester.pumpAndSettle();
-    await tester.pump(AppNav.tabTransition * 2);
-    expect(find.text('screen:profile'), findsOneWidget);
+    await finish();
+
+    // Profile -> Friends: the other way.
+    await halfway('friends');
+    expect(x('screen:friends'), lessThan(0));
+    expect(x('screen:profile'), greaterThan(0));
+    await finish();
+
+    // Friends -> Home: Home comes back from the left.
+    await halfway('home');
+    expect(x('screen:welcome'), lessThan(0));
+    expect(x('screen:friends'), greaterThan(0));
+    await finish();
+    expect(find.text('screen:welcome'), findsOneWidget);
+    expect(x('screen:welcome'), 0);
   });
 }
