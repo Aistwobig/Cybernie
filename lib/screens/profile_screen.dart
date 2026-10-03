@@ -508,10 +508,13 @@ class _CharacterTile extends StatelessWidget {
   static Widget _sparkle(double size, double opacity) => IgnorePointer(
     child: Opacity(
       opacity: opacity,
-      child: Image.asset(
-        AppImages.sparkle,
-        width: size,
-        filterQuality: FilterQuality.medium,
+      child: NightTint(
+        art: true,
+        child: Image.asset(
+          AppImages.sparkle,
+          width: size,
+          filterQuality: FilterQuality.medium,
+        ),
       ),
     ),
   );

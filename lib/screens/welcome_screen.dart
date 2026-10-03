@@ -239,10 +239,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Image.asset(
-                        AppImages.compassStar,
-                        width: 30,
-                        filterQuality: FilterQuality.medium,
+                      NightTint(
+                        art: true,
+                        child: Image.asset(
+                          AppImages.compassStar,
+                          width: 30,
+                          filterQuality: FilterQuality.medium,
+                        ),
                       ),
                     ],
                   ),
@@ -393,10 +396,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
             const SizedBox(height: 8),
             FantasyButton(
               label: AppStrings.joinRoomButton,
-              leading: Image.asset(
-                AppImages.sword,
-                width: 30,
-                filterQuality: FilterQuality.medium,
+              leading: NightTint(
+                art: true,
+                child: Image.asset(
+                  AppImages.sword,
+                  width: 30,
+                  filterQuality: FilterQuality.medium,
+                ),
               ),
               showChevron: true,
               onPressed: _joinRoom,
@@ -541,10 +547,13 @@ class _Sparkles extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget sparkle(double size, double opacity) => Opacity(
       opacity: opacity,
-      child: Image.asset(
-        AppImages.sparkle,
-        width: size,
-        filterQuality: FilterQuality.medium,
+      child: NightTint(
+        art: true,
+        child: Image.asset(
+          AppImages.sparkle,
+          width: size,
+          filterQuality: FilterQuality.medium,
+        ),
       ),
     );
 
@@ -761,10 +770,13 @@ class _EnteringTavernState extends State<_EnteringTavern>
                                 angle: t * 2 * math.pi / 4,
                                 child: Transform.scale(
                                   scale: pulse,
-                                  child: Image.asset(
-                                    AppImages.compassStar,
-                                    width: 84,
-                                    filterQuality: FilterQuality.medium,
+                                  child: NightTint(
+                                    art: true,
+                                    child: Image.asset(
+                                      AppImages.compassStar,
+                                      width: 84,
+                                      filterQuality: FilterQuality.medium,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -811,10 +823,13 @@ class _EnteringTavernState extends State<_EnteringTavern>
       alignment: at,
       child: Opacity(
         opacity: 0.25 + 0.75 * wave,
-        child: Image.asset(
-          AppImages.sparkle,
-          width: size,
-          filterQuality: FilterQuality.medium,
+        child: NightTint(
+          art: true,
+          child: Image.asset(
+            AppImages.sparkle,
+            width: size,
+            filterQuality: FilterQuality.medium,
+          ),
         ),
       ),
     );

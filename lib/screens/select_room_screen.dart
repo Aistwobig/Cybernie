@@ -193,10 +193,13 @@ class _RoomCard extends StatelessWidget {
                   padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
                   child: Row(
                     children: [
-                      Image.asset(
-                        AppImages.compassStar,
-                        width: 40,
-                        filterQuality: FilterQuality.medium,
+                      NightTint(
+                        art: true,
+                        child: Image.asset(
+                          AppImages.compassStar,
+                          width: 40,
+                          filterQuality: FilterQuality.medium,
+                        ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -229,10 +232,13 @@ class _RoomCard extends StatelessWidget {
             label: isFull ? AppStrings.roomFullButton : AppStrings.joinButton,
             leading: isFull
                 ? null
-                : Image.asset(
-                    AppImages.sword,
-                    width: 28,
-                    filterQuality: FilterQuality.medium,
+                : NightTint(
+                    art: true,
+                    child: Image.asset(
+                      AppImages.sword,
+                      width: 28,
+                      filterQuality: FilterQuality.medium,
+                    ),
                   ),
             showChevron: !isFull,
             height: 62,

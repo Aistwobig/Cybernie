@@ -4,6 +4,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../theme/app_theme.dart';
+
 /// Plays a directional walk-cycle from a single sprite sheet.
 ///
 /// Expects an 8-column x 4-row grid where each row is a facing direction:
@@ -167,6 +169,10 @@ class _SpritePainter extends CustomPainter {
   final int col;
   final int row;
 
+  /// Night mode's tint, so the character matches the dimmed frames and
+  /// scenes around it (null by day).
+  final ColorFilter? filter = AppColors.artFilter;
+
   @override
   void paint(Canvas canvas, Size size) {
     final cellWidth = sheet.width / columns;
@@ -192,7 +198,31 @@ class _SpritePainter extends CustomPainter {
       destHeight,
     );
 
-    final paint = Paint()..filterQuality = FilterQuality.none;
+    // At night a faint moonlight glow sits behind the character, so dark
+    // outfits still stand out from the dark page.
+    if (filter != null) {
+      final glow = Rect.fromCenter(
+        center: dstRect.center,
+        width: dstRect.width * 0.9,
+        height: dstRect.height * 0.9,
+      );
+      canvas.drawOval(
+        glow,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              AppColors.ink.withValues(alpha: 0.26),
+              AppColors.ink.withValues(alpha: 0.1),
+              AppColors.ink.withValues(alpha: 0),
+            ],
+            stops: const [0, 0.55, 1],
+          ).createShader(glow),
+      );
+    }
+
+    final paint = Paint()
+      ..filterQuality = FilterQuality.none
+      ..colorFilter = filter;
     canvas.drawImageRect(sheet, srcRect, dstRect, paint);
   }
 
@@ -200,6 +230,7 @@ class _SpritePainter extends CustomPainter {
   bool shouldRepaint(covariant _SpritePainter oldDelegate) {
     return oldDelegate.col != col ||
         oldDelegate.row != row ||
-        oldDelegate.sheet != sheet;
+        oldDelegate.sheet != sheet ||
+        oldDelegate.filter != filter;
   }
 }

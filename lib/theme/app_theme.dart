@@ -86,23 +86,49 @@ class AppColors {
         ])
       : null;
 
+  /// A gentler night tint for art that sits on the page: frames, buttons,
+  /// icons and the character sprites. Takes the glare off their cream
+  /// highlights and cools them toward the moonlit scenes, while keeping
+  /// them clearly brighter than the backgrounds. Null by day.
+  static ColorFilter? get artFilter => _night
+      ? const ColorFilter.matrix([
+          0.80, 0, 0, 0, 0, //
+          0, 0.82, 0, 0, 0, //
+          0, 0, 0.92, 0, 8, //
+          0, 0, 0, 1, 0,
+        ])
+      : null;
+
   /// For thin dark-brown line art (dividers), which would vanish on the
   /// night background: drawn in gold instead. Null by day.
   static ColorFilter? get lineArtFilter =>
       _night ? ColorFilter.mode(frameBrown, BlendMode.srcIn) : null;
 }
 
-/// Applies [AppColors.sceneFilter] (or [AppColors.lineArtFilter] when
-/// [lineArt] is true) to [child] at night; does nothing by day.
+/// Applies [AppColors.sceneFilter] to [child] at night (or
+/// [AppColors.lineArtFilter] when [lineArt] is true, or [AppColors.artFilter]
+/// when [art] is true); does nothing by day.
 class NightTint extends StatelessWidget {
-  const NightTint({super.key, required this.child, this.lineArt = false});
+  const NightTint({
+    super.key,
+    required this.child,
+    this.lineArt = false,
+    this.art = false,
+  });
 
   final Widget child;
   final bool lineArt;
 
+  /// Frames, buttons, icons and characters: the gentler tint.
+  final bool art;
+
   @override
   Widget build(BuildContext context) {
-    final filter = lineArt ? AppColors.lineArtFilter : AppColors.sceneFilter;
+    final filter = art
+        ? AppColors.artFilter
+        : lineArt
+        ? AppColors.lineArtFilter
+        : AppColors.sceneFilter;
     return filter == null
         ? child
         : ColorFiltered(colorFilter: filter, child: child);

@@ -126,6 +126,9 @@ class _NineSlicePainter extends CustomPainter {
   final Rect centerPx;
   final double scale;
 
+  /// Night mode's gentler tint for the frame art (null by day).
+  final ColorFilter? filter = AppColors.artFilter;
+
   @override
   void paint(Canvas canvas, Size size) {
     final img = image;
@@ -136,14 +139,16 @@ class _NineSlicePainter extends CustomPainter {
       img,
       centerPx,
       Offset.zero & (size * scale),
-      Paint()..filterQuality = FilterQuality.medium,
+      Paint()
+        ..filterQuality = FilterQuality.medium
+        ..colorFilter = filter,
     );
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant _NineSlicePainter old) =>
-      old.image != image || old.scale != scale;
+      old.image != image || old.scale != scale || old.filter != filter;
 }
 
 /// Loads an asset image once and rebuilds with it (null until decoded).
@@ -329,6 +334,9 @@ class _ButtonFramePainter extends CustomPainter {
 
   final ui.Image? image;
 
+  /// Night mode's gentler tint for the button art (null by day).
+  final ColorFilter? filter = AppColors.artFilter;
+
   // Source x-ranges in frame_button.png (658 x 182).
   static const List<(double, double, bool)> _strips = [
     (0, 70, false),
@@ -347,7 +355,9 @@ class _ButtonFramePainter extends CustomPainter {
     final stretchPx = (img.width - fixedPx).toDouble();
     final stretchOut = (size.width - fixedPx * s).clamp(0.0, double.infinity);
 
-    final paint = Paint()..filterQuality = FilterQuality.medium;
+    final paint = Paint()
+      ..filterQuality = FilterQuality.medium
+      ..colorFilter = filter;
     var x = 0.0;
     for (final (from, to, stretches) in _strips) {
       final srcW = to - from;
@@ -370,7 +380,8 @@ class _ButtonFramePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _ButtonFramePainter old) => old.image != image;
+  bool shouldRepaint(covariant _ButtonFramePainter old) =>
+      old.image != image || old.filter != filter;
 }
 
 // --- Small framed buttons ------------------------------------------------------
@@ -594,10 +605,13 @@ class FantasyTitleBar extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 10),
-          Image.asset(
-            AppImages.compassStar,
-            width: 34,
-            filterQuality: FilterQuality.medium,
+          NightTint(
+            art: true,
+            child: Image.asset(
+              AppImages.compassStar,
+              width: 34,
+              filterQuality: FilterQuality.medium,
+            ),
           ),
           const Spacer(),
           ?trailing,
@@ -620,10 +634,13 @@ class StarBanner extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 14, 14, 14),
       child: Row(
         children: [
-          Image.asset(
-            AppImages.compassStar,
-            width: 36,
-            filterQuality: FilterQuality.medium,
+          NightTint(
+            art: true,
+            child: Image.asset(
+              AppImages.compassStar,
+              width: 36,
+              filterQuality: FilterQuality.medium,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
