@@ -2,6 +2,7 @@ import 'package:final_project/constants/app_images.dart';
 import 'package:final_project/game/player.dart';
 import 'package:final_project/game/tavern_game.dart';
 import 'package:final_project/game/tavern_map.dart';
+import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -73,9 +74,23 @@ void main() {
       // Emotes from them and from us pop up and clear without errors.
       game.otherPlayerEmotes('friend', '👋');
       game.emote('😵');
+      // The picture loads, then pops up over our head...
+      for (var i = 0; i < 5; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(
+        game.player.children.whereType<SpriteComponent>(),
+        hasLength(1),
+        reason: 'our emote should show over our head',
+      );
+      // ...and is gone a few seconds later.
       for (var i = 0; i < 10; i++) {
         await tester.pump(const Duration(milliseconds: 300));
       }
+      expect(game.player.children.whereType<SpriteComponent>(), isEmpty);
       expect(tester.takeException(), isNull);
 
       // Walking up to the notice board offers it, and E opens it.
