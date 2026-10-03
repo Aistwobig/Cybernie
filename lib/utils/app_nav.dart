@@ -22,8 +22,9 @@ class AppNav {
   /// How long switching tabs takes.
   static const Duration tabTransition = Duration(milliseconds: 300);
 
-  /// While a tab switch is running: +1 when the new tab comes in from the
-  /// right (moving right along the bar), -1 when it comes in from the left.
+  /// While a tab switch is running: -1 when the new tab comes in from the
+  /// left (moving right along the bar, so the screens move right), +1 when
+  /// it comes in from the right (moving left along the bar).
   /// Null otherwise, and tab screens just fade (e.g. Home after login).
   static int? _slideFrom;
   static Timer? _slideEnd;
@@ -37,8 +38,8 @@ class AppNav {
   /// Back to the Welcome screen: reuses it if it's underneath, otherwise
   /// makes it the only screen.
   static void goHome(BuildContext context) {
-    // From a tab, Home is to the left: slide the tab away to the right.
-    if (tabs.contains(ModalRoute.of(context)?.settings.name)) _startSlide(-1);
+    // From a tab, Home is to the left: the screens move left.
+    if (tabs.contains(ModalRoute.of(context)?.settings.name)) _startSlide(1);
     final navigator = Navigator.of(context);
     var found = false;
     navigator.popUntil((route) {
@@ -52,8 +53,9 @@ class AppNav {
   }
 
   /// The page route for a tab screen (Home, Friends, Profile). Switching
-  /// tabs slides like swiping between pages, in the direction of the tab
-  /// you picked: the new screen pushes the old one off the other side.
+  /// tabs slides like swiping between pages: picking a tab to the right
+  /// moves the screens right (the new one comes in from the left and pushes
+  /// the old one off the right edge); picking one to the left moves them left.
   static Route<void> tabRoute(RouteSettings settings, WidgetBuilder builder) {
     return PageRouteBuilder<void>(
       settings: settings,
@@ -92,7 +94,7 @@ class AppNav {
     final navigator = Navigator.of(context);
     final leaving = ModalRoute.of(context);
     final fromIndex = tabs.indexOf(leaving?.settings.name ?? home);
-    _startSlide(tabs.indexOf(route) > fromIndex ? 1 : -1);
+    _startSlide(tabs.indexOf(route) > fromIndex ? -1 : 1);
     navigator.pushNamed(route);
     // Keep the old tab underneath until the new one has slid in fully, so
     // Home never shows through between two tabs.

@@ -111,29 +111,30 @@ void main() {
       await tester.pump(AppNav.tabTransition * 2);
     }
 
-    // Home -> Friends: Friends comes in from the right, Home leaves left.
+    // Home -> Friends: the screens move right. Friends comes in from the
+    // left, Home leaves off the right edge.
     await halfway('friends');
-    expect(x('screen:friends'), greaterThan(0));
-    expect(x('screen:welcome'), lessThan(0));
+    expect(x('screen:friends'), lessThan(0));
+    expect(x('screen:welcome'), greaterThan(0));
     await finish();
 
     // Friends -> Profile: same way. Home never shows in between.
     await halfway('profile');
-    expect(x('screen:profile'), greaterThan(0));
-    expect(x('screen:friends'), lessThan(0));
+    expect(x('screen:profile'), lessThan(0));
+    expect(x('screen:friends'), greaterThan(0));
     expect(find.text('screen:welcome'), findsNothing);
     await finish();
 
-    // Profile -> Friends: the other way.
+    // Profile -> Friends: the screens move left.
     await halfway('friends');
-    expect(x('screen:friends'), lessThan(0));
-    expect(x('screen:profile'), greaterThan(0));
+    expect(x('screen:friends'), greaterThan(0));
+    expect(x('screen:profile'), lessThan(0));
     await finish();
 
-    // Friends -> Home: Home comes back from the left.
+    // Friends -> Home: Home comes back from the right.
     await halfway('home');
-    expect(x('screen:welcome'), lessThan(0));
-    expect(x('screen:friends'), greaterThan(0));
+    expect(x('screen:welcome'), greaterThan(0));
+    expect(x('screen:friends'), lessThan(0));
     await finish();
     expect(find.text('screen:welcome'), findsOneWidget);
     expect(x('screen:welcome'), 0);
