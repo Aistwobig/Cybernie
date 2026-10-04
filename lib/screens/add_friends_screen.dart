@@ -26,7 +26,10 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
 
   /// Our connection to each player we have a friendship row with.
   Map<String, FriendStatus> _statusById = {};
+
+  /// Requests other players sent us, and ones we sent that are waiting.
   List<Profile> _requests = [];
+  List<Profile> _sent = [];
   List<Profile> _results = [];
   bool _isSearching = false;
 
@@ -55,6 +58,10 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
         _requests = [
           for (final e in entries)
             if (e.status == FriendStatus.requestReceived) e.profile,
+        ];
+        _sent = [
+          for (final e in entries)
+            if (e.status == FriendStatus.requestSent) e.profile,
         ];
       });
     } catch (_) {
@@ -139,10 +146,19 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(24, 6, 24, 16),
                   children: [
-                    if (_requests.isNotEmpty) ...[
-                      _SectionLabel(
-                        AppStrings.friendRequestsHeader(_requests.length),
-                      ),
+                    // Search results first while searching.
+                    if (_query.trim().isNotEmpty) ...[
+                      _SectionLabel(AppStrings.resultsHeader),
+                      ..._buildResults(now),
+                      const SizedBox(height: 8),
+                    ],
+                    // Requests to you: accept or decline.
+                    _SectionLabel(
+                      AppStrings.friendRequestsHeader(_requests.length),
+                    ),
+                    if (_requests.isEmpty)
+                      const _Hint(AppStrings.noFriendRequests)
+                    else
                       for (final player in _requests)
                         PlayerRow(
                           profile: player,
@@ -150,10 +166,19 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
                           isOnline: player.isOnline(now),
                           trailing: _requestButtons(player),
                         ),
-                      const SizedBox(height: 8),
-                    ],
-                    _SectionLabel(AppStrings.resultsHeader),
-                    ..._buildResults(now),
+                    const SizedBox(height: 8),
+                    // Requests you sent that are still waiting: cancel.
+                    _SectionLabel(AppStrings.sentRequestsHeader(_sent.length)),
+                    if (_sent.isEmpty)
+                      const _Hint(AppStrings.noSentRequests)
+                    else
+                      for (final player in _sent)
+                        PlayerRow(
+                          profile: player,
+                          subtitle: lastSeenLabel(player, now),
+                          isOnline: player.isOnline(now),
+                          trailing: _sentButton(player),
+                        ),
                   ],
                 ),
               ),
@@ -192,9 +217,6 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
   }
 
   List<Widget> _buildResults(DateTime now) {
-    if (_query.trim().isEmpty) {
-      return [const _Hint(AppStrings.searchPlayersPrompt)];
-    }
     if (_isSearching && _results.isEmpty) {
       return [
         Padding(
@@ -245,6 +267,17 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
               : () => _act(player, () => FriendsService.remove(player.id)),
         ),
       ],
+    );
+  }
+
+  /// Takes back a request we sent.
+  Widget _sentButton(Profile player) {
+    final busy = _busy.contains(player.id);
+    return _SmallButton(
+      label: AppStrings.cancelButton,
+      onPressed: busy
+          ? null
+          : () => _act(player, () => FriendsService.remove(player.id)),
     );
   }
 

@@ -93,9 +93,10 @@ class AppStrings {
   static const String addFriendsTitle = 'Add Friends';
   static const String searchPlayersHint = 'Search by name or username...';
   static String friendRequestsHeader(int count) => 'FRIEND REQUESTS ($count)';
+  static String sentRequestsHeader(int count) => 'SENT REQUESTS ($count)';
+  static const String noFriendRequests = 'No friend requests right now.';
+  static const String noSentRequests = "You haven't sent any requests.";
   static const String resultsHeader = 'RESULTS';
-  static const String searchPlayersPrompt =
-      'Search for players who have signed in to Cybernie.';
   static String noPlayersMatch(String query) => 'No players match "$query"';
   static const String acceptButton = 'ACCEPT';
   static const String declineButton = 'DECLINE';
