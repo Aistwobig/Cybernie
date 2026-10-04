@@ -9,7 +9,9 @@ import 'package:flutter/services.dart';
 import '../constants/app_images.dart';
 import '../constants/characters.dart';
 import '../constants/drinks.dart';
+import '../theme/app_theme.dart';
 import 'bernie.dart';
+import 'night_lighting.dart';
 import 'player.dart';
 import 'remote_player.dart';
 import 'tavern_map.dart';
@@ -209,6 +211,10 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
 
   void otherPlayerEmotes(String id, String emoji) => _others[id]?.emote(emoji);
 
+  /// Shows or hides the "..." bubble over another player who is typing.
+  void otherPlayerTyping(String id, bool typing) =>
+      _others[id]?.showTyping(typing);
+
   /// Shows one of our own emotes over our head.
   void emote(String emoji) {
     if (isLoaded) player.emote(emoji);
@@ -404,6 +410,15 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       for (final seat in TavernMap.seats) _SeatTarget(seat, onDoubleTap: sitOn),
     ];
 
+    // Night mode: the map (and the bits of it drawn over characters) dims
+    // like the app's other scenes, and its lanterns glow warm.
+    final sceneFilter = AppColors.sceneFilter;
+    if (sceneFilter != null) {
+      for (final part in [map, counterFront, ...stoolFronts]) {
+        part.paint.colorFilter = sceneFilter;
+      }
+    }
+
     world.addAll([
       map,
       bernie,
@@ -412,6 +427,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       ...seatTargets,
       player,
       _keyboardInput,
+      if (sceneFilter != null) NightLighting(),
     ]);
 
     _joystick = JoystickComponent(

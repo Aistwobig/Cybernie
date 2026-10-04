@@ -113,6 +113,7 @@ class RoomService {
     required void Function() onSomeoneJoined,
     required void Function(String playerId, String emoji) onEmote,
     void Function(String playerId, String drinkId)? onDrink,
+    void Function(String playerId, bool typing)? onTyping,
     required void Function() onError,
   }) async {
     await _client.realtime.setAuth(_client.auth.currentSession?.accessToken);
@@ -167,6 +168,18 @@ class RoomService {
             }
           },
         )
+        .onBroadcast(
+          event: 'typing',
+          callback: (message) {
+            final data = message['payload'] is Map
+                ? Map<String, dynamic>.from(message['payload'] as Map)
+                : message;
+            final id = data['id'];
+            if (id is String && id != myId) {
+              onTyping?.call(id, data['t'] == true);
+            }
+          },
+        )
         .subscribe((status, error) async {
           if (status == RealtimeSubscribeStatus.subscribed) {
             await channel.track({
@@ -201,6 +214,15 @@ class RoomService {
     await _channel?.sendBroadcastMessage(
       event: 'drink',
       payload: {'id': myId, 'd': drinkId},
+    );
+  }
+
+  /// Tells the room we started ([typing] true, repeated every few seconds
+  /// while we keep typing) or stopped writing a chat message.
+  Future<void> sendTyping(bool typing) async {
+    await _channel?.sendBroadcastMessage(
+      event: 'typing',
+      payload: {'id': myId, 't': typing},
     );
   }
 

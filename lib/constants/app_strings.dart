@@ -197,6 +197,13 @@ class AppStrings {
   static const String chatTitle = 'CHAT';
   static String chatNewMessages(int count) =>
       count == 1 ? '1 NEW MESSAGE' : '$count NEW MESSAGES';
+
+  /// Under the tavern chat while others are writing.
+  static String chatTyping(List<String> names) => switch (names.length) {
+    1 => '${names[0]} is typing…',
+    2 => '${names[0]} and ${names[1]} are typing…',
+    _ => 'Several people are typing…',
+  };
   static const String hideChat = 'Hide chat';
   static const String showChat = 'Show chat';
   static const String moreRoomsComingSoon = 'MORE ROOMS — COMING SOON';

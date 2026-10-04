@@ -5,6 +5,7 @@ import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
 import '../constants/app_images.dart';
+import '../theme/app_theme.dart';
 import 'character.dart';
 
 /// Bernie, the cat who runs the tavern: an NPC standing behind the bar with
@@ -63,7 +64,9 @@ class Bernie extends SpriteAnimationComponent
     // The same height as the players, so he's to scale.
     size = Vector2(_cellW, _cellH) * (Character.displayHeight / _cellH);
     priority = position.y.round();
-    paint.filterQuality = FilterQuality.none;
+    paint
+      ..filterQuality = FilterQuality.none
+      ..colorFilter = AppColors.artFilter;
   }
 
   /// Shows [text] in a speech bubble over his head (above the name plate

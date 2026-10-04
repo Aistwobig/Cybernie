@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/sprite.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/material.dart';
 
 import '../constants/drinks.dart';
 import '../constants/emotes.dart';
+import '../theme/app_theme.dart';
 
 enum Facing { south, north, west, east }
 
@@ -222,7 +225,11 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     anchor = Anchor(0.5, feetFraction);
     _nameTag.position = Vector2(size.x / 2, 2);
     // Keep pixel art crisp when scaled.
-    paint.filterQuality = FilterQuality.none;
+    paint
+      ..filterQuality = FilterQuality.none
+      // At night: the gentler tint, so characters stay brighter than the
+      // dimmed tavern around them.
+      ..colorFilter = AppColors.artFilter;
   }
 
   @override
@@ -247,11 +254,33 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   /// Shows [text] in a speech bubble above the name tag for a few seconds.
   void say(String text) {
     if (!isLoaded) return;
+    // Their message arrived, so they're done typing.
+    showTyping(false);
     _bubble?.removeFromParent();
     final bubble = SpeechBubble(text)
       ..position = Vector2(size.x / 2, -16)
       ..anchor = Anchor.bottomCenter;
     _bubble = bubble;
+    add(bubble);
+  }
+
+  TypingBubble? _typing;
+
+  /// Shows (or hides) a "..." bubble above the head while this player is
+  /// writing a chat message. It takes the place of their last speech bubble
+  /// (they're on to the next message).
+  void showTyping(bool typing) {
+    if (!typing) {
+      _typing?.removeFromParent();
+      _typing = null;
+      return;
+    }
+    if (!isLoaded || (_typing?.isMounted ?? false)) return;
+    _bubble?.removeFromParent();
+    final bubble = TypingBubble()
+      ..position = Vector2(size.x / 2, -16)
+      ..anchor = Anchor.bottomCenter;
+    _typing = bubble;
     add(bubble);
   }
 
@@ -326,6 +355,50 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     ]);
     _emote = emote;
     add(emote);
+  }
+}
+
+/// A small parchment bubble with three dots bobbing in turn, shown while a
+/// player is typing. Removes itself after [_lifetime] seconds in case the
+/// "stopped typing" message never arrives.
+class TypingBubble extends PositionComponent {
+  TypingBubble() : super(size: Vector2(34, 18));
+
+  static const double _lifetime = 8;
+  double _age = 0;
+
+  static final Paint _fill = Paint()..color = const Color(0xF2F5EFE0);
+  static final Paint _border = Paint()
+    ..color = const Color(0xFF1B1712)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.2;
+  static final Paint _dot = Paint()..color = const Color(0xFF1B1712);
+
+  @override
+  void update(double dt) {
+    _age += dt;
+    if (_age > _lifetime) removeFromParent();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final box = RRect.fromRectAndRadius(
+      size.toRect(),
+      const Radius.circular(9),
+    );
+    canvas
+      ..drawRRect(box, _fill)
+      ..drawRRect(box, _border);
+    for (var i = 0; i < 3; i++) {
+      // Each dot hops in turn, a third of a beat after the one before.
+      final phase = (_age * 2.4 - i / 3) % 1;
+      final hop = phase < 0.5 ? math.sin(phase * 2 * math.pi) * 3 : 0.0;
+      canvas.drawCircle(
+        Offset(size.x / 2 + (i - 1) * 8, size.y / 2 - hop),
+        2.3,
+        _dot,
+      );
+    }
   }
 }
 

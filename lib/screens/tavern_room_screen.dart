@@ -67,6 +67,21 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   bool _atBar = false;
   bool _justOrdered = false;
   Timer? _orderPause;
+
+  /// Our own typing: whether the room was told we're typing, when we last
+  /// said so, and a timer that says we stopped after a pause.
+  bool _typingSent = false;
+  DateTime _lastTypingPing = DateTime.fromMillisecondsSinceEpoch(0);
+  Timer? _typingIdle;
+  String _lastDraft = '';
+  static const Duration _typingRepeat = Duration(seconds: 2);
+  static const Duration _typingPause = Duration(seconds: 4);
+
+  /// Others typing, by player id. Each one is dropped if no new "typing"
+  /// arrives in time (their "stopped" message may never come).
+  final Map<String, Timer> _typers = {};
+  static const Duration _typingTimeout = Duration(seconds: 5);
+
   @override
   void initState() {
     super.initState();
@@ -105,6 +120,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     };
     _game.onDrinkOrdered = (drinkId) => _room?.sendDrink(drinkId);
     _game.onSeatTooFar = () => _showSnack(AppStrings.walkCloserToSit);
+    _messageController.addListener(_onDraftChanged);
     _enterRoom();
     _connectChat();
   }
@@ -125,6 +141,10 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onSeatTooFar = null
       ..onInteract = null;
     _orderPause?.cancel();
+    _typingIdle?.cancel();
+    for (final timer in _typers.values) {
+      timer.cancel();
+    }
     _room?.leave();
     _chat?.dispose();
     _gameFocus.dispose();
@@ -179,6 +199,13 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         setState(() {
           _others = others;
           _playersInRoom = others.length + 1;
+          // Whoever left isn't typing any more.
+          final here = {for (final p in others) p.id};
+          _typers.removeWhere((id, timer) {
+            if (here.contains(id)) return false;
+            timer.cancel();
+            return true;
+          });
         });
       },
       onMove: (move) => _game.moveOtherPlayer(
@@ -195,6 +222,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         SfxService.play(Sfx.pop, gain: 0.6);
       },
       onDrink: _game.otherPlayerDrinks,
+      onTyping: _setTyping,
       onError: () => _showSnack(AppStrings.roomConnectionError),
     );
     // A little welcome jingle once we're in.
@@ -213,6 +241,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       });
       // Our own bubble is shown as soon as we send; show everyone else's.
       if (message.senderId != chat.myId) {
+        _setTyping(message.senderId, false);
         SfxService.play(Sfx.message, gain: 0.7);
         _game.otherPlayerSays(message.senderId, message.body);
       }
@@ -250,6 +279,51 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     } finally {
       if (mounted) setState(() => _isSending = false);
     }
+  }
+
+  /// Tells the room when we start typing (again every [_typingRepeat] while
+  /// we keep at it) and when we stop: the box is emptied or sent, or we
+  /// pause for [_typingPause].
+  void _onDraftChanged() {
+    final draft = _messageController.text.trim();
+    // Moving the cursor also notifies; only edits count.
+    if (draft == _lastDraft) return;
+    _lastDraft = draft;
+    if (draft.isEmpty) {
+      _stopTyping();
+      return;
+    }
+    final now = DateTime.now();
+    if (!_typingSent || now.difference(_lastTypingPing) >= _typingRepeat) {
+      _typingSent = true;
+      _lastTypingPing = now;
+      _room?.sendTyping(true);
+    }
+    _typingIdle?.cancel();
+    _typingIdle = Timer(_typingPause, _stopTyping);
+  }
+
+  void _stopTyping() {
+    _typingIdle?.cancel();
+    if (!_typingSent) return;
+    _typingSent = false;
+    _room?.sendTyping(false);
+  }
+
+  /// Shows [playerId] as typing (over their head and under the chat) for
+  /// up to [_typingTimeout], or stops showing them.
+  void _setTyping(String playerId, bool typing) {
+    _game.otherPlayerTyping(playerId, typing);
+    if (!mounted) return;
+    setState(() {
+      _typers.remove(playerId)?.cancel();
+      if (typing) {
+        _typers[playerId] = Timer(
+          _typingTimeout,
+          () => _setTyping(playerId, false),
+        );
+      }
+    });
   }
 
   void _showSnack(String text) {
@@ -516,6 +590,12 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
               if (_emotesOpen) ...[
                 _EmotePicker(onPick: _sendEmote),
                 const SizedBox(height: 8),
+              ],
+              if (_typers.isNotEmpty) ...[
+                _TypingLine(
+                  names: [for (final id in _typers.keys) _nameInRoom(id)],
+                ),
+                const SizedBox(height: 4),
               ],
               _ChatInput(
                 controller: _messageController,
@@ -856,6 +936,37 @@ class _ChatLog extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// "Mira is typing…" in a small dark pill above the chat box.
+class _TypingLine extends StatelessWidget {
+  const _TypingLine({required this.names});
+
+  final List<String> names;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.ink.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          AppStrings.chatTyping(names),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.inter(
+            fontSize: 11,
+            fontStyle: FontStyle.italic,
+            color: AppColors.parchment,
+          ),
+        ),
+      ),
     );
   }
 }
