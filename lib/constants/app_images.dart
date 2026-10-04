@@ -11,6 +11,7 @@ class AppImages {
   static const String mageRunSheet = 'assets/images/mage_left_right.png';
   static const String mageSitBackSheet = 'assets/images/mage_sit_back.png';
   static const String boyIdleSheet = 'assets/images/idle_anim_boy.png';
+  static const String boySitBackSheet = 'assets/images/boy_sit_back.png';
   static const String lilySheet = 'assets/images/lily_walk.png';
   static const String lilyIdleSheet = 'assets/images/lily_idle.png';
   static const String lilySitBackSheet = 'assets/images/lily_sit_back.png';

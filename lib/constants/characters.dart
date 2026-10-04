@@ -50,11 +50,13 @@ const List<GameCharacter> gameCharacters = [
     name: AppStrings.characterLuna,
     sheet: AppImages.characterMenAnim,
     idleSheet: AppImages.boyIdleSheet,
+    sitBackSheet: AppImages.boySitBackSheet,
   ),
   GameCharacter(
     name: AppStrings.characterRogue,
     sheet: AppImages.characterMenAnim,
     idleSheet: AppImages.boyIdleSheet,
+    sitBackSheet: AppImages.boySitBackSheet,
   ),
   GameCharacter(
     name: AppStrings.characterMage,
@@ -75,6 +77,7 @@ const List<GameCharacter> gameCharacters = [
     name: AppStrings.characterDancer,
     sheet: AppImages.characterMenAnim,
     idleSheet: AppImages.boyIdleSheet,
+    sitBackSheet: AppImages.boySitBackSheet,
   ),
   // His sheets bake in the bounce: stretched frames are drawn in the air
   // above a shadow on the ground. 16 frames: every drawn pose is followed
