@@ -120,6 +120,24 @@ class _SpriteWalkPreviewState extends State<SpriteWalkPreview> {
   }
 
   @override
+  void didUpdateWidget(covariant SpriteWalkPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.assetPath != widget.assetPath ||
+        oldWidget.sideAssetPath != widget.sideAssetPath) {
+      _timer?.cancel();
+      _frameIndex = 0;
+      _loadImage();
+    } else if (oldWidget.animate != widget.animate ||
+        oldWidget.frameDuration != widget.frameDuration ||
+        oldWidget.columns != widget.columns) {
+      // Started or stopped (e.g. a tile hovered): stopping goes back to the
+      // first frame.
+      _frameIndex = 0;
+      if (_sheet != null) _startLoop();
+    }
+  }
+
+  @override
   void dispose() {
     _timer?.cancel();
     super.dispose();

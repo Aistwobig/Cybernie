@@ -429,7 +429,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 /// A character in its ornate frame with sparkles; the chosen one is dark.
-class _CharacterTile extends StatelessWidget {
+/// The chosen character, and any character you hover, plays its idle
+/// animation facing front; the rest stand still.
+class _CharacterTile extends StatefulWidget {
   const _CharacterTile({
     required this.character,
     required this.isSelected,
@@ -441,7 +443,21 @@ class _CharacterTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_CharacterTile> createState() => _CharacterTileState();
+}
+
+class _CharacterTileState extends State<_CharacterTile> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
+    final character = widget.character;
+    final isSelected = widget.isSelected;
+    final onTap = widget.onTap;
+    // Idle cycles run at the same pace as in the tavern (0.2 s per frame
+    // for 8 frames, whatever the frame count).
+    final idleFrame = Duration(microseconds: 200000 * 8 ~/ character.frames);
+
     return Semantics(
       button: true,
       selected: isSelected,
@@ -455,6 +471,7 @@ class _CharacterTile extends StatelessWidget {
           type: MaterialType.transparency,
           child: InkWell(
             onTap: onTap,
+            onHover: (hovering) => setState(() => _hovered = hovering),
             borderRadius: BorderRadius.circular(6),
             child: Stack(
               children: [
@@ -473,13 +490,16 @@ class _CharacterTile extends StatelessWidget {
                   child: Column(
                     children: [
                       Expanded(
-                        // The portrait files are walk sheets: show the
-                        // front-facing standing frame.
+                        // The front-facing idle (the walk's first frame
+                        // for a character without one).
                         child: SpriteWalkPreview(
-                          assetPath: character.sheet,
+                          assetPath: character.idleSheet ?? character.sheet,
                           columns: character.frames,
                           facing: SpriteDirection.south,
-                          animate: false,
+                          animate:
+                              character.idleSheet != null &&
+                              (_hovered || isSelected),
+                          frameDuration: idleFrame,
                         ),
                       ),
                       const SizedBox(height: 6),
