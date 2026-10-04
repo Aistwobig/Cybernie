@@ -248,7 +248,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
 
   /// How big a held drink is drawn, and for how long it's held.
   static const double drinkSize = 22;
-  static const double drinkSeconds = 60;
+  static const double drinkSeconds = 10;
 
   /// Shows [drink] (sent as its id, see drinks.dart) held up beside the
   /// head for [drinkSeconds], with a little sip now and then.
