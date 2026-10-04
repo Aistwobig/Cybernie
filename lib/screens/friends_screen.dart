@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../utils/last_seen.dart';
 import '../widgets/fantasy_ui.dart';
 import '../widgets/player_avatar.dart';
+import 'direct_chat_screen.dart';
 
 /// Friends list: real players you've added, with their photo, an online dot
 /// and when they were last active. Online friends are listed first.
@@ -150,7 +151,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   Future<void> _showFriend(Profile friend) async {
-    final removed = await showModalBottomSheet<bool>(
+    final result = await showModalBottomSheet<_FriendSheetResult>(
       context: context,
       backgroundColor: AppColors.parchment,
       shape: const RoundedRectangleBorder(
@@ -158,7 +159,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
       ),
       builder: (sheetContext) => _FriendSheet(friend: friend),
     );
-    if (removed == true) _loadFriends();
+    if (!mounted) return;
+    switch (result) {
+      case _FriendSheetResult.removed:
+        _loadFriends();
+      case _FriendSheetResult.message:
+        await DirectChatScreen.open(context, friend);
+      case null:
+        break;
+    }
   }
 
   List<Profile> get _filteredFriends => _friends.where(_matchesQuery).toList();
@@ -299,13 +308,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   profile: friend,
                   subtitle: lastSeenLabel(friend, now),
                   isOnline: friend.isOnline(now),
+                  // Tap a friend to see their profile (and message them);
+                  // the chat button goes straight to the conversation.
                   onTap: () => _showFriend(friend),
                   trailing: FramedIconButton(
-                    icon: Icons.chevron_right,
-                    tooltip: AppStrings.viewFriend(friend.displayName),
+                    icon: Icons.chat_bubble_outline,
+                    tooltip: AppStrings.messageFriend(friend.displayName),
                     dark: true,
                     size: 40,
-                    onPressed: () => _showFriend(friend),
+                    onPressed: () => DirectChatScreen.open(context, friend),
                   ),
                 ),
           ],
@@ -573,6 +584,8 @@ class _RingedAvatar extends StatelessWidget {
 
 /// A friend's card: big photo, name, username, status, and Remove friend.
 /// Pops `true` if the friend was removed.
+enum _FriendSheetResult { removed, message }
+
 class _FriendSheet extends StatefulWidget {
   const _FriendSheet({required this.friend});
 
@@ -594,7 +607,7 @@ class _FriendSheetState extends State<_FriendSheet> {
     setState(() => _removing = true);
     try {
       await FriendsService.remove(widget.friend.id);
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) Navigator.of(context).pop(_FriendSheetResult.removed);
     } catch (_) {
       if (mounted) {
         setState(() => _removing = false);
@@ -650,6 +663,30 @@ class _FriendSheetState extends State<_FriendSheet> {
               ),
             ),
             const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.ink,
+                  foregroundColor: AppColors.onInk,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                onPressed: () =>
+                    Navigator.of(context).pop(_FriendSheetResult.message),
+                icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                label: Text(
+                  AppStrings.messageButton,
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
             SizedBox(
               width: double.infinity,
               height: 42,

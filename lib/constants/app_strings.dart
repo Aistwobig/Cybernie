@@ -160,6 +160,31 @@ class AppStrings {
       "The notice board isn't set up yet. Run the notice board SQL in Supabase.";
   static const String takeDownNote = 'Take down note';
   static const String emotesButton = 'Emotes';
+
+  // Private messages between friends
+  static const String messagesTitle = 'Messages';
+  static const String messageButton = 'MESSAGE';
+  static String messageFriend(String name) => 'Message $name';
+  static String dmHint(String name) => 'Message $name…';
+  static String dmEmpty(String name) =>
+      'No messages yet. Say hi to $name or send an emote!';
+  static const String dmLoadError = "Couldn't load your messages.";
+  static const String dmNotSetUp =
+      "Private messages aren't set up yet. Run the direct_messages "
+      'migration in Supabase.';
+  static const String dmSendError = "Couldn't send. Please try again.";
+  static const String dmDeleteError = "Couldn't delete that message.";
+  static const String dmEdited = 'edited';
+  static const String dmEdit = 'Edit';
+  static const String dmDelete = 'Delete';
+  static const String dmEditing = 'Editing message';
+  static const String dmSend = 'Send';
+  static const String dmSaveEdit = 'Save edit';
+  static const String dmMessageActionsHint = 'Edit or delete';
+  static const String noFriendsToMessage =
+      'Add friends to message them privately.';
+  static String unreadMessages(int count) =>
+      count == 1 ? '1 new message' : '$count new messages';
   static const String chatTitle = 'CHAT';
   static String chatNewMessages(int count) =>
       count == 1 ? '1 NEW MESSAGE' : '$count NEW MESSAGES';
