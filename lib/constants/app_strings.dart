@@ -161,6 +161,7 @@ class AppStrings {
       "Come up to the bar and I'll pour you something!";
   static const String orderButton = 'ORDER';
   static const String standUpButton = 'Stand up (E)';
+  static const String walkCloserToSit = 'Walk closer to that seat to sit down.';
   static const String noticeBoardHint = 'Pin a note for everyone...';
   static const String pinNoteButton = 'PIN';
   static const String noticeBoardEmpty = 'No notes yet. Pin the first one!';

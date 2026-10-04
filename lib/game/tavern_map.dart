@@ -65,6 +65,10 @@ class TavernMap {
   ];
   static const double seatReach = 62;
 
+  /// How close you need to be to sit by double-tapping a seat (a bit more
+  /// forgiving than [seatReach], for fingers on phones).
+  static const double seatTapReach = 110;
+
   /// Everything a player's feet cannot walk through.
   static const List<Rect> collisionBoxes = [
     // --- Outer walls -------------------------------------------------------

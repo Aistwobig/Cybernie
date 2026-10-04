@@ -101,6 +101,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       if (mounted) setState(() => _atBar = atBar);
     };
     _game.onDrinkOrdered = (drinkId) => _room?.sendDrink(drinkId);
+    _game.onSeatTooFar = () => _showSnack(AppStrings.walkCloserToSit);
     _enterRoom();
     _connectChat();
   }
@@ -118,6 +119,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onBernieSelected = null
       ..onAtBarChanged = null
       ..onDrinkOrdered = null
+      ..onSeatTooFar = null
       ..onInteract = null;
     _orderPause?.cancel();
     _room?.leave();

@@ -224,6 +224,31 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     }
   }
 
+  /// Called when a seat is double-tapped from too far away to sit on it.
+  void Function()? onSeatTooFar;
+
+  /// Double-tapping a seat: sits on it when we're close enough and it's
+  /// free; double-tapping the seat we're on stands us up.
+  void sitOn(Seat seat) {
+    if (!player.isLoaded) return;
+    if (sitting) {
+      if (identical(seat, _seat)) standUp();
+      return;
+    }
+    if (!player.canSitFacing(seat.facing) || _seatTaken(seat)) return;
+    final distance = player.position.distanceTo(Vector2(seat.x, seat.y));
+    if (distance > TavernMap.seatTapReach) {
+      onSeatTooFar?.call();
+      return;
+    }
+    _setNearSeat(seat);
+    sitDown();
+  }
+
+  bool _seatTaken(Seat seat) => _others.values.any(
+    (o) => o.sitting && o.position.distanceTo(Vector2(seat.x, seat.y)) < 12,
+  );
+
   /// Sits on the free seat in reach (see [nearSeat]).
   void sitDown() {
     final seat = _nearSeat;
@@ -268,10 +293,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       if (!player.canSitFacing(seat.facing)) continue;
       final distance = player.position.distanceTo(Vector2(seat.x, seat.y));
       if (distance > bestDistance) continue;
-      final taken = _others.values.any(
-        (o) => o.sitting && o.position.distanceTo(Vector2(seat.x, seat.y)) < 12,
-      );
-      if (taken) continue;
+      if (_seatTaken(seat)) continue;
       best = seat;
       bestDistance = distance;
     }
@@ -371,11 +393,18 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       sitBackSheetAsset: _character.sitBackSheet,
     )..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy);
 
+    // Invisible double-tap areas over each stool (seat and legs), for
+    // sitting on phones without the button.
+    final seatTargets = [
+      for (final seat in TavernMap.seats) _SeatTarget(seat, onDoubleTap: sitOn),
+    ];
+
     world.addAll([
       map,
       bernie,
       counterFront,
       ...stoolFronts,
+      ...seatTargets,
       player,
       _keyboardInput,
     ]);
@@ -458,6 +487,26 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       world.add(_hitboxOverlay!);
     }
   }
+}
+
+/// An invisible box over a stool (its seat and legs) that reports double
+/// taps. Drawn nothing; high priority only so it's found first.
+class _SeatTarget extends PositionComponent with DoubleTapCallbacks {
+  _SeatTarget(this.seat, {required this.onDoubleTap})
+    : super(
+        position: Vector2(seat.frontLeft, seat.y - 40),
+        size: Vector2(
+          seat.frontRight - seat.frontLeft,
+          seat.frontBottom - (seat.y - 40),
+        ),
+        priority: 50000,
+      );
+
+  final Seat seat;
+  final void Function(Seat seat) onDoubleTap;
+
+  @override
+  void onDoubleTapDown(DoubleTapDownEvent event) => onDoubleTap(seat);
 }
 
 /// The tavern picture, which reports taps that land on empty floor (not on

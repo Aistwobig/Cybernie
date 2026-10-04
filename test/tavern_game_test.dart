@@ -153,6 +153,32 @@ void main() {
       expect(game.player.current?.$2, isNot(Pose.sit));
       expect(sentSitting.last, isFalse);
 
+      // On phones: double-tapping a stool sits on it when you're close,
+      // and double-tapping it again stands you up.
+      var tooFar = 0;
+      game.onSeatTooFar = () => tooFar++;
+      Future<void> doubleTapSeat() async {
+        await tester.pump(const Duration(milliseconds: 16));
+        final onScreen = game.camera.localToGlobal(
+          Vector2(seat.x, seat.y - 15),
+        );
+        final at = Offset(onScreen.x, onScreen.y);
+        await tester.tapAt(at);
+        await tester.pump(const Duration(milliseconds: 60));
+        await tester.tapAt(at);
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+
+      await doubleTapSeat();
+      expect(game.sitting, isTrue, reason: 'double-tap sits when near');
+      expect(game.player.position, Vector2(seat.x, seat.y));
+      await doubleTapSeat();
+      expect(game.sitting, isFalse, reason: 'double-tap again stands up');
+      // From across the room it asks you to walk closer instead.
+      game.sitOn(TavernMap.seats.last);
+      expect(game.sitting, isFalse);
+      expect(tooFar, 1);
+
       // Bernie stands behind the bar: the counter is drawn over him. His
       // name plate shows only while he's selected.
       final bernie = game.bernie;
