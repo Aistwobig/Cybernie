@@ -1,6 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 
 /// Moving between the bottom-nav tabs (Home, Friends, Profile).
 ///
@@ -22,18 +21,14 @@ class AppNav {
   /// How long switching tabs takes.
   static const Duration tabTransition = Duration(milliseconds: 300);
 
-  /// While a tab switch is running: -1 when the new tab comes in from the
-  /// left (moving right along the bar, so the screens move right), +1 when
-  /// it comes in from the right (moving left along the bar).
-  /// Null otherwise, and tab screens just fade (e.g. Home after login).
+  /// The direction of the latest tab switch: -1 when the new tab comes in
+  /// from the left (moving right along the bar, so the screens move right),
+  /// +1 when it comes in from the right (moving left along the bar).
+  /// Null until the first switch; until then tab screens just fade (e.g.
+  /// Home after login).
   static int? _slideFrom;
-  static Timer? _slideEnd;
 
-  static void _startSlide(int from) {
-    _slideFrom = from;
-    _slideEnd?.cancel();
-    _slideEnd = Timer(tabTransition * 2, () => _slideFrom = null);
-  }
+  static void _startSlide(int from) => _slideFrom = from;
 
   /// Back to the Welcome screen: reuses it if it's underneath, otherwise
   /// makes it the only screen.
@@ -57,7 +52,7 @@ class AppNav {
   /// moves the screens right (the new one comes in from the left and pushes
   /// the old one off the right edge); picking one to the left moves them left.
   static Route<void> tabRoute(RouteSettings settings, WidgetBuilder builder) {
-    return PageRouteBuilder<void>(
+    return _TabRoute(
       settings: settings,
       transitionDuration: tabTransition,
       reverseTransitionDuration: tabTransition,
@@ -95,15 +90,26 @@ class AppNav {
     final leaving = ModalRoute.of(context);
     final fromIndex = tabs.indexOf(leaving?.settings.name ?? home);
     _startSlide(tabs.indexOf(route) > fromIndex ? -1 : 1);
-    navigator.pushNamed(route);
     // Keep the old tab underneath until the new one has slid in fully, so
-    // Home never shows through between two tabs.
-    if (leaving != null && leaving.settings.name != home) {
+    // Home never shows through between two tabs; the new tab's route
+    // removes it then.
+    _replacing = leaving != null && leaving.settings.name != home
+        ? leaving
+        : null;
+    navigator.pushNamed(route);
+    // A tab route takes [_replacing] as it's pushed. Any other kind of route
+    // doesn't, so remove the old tab once the usual transition is over.
+    final replacing = _replacing;
+    _replacing = null;
+    if (replacing != null) {
       Future<void>.delayed(tabTransition * 1.5, () {
-        if (leaving.isActive) navigator.removeRoute(leaving);
+        if (replacing.isActive) navigator.removeRoute(replacing);
       });
     }
   }
+
+  /// The tab being switched away from, handed to the next tab route.
+  static Route<dynamic>? _replacing;
 
   /// Leaves a screen opened from Home (e.g. Select Room). Goes home instead
   /// if there's nothing to go back to.
@@ -114,5 +120,48 @@ class AppNav {
     } else {
       goHome(context);
     }
+  }
+}
+
+/// A tab's page route. The first frame of a freshly opened tab can be slow
+/// to build (images, fonts, lists), and the animation clock keeps running
+/// meanwhile, so the slide would jump straight to the end. It waits at the
+/// start until that frame is on screen, then plays in full.
+class _TabRoute extends PageRouteBuilder<void> {
+  _TabRoute({
+    super.settings,
+    required super.pageBuilder,
+    required super.transitionsBuilder,
+    super.transitionDuration,
+    super.reverseTransitionDuration,
+  });
+
+  @override
+  TickerFuture didPush() {
+    final pushed = super.didPush();
+    final controller = this.controller;
+
+    // Remove the tab we're replacing once we've fully covered it.
+    final replacing = AppNav._replacing;
+    AppNav._replacing = null;
+    if (replacing != null && controller != null) {
+      void removeWhenCovered(AnimationStatus status) {
+        if (status != AnimationStatus.completed) return;
+        controller.removeStatusListener(removeWhenCovered);
+        if (replacing.isActive) navigator?.removeRoute(replacing);
+      }
+
+      controller.addStatusListener(removeWhenCovered);
+    }
+
+    if (controller != null && AppNav._slideFrom != null) {
+      controller
+        ..stop(canceled: false)
+        ..value = 0;
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        if (isActive && !controller.isCompleted) controller.forward();
+      });
+    }
+    return pushed;
   }
 }

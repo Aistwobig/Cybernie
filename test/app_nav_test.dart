@@ -102,6 +102,8 @@ void main() {
     // Starts a switch and stops halfway through it.
     Future<void> halfway(String button) async {
       await tester.tap(find.text(button).last);
+      // The new tab's first frame; the slide starts once it's drawn.
+      await tester.pump();
       await tester.pump();
       await tester.pump(AppNav.tabTransition ~/ 2);
     }
@@ -129,6 +131,19 @@ void main() {
     await halfway('friends');
     expect(x('screen:friends'), greaterThan(0));
     expect(x('screen:profile'), lessThan(0));
+    await finish();
+
+    // Friends -> Profile again, with a slow first frame for the new screen
+    // (like a freshly built tab in a debug build): the slide still plays in
+    // full afterwards instead of being skipped.
+    await tester.tap(find.text('profile').last);
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+    await tester.pump(AppNav.tabTransition ~/ 2);
+    expect(x('screen:profile'), lessThan(0));
+    expect(x('screen:friends'), greaterThan(0));
+    await finish();
+    await halfway('friends');
     await finish();
 
     // Friends -> Home: Home comes back from the right.
