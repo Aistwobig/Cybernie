@@ -24,33 +24,35 @@ class TavernMap {
   static const Offset noticeBoardSpot = Offset(1245, 310);
   static const double noticeBoardReach = 95;
 
-  /// Where a seated character's feet line goes on each seat. Seated-from-
-  /// behind sprites stop at the skirt hem (legs point away from the camera,
-  /// hidden by the body), so this puts the hem on the cushion with the stool
-  /// legs showing below. Standing within
-  /// [seatReach] of a free one offers "Click to sit".
+  /// The seats. Each has where a seated character's feet line goes, and the
+  /// stool's front (cushion edge and legs) as a rectangle of this picture.
+  /// The game draws that front again as its own sprite, layered by depth:
+  /// over whoever sits on it (their legs tuck behind the stool) and under
+  /// anyone walking past in front. Standing within [seatReach] of a free
+  /// seat offers "Click to sit".
   ///
   /// Only seats you sit on with your back to the camera for now (the bar
   /// stools, and the stools in front of tables), matching the seated
   /// animations the characters have. Side and front chairs can be added
   /// here with their own [Seat.facing] once those animations exist.
   static const List<Seat> seats = [
-    // Bar stools, facing the bar.
-    Seat(378, 404),
-    Seat(443, 404),
-    Seat(508, 404),
-    Seat(571, 404),
-    Seat(633, 404),
-    Seat(696, 404),
-    Seat(761, 404),
-    Seat(826, 404),
-    // Stools in front of tables, facing the table.
-    Seat(229, 876), // long table (left)
-    Seat(320, 876),
-    Seat(1068, 564), // table (top-right)
-    Seat(1162, 731), // table (middle-right)
-    Seat(983, 938), // big table (bottom-right)
-    Seat(1073, 938),
+    // Bar stools, facing the bar: red cushion from y 368, legs to y 427.
+    Seat.barStool(379),
+    Seat.barStool(445),
+    Seat.barStool(508),
+    Seat.barStool(572),
+    Seat.barStool(632),
+    Seat.barStool(696),
+    Seat.barStool(762),
+    Seat.barStool(826),
+    // Wooden stools in front of tables, facing the table. The number is the
+    // top of the seat.
+    Seat.tableStool(229, 841), // long table (left)
+    Seat.tableStool(320, 841),
+    Seat.tableStool(1068, 529), // table (top-right)
+    Seat.tableStool(1162, 696), // table (middle-right)
+    Seat.tableStool(983, 903), // big table (bottom-right)
+    Seat.tableStool(1073, 903),
   ];
   static const double seatReach = 62;
 
@@ -107,9 +109,51 @@ class TavernMap {
 /// A place to sit: where the seated character's feet go, and which way
 /// they face (north = back to the camera).
 class Seat {
-  const Seat(this.x, this.y, {this.facing = Facing.north});
+  const Seat(
+    this.x,
+    this.y, {
+    required this.frontLeft,
+    required this.frontTop,
+    required this.frontRight,
+    required this.frontBottom,
+    this.facing = Facing.north,
+  });
 
+  /// A red-cushioned bar stool centred on [centerX].
+  const Seat.barStool(double centerX)
+    : this(
+        centerX,
+        404,
+        frontLeft: centerX - 18,
+        frontTop: 396,
+        frontRight: centerX + 19,
+        frontBottom: 429,
+      );
+
+  /// A wooden stool centred on [centerX] whose seat top is at [seatTop].
+  const Seat.tableStool(double centerX, double seatTop)
+    : this(
+        centerX,
+        seatTop + 35,
+        frontLeft: centerX - 18,
+        frontTop: seatTop + 22,
+        frontRight: centerX + 19,
+        frontBottom: seatTop + 48,
+      );
+
+  /// Where the seated character's feet line goes.
   final double x;
   final double y;
   final Facing facing;
+
+  final double frontLeft;
+  final double frontTop;
+  final double frontRight;
+  final double frontBottom;
+
+  /// The part of the stool drawn in front of whoever sits on it, in map
+  /// pixels (cut from the same spot of the tavern picture): the seat's front
+  /// edge and the legs, exactly as wide as the stool, so hair and clothes
+  /// drape over the seat but nothing shows below it.
+  Rect get front => Rect.fromLTRB(frontLeft, frontTop, frontRight, frontBottom);
 }

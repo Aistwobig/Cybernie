@@ -136,6 +136,13 @@ void main() {
       expect(game.player.position, Vector2(seat.x, seat.y));
       expect(game.player.current, (Facing.north, Pose.sit));
       expect(sentSitting.last, isTrue);
+      // The stool's front is its own sprite, drawn over her (her legs tuck
+      // behind it).
+      final stoolFront = game.world.children.whereType<SpriteComponent>().where(
+        (c) => c.position == Vector2(seat.frontLeft, seat.frontTop),
+      );
+      expect(stoolFront, hasLength(1));
+      expect(stoolFront.single.priority, greaterThan(game.player.priority));
       // Moving gets her up, back where she stood.
       game.player.walk(Vector2.zero(), 1 / 60);
       game.standUp();

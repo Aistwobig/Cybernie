@@ -274,12 +274,30 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
 
   @override
   Future<void> onLoad() async {
+    final mapImage = await images.load(AppImages.tavernRoom);
     final map = SpriteComponent(
-      sprite: await loadSprite(AppImages.tavernRoom),
+      sprite: Sprite(mapImage),
       size: Vector2(TavernMap.width, TavernMap.height),
       // Characters use their y position as priority; the floor stays below.
       priority: -1,
     )..paint.filterQuality = FilterQuality.none;
+
+    // Each stool's front as its own sprite over the map, layered by depth
+    // like the characters (by its bottom edge): in front of whoever sits on
+    // it, behind anyone walking past in front of it.
+    final stoolFronts = [
+      for (final seat in TavernMap.seats)
+        SpriteComponent(
+          sprite: Sprite(
+            mapImage,
+            srcPosition: Vector2(seat.front.left, seat.front.top),
+            srcSize: Vector2(seat.front.width, seat.front.height),
+          ),
+          position: Vector2(seat.front.left, seat.front.top),
+          size: Vector2(seat.front.width, seat.front.height),
+          priority: seat.front.bottom.round(),
+        )..paint.filterQuality = FilterQuality.none,
+    ];
 
     player = Player(
       sheetAsset: _character.sheet,
@@ -291,7 +309,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       sitBackSheetAsset: _character.sitBackSheet,
     )..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy);
 
-    world.addAll([map, player, _keyboardInput]);
+    world.addAll([map, ...stoolFronts, player, _keyboardInput]);
 
     _joystick = JoystickComponent(
       background: _JoystickBase(radius: 48),

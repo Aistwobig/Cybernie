@@ -85,9 +85,7 @@ void main() {
     expect(find.text('screen:welcome'), findsOneWidget);
   });
 
-  testWidgets('tabs slide toward the side of the tab you pick', (
-    tester,
-  ) async {
+  testWidgets('tabs slide toward the side of the tab you pick', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         initialRoute: '/welcome',
