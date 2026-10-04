@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
 import '../theme/app_theme.dart';
+import '../services/sfx_service.dart';
 import '../utils/app_nav.dart';
 
 /// The fantasy UI kit: pixel-art frames, castle header, ornate buttons and
@@ -238,7 +239,12 @@ class FantasyButton extends StatelessWidget {
               child: Material(
                 type: MaterialType.transparency,
                 child: InkWell(
-                  onTap: enabled ? onPressed : null,
+                  onTap: enabled
+                      ? () {
+                          SfxService.play(Sfx.click);
+                          onPressed!();
+                        }
+                      : null,
                   borderRadius: BorderRadius.circular(height * 0.2),
                   child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: height * 0.5),
@@ -678,6 +684,7 @@ class FantasyBottomNav extends StatelessWidget {
 
   void _go(BuildContext context, int index) {
     if (index == currentIndex) return;
+    SfxService.play(Sfx.click);
     switch (index) {
       case 0:
         AppNav.goHome(context);

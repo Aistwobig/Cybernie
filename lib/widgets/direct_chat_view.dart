@@ -6,6 +6,7 @@ import '../constants/app_strings.dart';
 import '../constants/emotes.dart';
 import '../models/profile.dart';
 import '../services/direct_message_service.dart';
+import '../services/sfx_service.dart';
 import '../theme/app_theme.dart';
 
 /// A private conversation with [friend]: the messages, newest at the bottom,
@@ -50,7 +51,9 @@ class _DirectChatViewState extends State<DirectChatView> {
     super.initState();
     _feed = DirectMessageService.listen(
       onNew: (m) {
-        if (m.senderId == _friendId) _put(m);
+        if (m.senderId != _friendId) return;
+        _put(m);
+        SfxService.play(Sfx.message);
       },
       onEdited: (m) {
         if (m.isWith(_friendId)) _put(m);

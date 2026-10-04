@@ -27,6 +27,9 @@ class AppStrings {
   static const String musicLabel = 'Music';
   static const String muteMusic = 'Mute music';
   static const String unmuteMusic = 'Unmute music';
+  static const String soundEffectsLabel = 'Sound effects';
+  static const String muteSoundEffects = 'Mute sound effects';
+  static const String unmuteSoundEffects = 'Unmute sound effects';
   static const String nightMode = 'Night mode';
   static const String dayMode = 'Day mode';
   static const String characterPreviewTitle = 'Character Preview';

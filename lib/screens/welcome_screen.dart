@@ -8,6 +8,7 @@ import '../constants/characters.dart';
 import '../constants/app_strings.dart';
 import '../services/auth_service.dart';
 import '../services/music_service.dart';
+import '../services/sfx_service.dart';
 import '../services/profile_service.dart';
 import '../services/room_service.dart';
 import '../theme/app_theme.dart';
@@ -259,7 +260,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
             color: AppColors.card,
             position: PopupMenuPosition.under,
             itemBuilder: (context) => [
-              const _MusicVolumeEntry(),
+              _VolumeEntry.music(),
+              _VolumeEntry.effects(),
               const PopupMenuDivider(),
               PopupMenuItem(
                 onTap: ThemeModeController.toggle,
@@ -839,11 +841,54 @@ class _EnteringTavernState extends State<_EnteringTavern>
   }
 }
 
-/// The music volume in the Home menu: a speaker button that mutes and
-/// unmutes, the percentage, and a slider. Dragging it doesn't close the
-/// menu.
-class _MusicVolumeEntry extends PopupMenuEntry<void> {
-  const _MusicVolumeEntry();
+/// A volume control in the Home menu (music or sound effects): a speaker
+/// button that mutes and unmutes, the percentage, and a slider. Dragging it
+/// doesn't close the menu.
+class _VolumeEntry extends PopupMenuEntry<void> {
+  const _VolumeEntry({
+    required this.label,
+    required this.muteTooltip,
+    required this.unmuteTooltip,
+    required this.volume,
+    required this.defaultVolume,
+    required this.setVolume,
+    required this.saveVolume,
+  });
+
+  /// Music, as in MusicService.
+  factory _VolumeEntry.music() => const _VolumeEntry(
+    label: AppStrings.musicLabel,
+    muteTooltip: AppStrings.muteMusic,
+    unmuteTooltip: AppStrings.unmuteMusic,
+    volume: _musicVolume,
+    defaultVolume: MusicService.defaultVolume,
+    setVolume: _setMusicVolume,
+    saveVolume: _saveMusicVolume,
+  );
+
+  /// Sound effects, as in SfxService.
+  factory _VolumeEntry.effects() => const _VolumeEntry(
+    label: AppStrings.soundEffectsLabel,
+    muteTooltip: AppStrings.muteSoundEffects,
+    unmuteTooltip: AppStrings.unmuteSoundEffects,
+    volume: _sfxVolume,
+    defaultVolume: SfxService.defaultVolume,
+    setVolume: SfxService.setVolume,
+    saveVolume: SfxService.saveVolume,
+  );
+
+  static ValueNotifier<double> _musicVolume() => MusicService.volume;
+  static ValueNotifier<double> _sfxVolume() => SfxService.volume;
+  static void _setMusicVolume(double v) => MusicService.setVolume(v);
+  static void _saveMusicVolume() => MusicService.saveVolume();
+
+  final String label;
+  final String muteTooltip;
+  final String unmuteTooltip;
+  final ValueNotifier<double> Function() volume;
+  final double defaultVolume;
+  final void Function(double value) setVolume;
+  final void Function() saveVolume;
 
   @override
   double get height => 84;
@@ -852,27 +897,27 @@ class _MusicVolumeEntry extends PopupMenuEntry<void> {
   bool represents(void value) => false;
 
   @override
-  State<_MusicVolumeEntry> createState() => _MusicVolumeEntryState();
+  State<_VolumeEntry> createState() => _VolumeEntryState();
 }
 
-class _MusicVolumeEntryState extends State<_MusicVolumeEntry> {
+class _VolumeEntryState extends State<_VolumeEntry> {
   /// The volume to go back to when unmuting.
-  double _beforeMute = MusicService.defaultVolume;
+  late double _beforeMute = widget.defaultVolume;
 
   void _toggleMute(double volume) {
     if (volume > 0) {
       _beforeMute = volume;
-      MusicService.setVolume(0);
+      widget.setVolume(0);
     } else {
-      MusicService.setVolume(_beforeMute > 0 ? _beforeMute : 0.5);
+      widget.setVolume(_beforeMute > 0 ? _beforeMute : 0.5);
     }
-    MusicService.saveVolume();
+    widget.saveVolume();
   }
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<double>(
-      valueListenable: MusicService.volume,
+      valueListenable: widget.volume(),
       builder: (context, volume, _) {
         final percent = (volume * 100).round();
         return Padding(
@@ -885,8 +930,8 @@ class _MusicVolumeEntryState extends State<_MusicVolumeEntry> {
                 children: [
                   IconButton(
                     tooltip: volume > 0
-                        ? AppStrings.muteMusic
-                        : AppStrings.unmuteMusic,
+                        ? widget.muteTooltip
+                        : widget.unmuteTooltip,
                     onPressed: () => _toggleMute(volume),
                     icon: Icon(
                       volume == 0
@@ -900,7 +945,7 @@ class _MusicVolumeEntryState extends State<_MusicVolumeEntry> {
                   ),
                   Expanded(
                     child: Text(
-                      AppStrings.musicLabel,
+                      widget.label,
                       style: FantasyText.mono(
                         size: 14,
                         color: AppColors.ink,
@@ -931,8 +976,8 @@ class _MusicVolumeEntryState extends State<_MusicVolumeEntry> {
                   divisions: 20,
                   label: '$percent%',
                   semanticFormatterCallback: (v) => '${(v * 100).round()}%',
-                  onChanged: MusicService.setVolume,
-                  onChangeEnd: (_) => MusicService.saveVolume(),
+                  onChanged: widget.setVolume,
+                  onChangeEnd: (_) => widget.saveVolume(),
                 ),
               ),
             ],

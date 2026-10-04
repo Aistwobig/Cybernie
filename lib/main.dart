@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'config/supabase_config.dart';
 import 'services/auth_service.dart';
 import 'services/music_service.dart';
+import 'services/sfx_service.dart';
 import 'services/presence_service.dart';
 import 'utils/app_nav.dart';
 import 'theme/app_theme.dart';
@@ -42,6 +43,7 @@ Future<void> main() async {
 
   await ThemeModeController.load();
   await MusicService.load();
+  await SfxService.load();
 
   runApp(DevicePreview(enabled: true, builder: (context) => const App()));
   // Background music; in a browser it waits for the first tap or click.

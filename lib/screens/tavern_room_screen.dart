@@ -15,6 +15,7 @@ import '../services/auth_service.dart';
 import '../services/chat_service.dart';
 import '../services/profile_service.dart';
 import '../services/room_service.dart';
+import '../services/sfx_service.dart';
 import '../game/tavern_map.dart';
 import '../theme/app_theme.dart';
 import 'tavern_panels.dart';
@@ -83,12 +84,14 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       if (mounted) setState(() => _nearSeat = near);
     };
     _game.onSittingChanged = (sitting) {
+      SfxService.play(sitting ? Sfx.sit : Sfx.stand);
       if (mounted) setState(() => _sitting = sitting);
     };
     // Tapping Bernie opens his menu; letting go of him closes it.
     _game.onBernieSelected = (selected) {
       if (!mounted) return;
       if (selected) {
+        SfxService.play(Sfx.sparkle);
         setState(() {
           _panel = _Panel.bar;
           _emotesOpen = false;
@@ -187,10 +190,15 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         sitting: move.sitting,
       ),
       onSomeoneJoined: _game.broadcastPosition,
-      onEmote: _game.otherPlayerEmotes,
+      onEmote: (id, emoji) {
+        _game.otherPlayerEmotes(id, emoji);
+        SfxService.play(Sfx.pop, gain: 0.6);
+      },
       onDrink: _game.otherPlayerDrinks,
       onError: () => _showSnack(AppStrings.roomConnectionError),
     );
+    // A little welcome jingle once we're in.
+    SfxService.play(Sfx.join);
   }
 
   Future<void> _connectChat() async {
@@ -205,6 +213,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       });
       // Our own bubble is shown as soon as we send; show everyone else's.
       if (message.senderId != chat.myId) {
+        SfxService.play(Sfx.message, gain: 0.7);
         _game.otherPlayerSays(message.senderId, message.body);
       }
     });
@@ -299,6 +308,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   void _orderDrink(String drinkId) {
     if (_justOrdered) return;
     _game.orderDrink(drinkId);
+    SfxService.play(Sfx.coin);
     _orderPause?.cancel();
     setState(() => _justOrdered = true);
     _orderPause = Timer(const Duration(seconds: 5), () {
@@ -308,6 +318,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   }
 
   void _sendEmote(String emoji) {
+    SfxService.play(Sfx.pop);
     _game.emote(emoji);
     _room?.sendEmote(emoji);
     setState(() => _emotesOpen = false);
