@@ -368,6 +368,9 @@ class _SmallButton extends StatelessWidget {
             )
           : OutlinedButton(
               style: OutlinedButton.styleFrom(
+                // Solid, so the banner art behind the row (the lantern and
+                // books on the right) doesn't show through the label.
+                backgroundColor: AppColors.card,
                 foregroundColor: AppColors.ink,
                 side: BorderSide(color: AppColors.ink),
                 padding: padding,
