@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'character.dart';
 import 'tavern_map.dart';
 
-export 'character.dart' show Facing;
+export 'character.dart' show Facing, Pose;
 
 /// You. Moves from joystick / keyboard input and collides with the map.
 ///
@@ -18,6 +18,7 @@ class Player extends Character {
     super.horizontalRunSheetAsset,
     super.feetFraction,
     super.frames,
+    super.sitBackSheetAsset,
   });
 
   static const double speed = 170; // map pixels per second

@@ -35,6 +35,7 @@ class PlayerMove {
     required this.y,
     required this.facing,
     required this.moving,
+    this.sitting = false,
   });
 
   final String playerId;
@@ -43,12 +44,16 @@ class PlayerMove {
   final int facing;
   final bool moving;
 
+  /// Sitting on a seat (they're at the seat's spot, facing [facing]).
+  final bool sitting;
+
   Map<String, dynamic> toPayload() => {
     'id': playerId,
     'x': x.round(),
     'y': y.round(),
     'f': facing,
     'm': moving,
+    if (sitting) 's': true,
   };
 
   static PlayerMove? fromPayload(Map<String, dynamic> message) {
@@ -67,6 +72,7 @@ class PlayerMove {
       y: y.toDouble(),
       facing: (data['f'] as num?)?.toInt() ?? 0,
       moving: data['m'] == true,
+      sitting: data['s'] == true,
     );
   }
 }

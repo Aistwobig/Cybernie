@@ -27,6 +27,12 @@ void main() {
         expect((w / frames, h / 4), walkCell, reason: '$idle ($frames x 4)');
       }
 
+      final sit = character.sitBackSheet;
+      if (sit != null) {
+        final (w, h) = pngSize(sit);
+        expect((w / frames, h / 1), walkCell, reason: '$sit ($frames x 1)');
+      }
+
       final run = character.horizontalRunSheet;
       if (run != null) {
         final (w, h) = pngSize(run);

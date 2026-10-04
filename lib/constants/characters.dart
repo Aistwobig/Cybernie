@@ -13,6 +13,7 @@ class GameCharacter {
     this.horizontalRunSheet,
     this.feetFraction = 0.963,
     this.frames = 8,
+    this.sitBackSheet,
   });
 
   final String name;
@@ -33,6 +34,11 @@ class GameCharacter {
   /// Frames per row in the walk and idle sheets (the columns). More frames
   /// play faster, so a cycle takes the same time whatever the count.
   final int frames;
+
+  /// Optional seated idle seen from behind ([frames] columns x 1 row), same
+  /// cell size and feet line as [sheet]. Characters with one can sit on the
+  /// tavern's seats that face away from the camera.
+  final String? sitBackSheet;
 }
 
 /// The choosable characters, in the order `profiles.character_index` uses.
@@ -55,6 +61,7 @@ const List<GameCharacter> gameCharacters = [
     sheet: AppImages.mageSheet,
     idleSheet: AppImages.mageIdleSheet,
     horizontalRunSheet: AppImages.mageRunSheet,
+    sitBackSheet: AppImages.mageSitBackSheet,
     feetFraction: 246 / 256,
   ),
   GameCharacter(

@@ -7,13 +7,16 @@ import '../constants/emotes.dart';
 
 enum Facing { south, north, west, east }
 
+/// What the character is doing; with [Facing] it picks the animation.
+enum Pose { stand, walk, sit }
+
 /// Anyone standing in the tavern: drawn from an 8-column x 4-row walk sheet
 /// (rows face South, North, West, East) of any size, with a name tag and
 /// chat bubbles. [Player] (you) and [RemotePlayer] (everyone else) build on
 /// this.
 ///
 /// [position] is the point between the character's feet.
-abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
+abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     with HasGameReference {
   Character({
     required String sheetAsset,
@@ -22,9 +25,11 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     String? horizontalRunSheetAsset,
     double feetFraction = 0.963,
     int frames = 8,
+    String? sitBackSheetAsset,
   }) : _sheetAsset = sheetAsset,
        _idleSheetAsset = idleSheetAsset,
        _horizontalRunSheetAsset = horizontalRunSheetAsset,
+       _sitBackSheetAsset = sitBackSheetAsset,
        _feetFraction = feetFraction,
        _frames = frames,
        _name = name,
@@ -33,6 +38,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
   String _sheetAsset;
   String? _idleSheetAsset;
   String? _horizontalRunSheetAsset;
+  String? _sitBackSheetAsset;
   double _feetFraction;
   int _frames;
   String _name;
@@ -45,6 +51,14 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
 
   Facing facing = Facing.south;
   bool moving = false;
+
+  /// Sitting on a seat, facing [facing]. Shown with the seated animation
+  /// when the character has one for that direction.
+  bool sitting = false;
+
+  /// Whether this character has a seated animation facing [direction].
+  bool canSitFacing(Facing direction) =>
+      animations?.containsKey((direction, Pose.sit)) ?? false;
   _ChatBubble? _bubble;
   SpriteComponent? _emote;
 
@@ -85,17 +99,20 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     String? idleSheetAsset,
     String? horizontalRunSheetAsset,
     int frames = 8,
+    String? sitBackSheetAsset,
   }) async {
     if (asset == _sheetAsset &&
         feetFraction == _feetFraction &&
         idleSheetAsset == _idleSheetAsset &&
         horizontalRunSheetAsset == _horizontalRunSheetAsset &&
+        sitBackSheetAsset == _sitBackSheetAsset &&
         frames == _frames) {
       return;
     }
     _sheetAsset = asset;
     _idleSheetAsset = idleSheetAsset;
     _horizontalRunSheetAsset = horizontalRunSheetAsset;
+    _sitBackSheetAsset = sitBackSheetAsset;
     _feetFraction = feetFraction;
     _frames = frames;
     // Not added to the game yet: onLoad will load the new sheet. Otherwise
@@ -105,7 +122,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
 
   /// Builds animations from the walk sheet ([_frames] columns x 4 rows),
   /// plus an optional idle sheet of the same layout and an optional 8 x 2
-  /// left/right run sheet.
+  /// left/right run sheet and an optional seated-from-behind strip.
   ///
   /// The idle and run sheets must use the same cell size and feet line as
   /// the walk sheet (assets/sheets has the tool notes), so switching between
@@ -122,6 +139,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     final sheetAsset = _sheetAsset;
     final idleSheetAsset = _idleSheetAsset;
     final runSheetAsset = _horizontalRunSheetAsset;
+    final sitBackAsset = _sitBackSheetAsset;
     final frames = _frames;
     final feetFraction = _feetFraction;
 
@@ -132,6 +150,9 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     final runImage = runSheetAsset == null
         ? null
         : await game.images.load(runSheetAsset);
+    final sitBackImage = sitBackAsset == null
+        ? null
+        : await game.images.load(sitBackAsset);
     // A newer character was picked meanwhile: finish when that one has.
     if (load != _loads) return _latestLoad;
 
@@ -152,15 +173,15 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
             srcSize: Vector2(runImage.width / 8, runImage.height / 2),
           );
 
-    final builtAnimations = <(Facing, bool), SpriteAnimation>{};
+    final builtAnimations = <(Facing, Pose), SpriteAnimation>{};
     for (final facing in Facing.values) {
-      builtAnimations[(facing, true)] = walkSheet.createAnimation(
+      builtAnimations[(facing, Pose.walk)] = walkSheet.createAnimation(
         row: facing.index,
         stepTime: 0.09 * perFrame,
       );
       // Standing still: the idle cycle if there is one, otherwise the first
       // walk frame held still (not the whole walk played slowly).
-      builtAnimations[(facing, false)] = idleSheet != null
+      builtAnimations[(facing, Pose.stand)] = idleSheet != null
           ? idleSheet.createAnimation(
               row: facing.index,
               stepTime: 0.2 * perFrame,
@@ -168,17 +189,26 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
           : walkSheet.createAnimation(row: facing.index, stepTime: 1, to: 1);
     }
     if (runSheet != null) {
-      builtAnimations[(Facing.west, true)] = runSheet.createAnimation(
+      builtAnimations[(Facing.west, Pose.walk)] = runSheet.createAnimation(
         row: 0,
         stepTime: 0.09,
       );
-      builtAnimations[(Facing.east, true)] = runSheet.createAnimation(
+      builtAnimations[(Facing.east, Pose.walk)] = runSheet.createAnimation(
         row: 1,
         stepTime: 0.09,
       );
     }
+    if (sitBackImage != null) {
+      builtAnimations[(Facing.north, Pose.sit)] = SpriteSheet(
+        image: sitBackImage,
+        srcSize: Vector2(
+          sitBackImage.width / frames,
+          sitBackImage.height.toDouble(),
+        ),
+      ).createAnimation(row: 0, stepTime: 0.2 * perFrame);
+    }
     animations = builtAnimations;
-    current = (facing, moving);
+    current = _pose;
     size = cell * (displayHeight / cell.y);
     anchor = Anchor(0.5, feetFraction);
     _nameTag.position = Vector2(size.x / 2, 2);
@@ -190,10 +220,17 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
   void update(double dt) {
     super.update(dt);
     if (!isLoaded) return;
-    final pose = (facing, moving);
+    final pose = _pose;
     if (current != pose) current = pose;
     // Whoever is lower on screen is drawn in front.
     priority = position.y.round();
+  }
+
+  /// The animation to show now. Sitting without a seated animation for
+  /// this direction falls back to standing.
+  (Facing, Pose) get _pose {
+    if (sitting && canSitFacing(facing)) return (facing, Pose.sit);
+    return (facing, moving ? Pose.walk : Pose.stand);
   }
 
   /// Shows [text] in a speech bubble above the name tag for a few seconds.

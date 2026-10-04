@@ -39,7 +39,10 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         idleSheetAsset: _character.idleSheet,
         horizontalRunSheetAsset: _character.horizontalRunSheet,
         frames: _character.frames,
+        sitBackSheetAsset: _character.sitBackSheet,
       );
+      // The new character may not have a seated pose.
+      if (sitting) standUp();
     }
   }
 
@@ -62,7 +65,8 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   _HitboxOverlay? _hitboxOverlay;
 
   /// Called when our position should be sent to the other players.
-  void Function(double x, double y, Facing facing, bool moving)? onLocalMove;
+  void Function(double x, double y, Facing facing, bool moving, bool sitting)?
+  onLocalMove;
 
   /// Called when another player is tapped (opens their player card).
   void Function(String playerId)? onPlayerTap;
@@ -75,6 +79,23 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
 
   bool _nearNoticeBoard = false;
   bool get nearNoticeBoard => _nearNoticeBoard;
+
+  /// Called when a free seat comes into reach (true) or goes out of reach
+  /// (false), to show or hide "Click to sit".
+  void Function(bool nearby)? onSeatNearby;
+
+  /// Called when we sit down (true) or stand up (false).
+  void Function(bool sitting)? onSittingChanged;
+
+  /// The seat in reach, if any, and the seat we're on, if any.
+  Seat? _nearSeat;
+  Seat? _seat;
+
+  /// Where we stood before sitting; standing up puts us back there.
+  Vector2? _standSpot;
+
+  bool get nearSeat => _nearSeat != null;
+  bool get sitting => _seat != null;
 
   final Map<String, RemotePlayer> _others = {};
   double _sinceLastSend = 0;
@@ -103,6 +124,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
           idleSheetAsset: look.idleSheet,
           horizontalRunSheetAsset: look.horizontalRunSheet,
           frames: look.frames,
+          sitBackSheetAsset: look.sitBackSheet,
         );
         continue;
       }
@@ -114,6 +136,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         idleSheetAsset: look.idleSheet,
         horizontalRunSheetAsset: look.horizontalRunSheet,
         frames: look.frames,
+        sitBackSheetAsset: look.sitBackSheet,
         name: p.name,
         start: Vector2(p.x, p.y),
       );
@@ -122,11 +145,19 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     }
   }
 
-  void moveOtherPlayer(String id, double x, double y, int facing, bool moving) {
+  void moveOtherPlayer(
+    String id,
+    double x,
+    double y,
+    int facing,
+    bool moving, {
+    bool sitting = false,
+  }) {
     _others[id]?.moveTo(
       Vector2(x, y),
       Facing.values[facing.clamp(0, Facing.values.length - 1)],
       moving,
+      isSitting: sitting,
     );
   }
 
@@ -139,9 +170,70 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     if (isLoaded) player.emote(emoji);
   }
 
-  /// E key: open the notice board when standing at it.
+  /// E key: stand up when sitting, sit on the seat in reach, or open the
+  /// notice board when standing at it.
   void interact() {
-    if (_nearNoticeBoard) onInteract?.call();
+    if (sitting) {
+      standUp();
+    } else if (_nearSeat != null) {
+      sitDown();
+    } else if (_nearNoticeBoard) {
+      onInteract?.call();
+    }
+  }
+
+  /// Sits on the free seat in reach (see [nearSeat]).
+  void sitDown() {
+    final seat = _nearSeat;
+    if (seat == null || sitting || !player.isLoaded) return;
+    _standSpot = player.position.clone();
+    player
+      ..position.setValues(seat.x, seat.y)
+      ..facing = seat.facing
+      ..moving = false
+      ..sitting = true;
+    _seat = seat;
+    _setNearSeat(null);
+    _sendPosition();
+    onSittingChanged?.call(true);
+  }
+
+  /// Gets up and steps back to where we stood before sitting.
+  void standUp() {
+    if (!sitting) return;
+    final spot = _standSpot;
+    if (spot != null) player.position.setFrom(spot);
+    player.sitting = false;
+    _seat = null;
+    _standSpot = null;
+    _sendPosition();
+    onSittingChanged?.call(false);
+  }
+
+  void _setNearSeat(Seat? seat) {
+    final was = _nearSeat != null;
+    _nearSeat = seat;
+    if (was != (seat != null)) onSeatNearby?.call(seat != null);
+  }
+
+  /// The closest seat in reach that we have a seated pose for and nobody
+  /// else is sitting on.
+  void _checkSeats() {
+    if (sitting) return;
+    Seat? best;
+    var bestDistance = TavernMap.seatReach;
+    for (final seat in TavernMap.seats) {
+      if (!player.canSitFacing(seat.facing)) continue;
+      final distance = player.position.distanceTo(Vector2(seat.x, seat.y));
+      if (distance > bestDistance) continue;
+      final taken = _others.values.any(
+        (o) => o.sitting && o.position.distanceTo(Vector2(seat.x, seat.y)) < 12,
+      );
+      if (taken) continue;
+      best = seat;
+      bestDistance = distance;
+    }
+    if (best != _nearSeat) _setNearSeat(best);
   }
 
   int get otherPlayerCount => _others.length;
@@ -162,6 +254,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       player.position.y,
       player.facing,
       player.moving,
+      player.sitting,
     );
   }
 
@@ -195,6 +288,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       idleSheetAsset: _character.idleSheet,
       horizontalRunSheetAsset: _character.horizontalRunSheet,
       frames: _character.frames,
+      sitBackSheetAsset: _character.sitBackSheet,
     )..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy);
 
     world.addAll([map, player, _keyboardInput]);
@@ -221,10 +315,13 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     final input = _joystick.relativeDelta.isZero()
         ? _keyboardInput.direction
         : _joystick.relativeDelta.clone();
+    // Moving while seated gets up first.
+    if (sitting && input.length2 > 0.01) standUp();
     // Cap dt so a dropped frame can't carry the player through a wall.
-    player.walk(input, math.min(dt, 1 / 30));
+    if (!sitting) player.walk(input, math.min(dt, 1 / 30));
     _maybeSendPosition(dt);
     _checkNoticeBoard();
+    _checkSeats();
     _followPlayer();
   }
 

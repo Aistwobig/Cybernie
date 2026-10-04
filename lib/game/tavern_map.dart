@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'character.dart' show Facing;
+
 /// Layout of Bernie's Tavern, measured in pixels on AppImages.tavernRoom
 /// (1402 x 1122). The game world uses the same units, so a box here lines up
 /// exactly with the picture.
@@ -21,6 +23,33 @@ class TavernMap {
   /// point offers "Read notice board".
   static const Offset noticeBoardSpot = Offset(1245, 310);
   static const double noticeBoardReach = 95;
+
+  /// Where a seated character's feet go on each seat. Standing within
+  /// [seatReach] of a free one offers "Click to sit".
+  ///
+  /// Only seats you sit on with your back to the camera for now (the bar
+  /// stools, and the stools in front of tables), matching the seated
+  /// animations the characters have. Side and front chairs can be added
+  /// here with their own [Seat.facing] once those animations exist.
+  static const List<Seat> seats = [
+    // Bar stools, facing the bar.
+    Seat(378, 400),
+    Seat(443, 400),
+    Seat(508, 400),
+    Seat(571, 400),
+    Seat(633, 400),
+    Seat(696, 400),
+    Seat(761, 400),
+    Seat(826, 400),
+    // Stools in front of tables, facing the table.
+    Seat(229, 872), // long table (left)
+    Seat(320, 872),
+    Seat(1068, 560), // table (top-right)
+    Seat(1162, 727), // table (middle-right)
+    Seat(983, 934), // big table (bottom-right)
+    Seat(1073, 934),
+  ];
+  static const double seatReach = 62;
 
   /// Everything a player's feet cannot walk through.
   static const List<Rect> collisionBoxes = [
@@ -70,4 +99,14 @@ class TavernMap {
 
   static bool isBlocked(Rect feet) =>
       collisionBoxes.any((box) => box.overlaps(feet));
+}
+
+/// A place to sit: where the seated character's feet go, and which way
+/// they face (north = back to the camera).
+class Seat {
+  const Seat(this.x, this.y, {this.facing = Facing.north});
+
+  final double x;
+  final double y;
+  final Facing facing;
 }

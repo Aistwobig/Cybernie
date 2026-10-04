@@ -61,13 +61,13 @@ void main() {
       // and standing still plays her idle cycle (8 frames), not the walk.
       final anims = game.player.animations!;
       expect(
-        anims[(Facing.west, true)]!.frames.first.sprite.srcSize,
-        anims[(Facing.south, true)]!.frames.first.sprite.srcSize,
+        anims[(Facing.west, Pose.walk)]!.frames.first.sprite.srcSize,
+        anims[(Facing.south, Pose.walk)]!.frames.first.sprite.srcSize,
       );
-      expect(anims[(Facing.south, false)]!.frames, hasLength(8));
+      expect(anims[(Facing.south, Pose.stand)]!.frames, hasLength(8));
       game.player.walk(Vector2.zero(), 1 / 60);
       await tester.pump(const Duration(milliseconds: 16));
-      expect(game.player.current, (game.player.facing, false));
+      expect(game.player.current, (game.player.facing, Pose.stand));
       expect(game.player.size.y, closeTo(87, 0.01));
       game.moveOtherPlayer('friend', 700, 600, 3, true);
       game.otherPlayerSays('friend', 'hi!');
@@ -112,9 +112,38 @@ void main() {
       expect(interacted, 1);
 
       final sent = <double>[];
-      game.onLocalMove = (x, y, facing, moving) => sent.add(x);
+      final sentSitting = <bool>[];
+      game.onLocalMove = (x, y, facing, moving, sitting) {
+        sent.add(x);
+        sentSitting.add(sitting);
+      };
       game.broadcastPosition();
       expect(sent, hasLength(1));
+
+      // The Mage can sit on a bar stool: standing just in front of one
+      // offers "Click to sit"; sitting moves her onto it, facing the bar,
+      // with her seated animation, and tells the others.
+      final seat = TavernMap.seats.first;
+      final seatNearby = <bool>[];
+      game.onSeatNearby = seatNearby.add;
+      game.player.position.setValues(seat.x, seat.y + 45);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(seatNearby, [true]);
+      expect(game.nearSeat, isTrue);
+      game.interact();
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(game.sitting, isTrue);
+      expect(game.player.position, Vector2(seat.x, seat.y));
+      expect(game.player.current, (Facing.north, Pose.sit));
+      expect(sentSitting.last, isTrue);
+      // Moving gets her up, back where she stood.
+      game.player.walk(Vector2.zero(), 1 / 60);
+      game.standUp();
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(game.sitting, isFalse);
+      expect(game.player.position, Vector2(seat.x, seat.y + 45));
+      expect(game.player.current?.$2, isNot(Pose.sit));
+      expect(sentSitting.last, isFalse);
 
       game.syncOtherPlayers([]);
       expect(game.otherPlayerCount, 0);

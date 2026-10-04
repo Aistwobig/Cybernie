@@ -53,6 +53,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   String _reportName = '';
   bool _cameFromList = false;
   bool _nearNoticeBoard = false;
+  bool _nearSeat = false;
+  bool _sitting = false;
   bool _emotesOpen = false;
   bool _chatCollapsed = false;
   int _unreadMessages = 0;
@@ -73,6 +75,12 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       if (mounted) setState(() => _nearNoticeBoard = near);
     };
     _game.onInteract = _openNoticeBoard;
+    _game.onSeatNearby = (near) {
+      if (mounted) setState(() => _nearSeat = near);
+    };
+    _game.onSittingChanged = (sitting) {
+      if (mounted) setState(() => _sitting = sitting);
+    };
     _enterRoom();
     _connectChat();
   }
@@ -85,6 +93,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onLocalMove = null
       ..onPlayerTap = null
       ..onNoticeBoardNearby = null
+      ..onSeatNearby = null
+      ..onSittingChanged = null
       ..onInteract = null;
     _room?.leave();
     _chat?.dispose();
@@ -114,13 +124,14 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 
     final room = RoomService(_roomId);
     _room = room;
-    _game.onLocalMove = (x, y, facing, moving) => room.sendMove(
+    _game.onLocalMove = (x, y, facing, moving, sitting) => room.sendMove(
       PlayerMove(
         playerId: room.myId,
         x: x,
         y: y,
         facing: facing.index,
         moving: moving,
+        sitting: sitting,
       ),
     );
 
@@ -147,6 +158,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         move.y,
         move.facing,
         move.moving,
+        sitting: move.sitting,
       ),
       onSomeoneJoined: _game.broadcastPosition,
       onEmote: _game.otherPlayerEmotes,
@@ -349,6 +361,27 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
               onShowPlayers: _openPlayers,
             ),
           ),
+          // Next to a free seat: offer to sit. Seated: offer to stand.
+          if ((_nearSeat || _sitting) && _panel == _Panel.none)
+            Positioned(
+              top: 62,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: _HudButton(
+                  label: _sitting
+                      ? AppStrings.standUpButton
+                      : AppStrings.clickToSitButton,
+                  icon: _sitting ? Icons.directions_walk : Icons.event_seat,
+                  onPressed: () {
+                    _sitting ? _game.standUp() : _game.sitDown();
+                    // Keep WASD / E working after clicking.
+                    _gameFocus.requestFocus();
+                  },
+                  filled: true,
+                ),
+              ),
+            ),
           if (_nearNoticeBoard && _panel != _Panel.noticeBoard)
             Positioned(
               top: 62,

@@ -34,8 +34,8 @@ void main() {
       final p = game.player;
       final want = characterAt(slime);
       expect(p.sheetAsset, want.sheet);
-      final walk = p.animations![(Facing.south, true)]!.frames;
-      final idle = p.animations![(Facing.south, false)]!.frames;
+      final walk = p.animations![(Facing.south, Pose.walk)]!.frames;
+      final idle = p.animations![(Facing.south, Pose.stand)]!.frames;
       expect(walk, hasLength(want.frames));
       expect(idle, hasLength(want.frames));
       // Slime cells are 240 x 256, drawn 87 tall.

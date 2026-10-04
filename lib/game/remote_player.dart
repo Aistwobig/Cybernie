@@ -15,6 +15,7 @@ class RemotePlayer extends Character with TapCallbacks {
     super.horizontalRunSheetAsset,
     super.feetFraction,
     super.frames,
+    super.sitBackSheetAsset,
     required Vector2 start,
     this.onTap,
   }) : _target = start.clone() {
@@ -28,11 +29,18 @@ class RemotePlayer extends Character with TapCallbacks {
   /// Further than this (e.g. after lag), jump straight there instead.
   static const double _snapDistance = 250;
 
-  void moveTo(Vector2 target, Facing newFacing, bool isMoving) {
+  void moveTo(
+    Vector2 target,
+    Facing newFacing,
+    bool isMoving, {
+    bool isSitting = false,
+  }) {
     _target.setFrom(target);
     facing = newFacing;
     moving = isMoving;
-    if (position.distanceTo(_target) > _snapDistance) {
+    sitting = isSitting;
+    // Sitting down or standing up jumps straight to the seat (or off it).
+    if (isSitting || position.distanceTo(_target) > _snapDistance) {
       position.setFrom(_target);
     }
   }
