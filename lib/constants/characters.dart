@@ -58,10 +58,11 @@ class GameCharacter {
 const List<GameCharacter> gameCharacters = [
   GameCharacter(
     name: AppStrings.characterLuna,
-    // Her own walk. Until her idle sheets arrive she stands on her first
-    // walk frame in the tavern, and can't sit yet (no sitting art); her
-    // front idle from the GIF plays on the Profile tile.
+    // Her own walk and idle. She sits with her back idle lowered onto the
+    // seat; her front idle from the GIF plays on the Profile tile.
     sheet: AppImages.lunaSheet,
+    idleSheet: AppImages.lunaIdleSheet,
+    sitBackSheet: AppImages.lunaSitBackSheet,
     feetFraction: 374 / 384,
     profileIdleSheet: AppImages.lunaIdleFront,
     profileIdleFrames: 24,

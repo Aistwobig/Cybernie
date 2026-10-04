@@ -13,6 +13,8 @@ class AppImages {
   static const String boyIdleSheet = 'assets/images/idle_anim_boy.png';
   static const String boySitBackSheet = 'assets/images/boy_sit_back.png';
   static const String lunaSheet = 'assets/images/luna_walk.png';
+  static const String lunaIdleSheet = 'assets/images/luna_idle.png';
+  static const String lunaSitBackSheet = 'assets/images/luna_sit_back.png';
   static const String lunaIdleFront = 'assets/images/luna_idle_front.png';
   static const String lilySheet = 'assets/images/lily_walk.png';
   static const String lilyIdleSheet = 'assets/images/lily_idle.png';
