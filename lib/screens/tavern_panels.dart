@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_strings.dart';
+import '../constants/drinks.dart';
 import '../models/profile.dart';
 import '../services/friends_service.dart';
 import '../services/notice_board_service.dart';
@@ -885,6 +886,125 @@ class DirectChatPanel extends StatelessWidget {
       onClose: onClose,
       onBack: onBack,
       child: DirectChatView(friend: friend, compact: true),
+    );
+  }
+}
+
+// --- Bernie's bar --------------------------------------------------------------
+
+/// Bernie's drinks menu, opened by tapping him. You order from the bar
+/// itself: further away, the menu says to come closer.
+class BarMenuPanel extends StatelessWidget {
+  const BarMenuPanel({
+    super.key,
+    required this.atBar,
+    required this.canOrder,
+    required this.onOrder,
+    required this.onClose,
+  });
+
+  /// Standing or sitting at the bar.
+  final bool atBar;
+
+  /// False for a moment after ordering, so drinks can't be spammed.
+  final bool canOrder;
+  final void Function(String drinkId) onOrder;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return TavernPanel(
+      title: AppStrings.bernieName,
+      onClose: onClose,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        children: [
+          Text(
+            atBar ? AppStrings.bernieGreeting : AppStrings.bernieComeCloser,
+            style: GoogleFonts.lora(
+              fontSize: 14,
+              fontStyle: FontStyle.italic,
+              color: AppColors.ink,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (final drink in drinks)
+            _DrinkTile(
+              drink: drink,
+              onOrder: atBar && canOrder ? () => onOrder(drink.id) : null,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DrinkTile extends StatelessWidget {
+  const _DrinkTile({required this.drink, required this.onOrder});
+
+  final Drink drink;
+  final VoidCallback? onOrder;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.ink.withValues(alpha: 0.25)),
+            ),
+            child: Image.asset(
+              drink.asset,
+              filterQuality: FilterQuality.none,
+              semanticLabel: drink.name,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  drink.name,
+                  style: _body(size: 14, weight: FontWeight.w700),
+                ),
+                Text(drink.description, style: _muted(size: 11.5)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            height: 32,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.ink,
+                foregroundColor: AppColors.onInk,
+                disabledBackgroundColor: AppColors.parchmentDim,
+                disabledForegroundColor: AppColors.inkMuted,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ),
+              onPressed: onOrder,
+              child: Text(
+                AppStrings.orderButton,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

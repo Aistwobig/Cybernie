@@ -30,6 +30,9 @@ class TavernMap {
   static const Offset bartenderSpot = Offset(625, 335);
   static const Rect barCounterFront = Rect.fromLTRB(372, 306, 800, 345);
 
+  /// Standing (or sitting) here, at the bar, lets you order from Bernie.
+  static const Rect barOrderArea = Rect.fromLTRB(330, 380, 900, 530);
+
   /// The seats. Each has where a seated character's feet line goes, and the
   /// stool's front (cushion edge and legs) as a rectangle of this picture.
   /// The game draws that front again as its own sprite, layered by depth:

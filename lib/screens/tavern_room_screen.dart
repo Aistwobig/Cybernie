@@ -62,6 +62,10 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   /// The friend in the private chat panel, opened from their player card.
   Profile? _chatFriend;
 
+  /// At the bar (can order from Bernie), and a short pause after ordering.
+  bool _atBar = false;
+  bool _justOrdered = false;
+  Timer? _orderPause;
   @override
   void initState() {
     super.initState();
@@ -81,6 +85,22 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _game.onSittingChanged = (sitting) {
       if (mounted) setState(() => _sitting = sitting);
     };
+    // Tapping Bernie opens his menu; letting go of him closes it.
+    _game.onBernieSelected = (selected) {
+      if (!mounted) return;
+      if (selected) {
+        setState(() {
+          _panel = _Panel.bar;
+          _emotesOpen = false;
+        });
+      } else if (_panel == _Panel.bar) {
+        setState(() => _panel = _Panel.none);
+      }
+    };
+    _game.onAtBarChanged = (atBar) {
+      if (mounted) setState(() => _atBar = atBar);
+    };
+    _game.onDrinkOrdered = (drinkId) => _room?.sendDrink(drinkId);
     _enterRoom();
     _connectChat();
   }
@@ -95,7 +115,11 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onNoticeBoardNearby = null
       ..onSeatNearby = null
       ..onSittingChanged = null
+      ..onBernieSelected = null
+      ..onAtBarChanged = null
+      ..onDrinkOrdered = null
       ..onInteract = null;
+    _orderPause?.cancel();
     _room?.leave();
     _chat?.dispose();
     _gameFocus.dispose();
@@ -162,6 +186,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ),
       onSomeoneJoined: _game.broadcastPosition,
       onEmote: _game.otherPlayerEmotes,
+      onDrink: _game.otherPlayerDrinks,
       onError: () => _showSnack(AppStrings.roomConnectionError),
     );
   }
@@ -259,9 +284,25 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   });
 
   void _closePanel() {
+    final wasBar = _panel == _Panel.bar;
     setState(() => _panel = _Panel.none);
+    // Closing his menu lets go of Bernie (hides his name plate).
+    if (wasBar) _game.bernie.selected = false;
     // Give the keyboard back to the game so WASD works again.
     _gameFocus.requestFocus();
+  }
+
+  /// Orders from Bernie, then closes his menu. Ordering pauses for a few
+  /// seconds so drinks can't be spammed.
+  void _orderDrink(String drinkId) {
+    if (_justOrdered) return;
+    _game.orderDrink(drinkId);
+    _orderPause?.cancel();
+    setState(() => _justOrdered = true);
+    _orderPause = Timer(const Duration(seconds: 5), () {
+      if (mounted) setState(() => _justOrdered = false);
+    });
+    _closePanel();
   }
 
   void _sendEmote(String emoji) {
@@ -313,6 +354,13 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         );
       case _Panel.noticeBoard:
         return NoticeBoardPanel(roomId: _roomId, onClose: _closePanel);
+      case _Panel.bar:
+        return BarMenuPanel(
+          atBar: _atBar,
+          canOrder: !_justOrdered,
+          onOrder: _orderDrink,
+          onClose: _closePanel,
+        );
       case _Panel.directChat:
         final friend = _chatFriend;
         if (friend == null) return null;
@@ -471,7 +519,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   }
 }
 
-enum _Panel { none, players, playerCard, report, noticeBoard, directChat }
+enum _Panel { none, players, playerCard, report, noticeBoard, directChat, bar }
 
 /// The reactions, as big tappable pictures above the chat box. They share
 /// the row's width, up to 48 px each.

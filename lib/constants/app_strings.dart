@@ -155,6 +155,11 @@ class AppStrings {
   static const String readNoticeBoard = 'Read notice board';
   static const String readNoticeBoardKey = 'Read notice board (E)';
   static const String clickToSitButton = 'Click to sit (E)';
+  static const String bernieName = 'Bernie';
+  static const String bernieGreeting = "What'll it be, friend?";
+  static const String bernieComeCloser =
+      "Come up to the bar and I'll pour you something!";
+  static const String orderButton = 'ORDER';
   static const String standUpButton = 'Stand up (E)';
   static const String noticeBoardHint = 'Pin a note for everyone...';
   static const String pinNoteButton = 'PIN';

@@ -1,4 +1,5 @@
 import 'package:final_project/constants/app_images.dart';
+import 'package:final_project/game/character.dart' show SpeechBubble;
 import 'package:final_project/game/player.dart';
 import 'package:final_project/game/tavern_game.dart';
 import 'package:final_project/game/tavern_map.dart';
@@ -174,6 +175,38 @@ void main() {
       bernie.selected = false;
       await tester.pump(const Duration(milliseconds: 16));
       expect(bernie.children.whereType<PositionComponent>(), isEmpty);
+
+      // Ordering from Bernie at the bar: he answers, we hold the drink, and
+      // the other players are told.
+      final atBar = <bool>[];
+      final ordered = <String>[];
+      game
+        ..onAtBarChanged = atBar.add
+        ..onDrinkOrdered = ordered.add;
+      // Away from the bar first (we just stood up from a bar stool).
+      game.player.position.setValues(600, 700);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(game.atBar, isFalse);
+      game.player.position.setValues(600, 460);
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(game.atBar, isTrue);
+      expect(atBar, [false, true]);
+      game.orderDrink('ale');
+      for (var i = 0; i < 5; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(ordered, ['ale']);
+      expect(bernie.children.whereType<SpeechBubble>(), hasLength(1));
+      expect(
+        game.player.children.whereType<SpriteComponent>(),
+        hasLength(1),
+        reason: 'the mug in our hand',
+      );
+      game.orderDrink('not-a-drink');
+      expect(ordered, ['ale']);
 
       game.syncOtherPlayers([]);
       expect(game.otherPlayerCount, 0);

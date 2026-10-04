@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 
 import '../constants/app_images.dart';
 import '../constants/characters.dart';
+import '../constants/drinks.dart';
 import 'bernie.dart';
 import 'player.dart';
 import 'remote_player.dart';
@@ -64,6 +65,43 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
 
   /// Bernie the bartender, behind the bar.
   late final Bernie bernie;
+
+  /// Called when Bernie is selected (tapped) or let go.
+  void Function(bool selected)? onBernieSelected;
+
+  /// Called when we order a drink, to tell the other players.
+  void Function(String drinkId)? onDrinkOrdered;
+
+  /// Whether we're at the bar, close enough to order from Bernie.
+  bool get atBar => _atBar;
+  bool _atBar = false;
+
+  /// Called when we step up to the bar (true) or away from it (false).
+  void Function(bool atBar)? onAtBarChanged;
+
+  void _checkBar() {
+    final at = TavernMap.barOrderArea.contains(
+      Offset(player.position.x, player.position.y),
+    );
+    if (at != _atBar) {
+      _atBar = at;
+      onAtBarChanged?.call(at);
+    }
+  }
+
+  /// Orders [drinkId] from Bernie: he says his line, and we hold the drink.
+  void orderDrink(String drinkId) {
+    final drink = drinkById(drinkId);
+    if (drink == null || !isLoaded) return;
+    bernie.say(drink.bernieSays);
+    player.holdDrink(drink.id);
+    onDrinkOrdered?.call(drink.id);
+  }
+
+  /// Another player got a drink: show it in their hand.
+  void otherPlayerDrinks(String id, String drinkId) =>
+      _others[id]?.holdDrink(drinkId);
+
   late final JoystickComponent _joystick;
   late final _keyboardInput = _KeyboardInput(onInteract: interact);
   _HitboxOverlay? _hitboxOverlay;
@@ -290,7 +328,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
 
     bernie = Bernie(
       position: Vector2(TavernMap.bartenderSpot.dx, TavernMap.bartenderSpot.dy),
-    );
+    )..onSelectedChanged = (selected) => onBernieSelected?.call(selected);
     // The counter top drawn again over Bernie, so the bar hides him from
     // the waist down. Layered by its bottom edge, like the stools: in front
     // of him, behind anyone sitting at or walking past the bar.
@@ -371,6 +409,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     _maybeSendPosition(dt);
     _checkNoticeBoard();
     _checkSeats();
+    _checkBar();
     _followPlayer();
   }
 

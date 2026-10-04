@@ -3,6 +3,7 @@ import 'package:flame/effects.dart';
 import 'package:flame/sprite.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/drinks.dart';
 import '../constants/emotes.dart';
 
 enum Facing { south, north, west, east }
@@ -59,8 +60,9 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   /// Whether this character has a seated animation facing [direction].
   bool canSitFacing(Facing direction) =>
       animations?.containsKey((direction, Pose.sit)) ?? false;
-  _ChatBubble? _bubble;
+  SpeechBubble? _bubble;
   SpriteComponent? _emote;
+  SpriteComponent? _drink;
 
   late final TextComponent _nameTag = TextComponent(
     text: _name,
@@ -237,11 +239,51 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   void say(String text) {
     if (!isLoaded) return;
     _bubble?.removeFromParent();
-    final bubble = _ChatBubble(text)
+    final bubble = SpeechBubble(text)
       ..position = Vector2(size.x / 2, -16)
       ..anchor = Anchor.bottomCenter;
     _bubble = bubble;
     add(bubble);
+  }
+
+  /// How big a held drink is drawn, and for how long it's held.
+  static const double drinkSize = 22;
+  static const double drinkSeconds = 60;
+
+  /// Shows [drink] (sent as its id, see drinks.dart) held up beside the
+  /// head for [drinkSeconds], with a little sip now and then.
+  Future<void> holdDrink(String id) async {
+    final drink = drinkById(id);
+    if (!isLoaded || drink == null) return;
+    final image = await game.images.load(drink.asset);
+    if (!isMounted) return;
+    _drink?.removeFromParent();
+    final mug = SpriteComponent(
+      sprite: Sprite(image),
+      size: Vector2.all(drinkSize),
+      anchor: Anchor.bottomCenter,
+      position: Vector2(size.x * 0.12, 30),
+      scale: Vector2.all(0.2),
+    )..paint.filterQuality = FilterQuality.none;
+    mug.addAll([
+      ScaleEffect.to(
+        Vector2.all(1),
+        EffectController(duration: 0.3, curve: Curves.easeOutBack),
+      ),
+      // A sip every few seconds: a quick tilt and back.
+      RotateEffect.by(
+        -0.35,
+        EffectController(
+          duration: 0.25,
+          reverseDuration: 0.35,
+          startDelay: 2,
+          infinite: true,
+        ),
+      ),
+      RemoveEffect(delay: drinkSeconds),
+    ]);
+    _drink = mug;
+    add(mug);
   }
 
   /// How big emotes are drawn on the map.
@@ -279,8 +321,8 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
 }
 
 /// A parchment speech bubble that removes itself after [_lifetime] seconds.
-class _ChatBubble extends PositionComponent {
-  _ChatBubble(String text)
+class SpeechBubble extends PositionComponent {
+  SpeechBubble(String text)
     : _painter = TextPainter(
         text: TextSpan(
           text: text,

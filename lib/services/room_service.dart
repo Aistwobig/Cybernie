@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../constants/drinks.dart';
 import '../constants/emotes.dart';
 
 /// Someone currently in a room, as shared through Realtime Presence.
@@ -111,6 +112,7 @@ class RoomService {
     required void Function(PlayerMove move) onMove,
     required void Function() onSomeoneJoined,
     required void Function(String playerId, String emoji) onEmote,
+    void Function(String playerId, String drinkId)? onDrink,
     required void Function() onError,
   }) async {
     await _client.realtime.setAuth(_client.auth.currentSession?.accessToken);
@@ -152,6 +154,19 @@ class RoomService {
             }
           },
         )
+        .onBroadcast(
+          event: 'drink',
+          callback: (message) {
+            final data = message['payload'] is Map
+                ? Map<String, dynamic>.from(message['payload'] as Map)
+                : message;
+            final id = data['id'];
+            final drink = data['d'];
+            if (id is String && drink is String && id != myId) {
+              if (drinkById(drink) != null) onDrink?.call(id, drink);
+            }
+          },
+        )
         .subscribe((status, error) async {
           if (status == RealtimeSubscribeStatus.subscribed) {
             await channel.track({
@@ -177,6 +192,15 @@ class RoomService {
     await _channel?.sendBroadcastMessage(
       event: 'emote',
       payload: {'id': myId, 'e': emoji},
+    );
+  }
+
+  /// Tells the room we got a drink from Bernie (see drinks.dart).
+  Future<void> sendDrink(String drinkId) async {
+    if (drinkById(drinkId) == null) return;
+    await _channel?.sendBroadcastMessage(
+      event: 'drink',
+      payload: {'id': myId, 'd': drinkId},
     );
   }
 

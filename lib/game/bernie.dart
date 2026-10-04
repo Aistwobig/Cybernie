@@ -27,6 +27,7 @@ class Bernie extends SpriteAnimationComponent
   void Function(bool selected)? onSelectedChanged;
 
   _PixelNamePlate? _plate;
+  SpeechBubble? _bubble;
   bool _selected = false;
   bool get selected => _selected;
 
@@ -63,6 +64,18 @@ class Bernie extends SpriteAnimationComponent
     size = Vector2(_cellW, _cellH) * (Character.displayHeight / _cellH);
     priority = position.y.round();
     paint.filterQuality = FilterQuality.none;
+  }
+
+  /// Shows [text] in a speech bubble over his head (above the name plate
+  /// while he's selected) for a few seconds.
+  void say(String text) {
+    if (!isLoaded) return;
+    _bubble?.removeFromParent();
+    final bubble = SpeechBubble(text)
+      ..position = Vector2(size.x / 2, _selected ? -12 : 6)
+      ..anchor = Anchor.bottomCenter;
+    _bubble = bubble;
+    add(bubble);
   }
 
   @override
