@@ -456,7 +456,18 @@ class _CharacterTileState extends State<_CharacterTile> {
     final onTap = widget.onTap;
     // Idle cycles run at the same pace as in the tavern (0.2 s per frame
     // for 8 frames, whatever the frame count).
-    final idleFrame = Duration(microseconds: 200000 * 8 ~/ character.frames);
+    // A Profile-only idle (e.g. Luna's) has its own frames and speed;
+    // otherwise the in-game idle runs at its tavern pace (0.2 s per frame
+    // for 8 frames, whatever the frame count).
+    final profileIdle = character.profileIdleSheet;
+    final idleAsset = profileIdle ?? character.idleSheet ?? character.sheet;
+    final idleColumns = profileIdle != null
+        ? character.profileIdleFrames
+        : character.frames;
+    final idleFrame = profileIdle != null
+        ? Duration(milliseconds: character.profileIdleFrameMs)
+        : Duration(microseconds: 200000 * 8 ~/ character.frames);
+    final hasIdle = profileIdle != null || character.idleSheet != null;
 
     return Semantics(
       button: true,
@@ -493,12 +504,12 @@ class _CharacterTileState extends State<_CharacterTile> {
                         // The front-facing idle (the walk's first frame
                         // for a character without one).
                         child: SpriteWalkPreview(
-                          assetPath: character.idleSheet ?? character.sheet,
-                          columns: character.frames,
+                          assetPath: idleAsset,
+                          columns: idleColumns,
+                          // A Profile-only idle is a single front row.
+                          rows: profileIdle != null ? 1 : 4,
                           facing: SpriteDirection.south,
-                          animate:
-                              character.idleSheet != null &&
-                              (_hovered || isSelected),
+                          animate: hasIdle && (_hovered || isSelected),
                           frameDuration: idleFrame,
                         ),
                       ),

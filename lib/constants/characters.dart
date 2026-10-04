@@ -14,6 +14,9 @@ class GameCharacter {
     this.feetFraction = 0.963,
     this.frames = 8,
     this.sitBackSheet,
+    this.profileIdleSheet,
+    this.profileIdleFrames = 8,
+    this.profileIdleFrameMs = 200,
   });
 
   final String name;
@@ -39,6 +42,13 @@ class GameCharacter {
   /// cell size and feet line as [sheet]. Characters with one can sit on the
   /// tavern's seats that face away from the camera.
   final String? sitBackSheet;
+
+  /// Optional front-facing idle just for the Profile tile (one row of
+  /// [profileIdleFrames] frames, [profileIdleFrameMs] each), for a
+  /// character whose in-game sheets aren't ready yet.
+  final String? profileIdleSheet;
+  final int profileIdleFrames;
+  final int profileIdleFrameMs;
 }
 
 /// The choosable characters, in the order `profiles.character_index` uses.
@@ -48,9 +58,14 @@ class GameCharacter {
 const List<GameCharacter> gameCharacters = [
   GameCharacter(
     name: AppStrings.characterLuna,
+    // In the tavern Luna still uses the shared sprite until her walk sheets
+    // are made; her own idle shows on the Profile tile.
     sheet: AppImages.characterMenAnim,
     idleSheet: AppImages.boyIdleSheet,
     sitBackSheet: AppImages.boySitBackSheet,
+    profileIdleSheet: AppImages.lunaIdleFront,
+    profileIdleFrames: 24,
+    profileIdleFrameMs: 125,
   ),
   GameCharacter(
     name: AppStrings.characterRogue,
