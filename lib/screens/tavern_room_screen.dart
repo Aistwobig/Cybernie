@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_strings.dart';
 import '../constants/characters.dart';
@@ -107,6 +108,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       if (!mounted) return;
       if (selected) {
         SfxService.play(Sfx.sparkle);
+        _markSeen(_seenBernieKey);
         setState(() {
           _panel = _Panel.bar;
           _emotesOpen = false;
@@ -121,6 +123,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _game.onDrinkOrdered = (drinkId) => _room?.sendDrink(drinkId);
     _game.onSeatTooFar = () => _showSnack(AppStrings.walkCloserToSit);
     _messageController.addListener(_onDraftChanged);
+    _loadHints();
     _enterRoom();
     _connectChat();
   }
@@ -326,6 +329,39 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     });
   }
 
+  static const String _seenBernieKey = 'tavern_seen_bernie';
+  static const String _seenBoardKey = 'tavern_seen_notice_board';
+
+  /// Bernie and the notice board carry a "!" until this player has used
+  /// them once on this device.
+  Future<void> _loadHints() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _game
+        ..bernieHint = !(prefs.getBool(_seenBernieKey) ?? false)
+        ..noticeBoardHint = !(prefs.getBool(_seenBoardKey) ?? false);
+    } catch (_) {
+      // No storage (e.g. private browsing): show both hints this visit.
+      _game
+        ..bernieHint = true
+        ..noticeBoardHint = true;
+    }
+  }
+
+  Future<void> _markSeen(String key) async {
+    if (key == _seenBernieKey) {
+      if (!_game.bernieHint) return;
+      _game.bernieHint = false;
+    } else {
+      if (!_game.noticeBoardHint) return;
+      _game.noticeBoardHint = false;
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(key, true);
+    } catch (_) {}
+  }
+
   void _showSnack(String text) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
@@ -356,6 +392,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 
   void _openNoticeBoard() {
     if (!mounted) return;
+    _markSeen(_seenBoardKey);
     setState(() {
       _panel = _Panel.noticeBoard;
       _emotesOpen = false;

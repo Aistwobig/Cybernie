@@ -24,6 +24,9 @@ class TavernMap {
   static const Offset noticeBoardSpot = Offset(1245, 310);
   static const double noticeBoardReach = 95;
 
+  /// The notice board's frame in the picture, drawn again so it can glow.
+  static const Rect noticeBoardRect = Rect.fromLTRB(1214, 174, 1334, 278);
+
   /// Where Bernie the bartender stands (his feet), behind the bar counter.
   /// [barCounterFront] is the counter top, drawn again over him so the bar
   /// hides him from the waist down (the bottles and menu on it stay in front).

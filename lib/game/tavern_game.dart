@@ -11,6 +11,7 @@ import '../constants/characters.dart';
 import '../constants/drinks.dart';
 import '../theme/app_theme.dart';
 import 'bernie.dart';
+import 'highlight.dart';
 import 'night_lighting.dart';
 import 'player.dart';
 import 'remote_player.dart';
@@ -410,17 +411,32 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       for (final seat in TavernMap.seats) _SeatTarget(seat, onDoubleTap: sitOn),
     ];
 
+    // The notice board drawn again over the map, so it can glow.
+    const board = TavernMap.noticeBoardRect;
+    _noticeBoard = HighlightableCutout(
+      sprite: Sprite(
+        mapImage,
+        srcPosition: Vector2(board.left, board.top),
+        srcSize: Vector2(board.width, board.height),
+      ),
+      position: Vector2(board.left, board.top),
+      size: Vector2(board.width, board.height),
+      // Over the floor, under everyone (it hangs on the back wall).
+      priority: 0,
+    )..paint.filterQuality = FilterQuality.none;
+
     // Night mode: the map (and the bits of it drawn over characters) dims
     // like the app's other scenes, and its lanterns glow warm.
     final sceneFilter = AppColors.sceneFilter;
     if (sceneFilter != null) {
-      for (final part in [map, counterFront, ...stoolFronts]) {
+      for (final part in [map, counterFront, _noticeBoard, ...stoolFronts]) {
         part.paint.colorFilter = sceneFilter;
       }
     }
 
     world.addAll([
       map,
+      _noticeBoard,
       bernie,
       counterFront,
       ...stoolFronts,
@@ -460,7 +476,25 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     _checkNoticeBoard();
     _checkSeats();
     _checkBar();
+    _updateHighlights();
     _followPlayer();
+  }
+
+  /// Show a "!" (and a bright glow) over Bernie / the notice board until the
+  /// player has used them once. Set by the screen, which remembers that.
+  bool bernieHint = false;
+  bool noticeBoardHint = false;
+
+  late final HighlightableCutout _noticeBoard;
+
+  /// Each also glows softly while the player is close enough to use it.
+  void _updateHighlights() {
+    bernie
+      ..showHint = bernieHint
+      ..highlighted = _atBar;
+    _noticeBoard
+      ..showHint = noticeBoardHint
+      ..highlighted = _nearNoticeBoard;
   }
 
   @override

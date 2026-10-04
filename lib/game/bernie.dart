@@ -7,12 +7,13 @@ import 'package:flutter/material.dart';
 import '../constants/app_images.dart';
 import '../theme/app_theme.dart';
 import 'character.dart';
+import 'highlight.dart';
 
 /// Bernie, the cat who runs the tavern: an NPC standing behind the bar with
 /// a mug, playing his idle loop. Tap him to select him, which shows his
 /// pixel name plate; tap him again (or anywhere else) to deselect.
 class Bernie extends SpriteAnimationComponent
-    with TapCallbacks, HasGameReference {
+    with TapCallbacks, HasGameReference, Highlightable {
   Bernie({required Vector2 position})
     : super(position: position, anchor: Anchor(0.5, _feetLine / _cellH));
 
@@ -79,6 +80,17 @@ class Bernie extends SpriteAnimationComponent
       ..anchor = Anchor.bottomCenter;
     _bubble = bubble;
     add(bubble);
+  }
+
+  // His name plate takes the spot over his head while he's selected.
+  @override
+  bool get hideHint => _selected;
+
+  @override
+  void render(Canvas canvas) {
+    final sprite = animationTicker?.getSprite();
+    if (sprite != null) renderGlow(canvas, sprite, size, glow);
+    super.render(canvas);
   }
 
   @override

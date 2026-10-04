@@ -1,5 +1,6 @@
 import 'package:final_project/constants/app_images.dart';
 import 'package:final_project/game/character.dart' show SpeechBubble;
+import 'package:final_project/game/highlight.dart';
 import 'package:final_project/game/player.dart';
 import 'package:final_project/game/tavern_game.dart';
 import 'package:final_project/game/tavern_map.dart';
@@ -201,6 +202,27 @@ void main() {
       bernie.selected = false;
       await tester.pump(const Duration(milliseconds: 16));
       expect(bernie.children.whereType<PositionComponent>(), isEmpty);
+
+      // Until he's been used, Bernie (and the notice board) carry a "!".
+      game
+        ..bernieHint = true
+        ..noticeBoardHint = true;
+      // Added on one tick, attached on the next.
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(bernie.children.whereType<HintMarker>(), hasLength(1));
+      final board = game.world.children.whereType<HighlightableCutout>().single;
+      expect(board.children.whereType<HintMarker>(), hasLength(1));
+      expect(board.priority, lessThan(game.player.priority));
+      game
+        ..bernieHint = false
+        ..noticeBoardHint = false;
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(bernie.children.whereType<HintMarker>(), isEmpty);
+      expect(board.children.whereType<HintMarker>(), isEmpty);
 
       // Ordering from Bernie at the bar: he answers, we hold the drink, and
       // the other players are told.
