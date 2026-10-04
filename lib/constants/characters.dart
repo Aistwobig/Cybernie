@@ -70,6 +70,7 @@ const List<GameCharacter> gameCharacters = [
     name: AppStrings.characterLily,
     sheet: AppImages.lilySheet,
     idleSheet: AppImages.lilyIdleSheet,
+    // Her back-facing idle, cut at the skirt hem and lowered onto the seat.
     sitBackSheet: AppImages.lilySitBackSheet,
     feetFraction: 374 / 384,
   ),
