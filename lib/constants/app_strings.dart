@@ -48,13 +48,13 @@ class AppStrings {
   // Profile screen
   static const String profileTitle = 'Profile';
   static const String profilePlayerName = 'Player';
-  static const String profileLevel = 'Level 12';
   static const String chooseCharacter = 'Choose a Character';
   static const String chooseCharacterSubtitle =
       'Select and customize your adventure look.';
-  static String levelLabel(int level) => 'Level $level';
-  static String levelProgress(int level, double progress) =>
-      'Level $level, ${(progress * 100).round()}% to next level';
+  static const String editBio = 'Edit bio';
+  static const String bioLabel = 'Bio';
+  static const String bioHint = 'A few words about you';
+  static const String bioEmpty = 'Add a short bio...';
   static const String characterLuna = 'Luna';
   static const String characterRogue = 'Rogue';
   static const String characterMage = 'Mage';

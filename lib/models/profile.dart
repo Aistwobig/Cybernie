@@ -8,8 +8,14 @@ class Profile {
     required this.characterIndex,
     required this.level,
     this.xp = 0,
+    this.bio = '',
     this.lastSeenAt,
   });
+
+  /// The player's short "about me" (up to [bioMaxLength] characters).
+  final String bio;
+
+  static const int bioMaxLength = 150;
 
   final String id;
   final String username;
@@ -47,6 +53,7 @@ class Profile {
     characterIndex: map['character_index'] as int? ?? 0,
     level: map['level'] as int? ?? 1,
     xp: map['xp'] as int? ?? 0,
+    bio: map['bio'] as String? ?? '',
     lastSeenAt: map['last_seen_at'] == null
         ? null
         : DateTime.parse(map['last_seen_at'] as String).toLocal(),

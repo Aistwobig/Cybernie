@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_images.dart';
 import '../constants/characters.dart';
 import '../constants/app_strings.dart';
+import '../models/profile.dart';
 import '../services/auth_service.dart';
 import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
@@ -28,8 +29,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   int _selectedCharacter = 1;
   String _playerName = AppStrings.profilePlayerName;
-  int _level = 1;
-  double _levelProgress = 0;
+  String _bio = '';
+
+  /// The bio as last loaded or saved, so Save only sends it when changed.
+  String _savedBio = '';
   bool _saving = false;
 
   /// A photo picked on this screen (shown immediately, before any upload).
@@ -44,6 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const String _photoKey = 'profile_photo';
   static const String _nameKey = 'profile_name';
   static const String _characterKey = 'profile_character';
+  static const String _bioKey = 'profile_bio';
 
   @override
   void initState() {
@@ -64,8 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _playerName = profile.displayName;
           }
           _profilePhotoUrl = profile.avatarUrl;
-          _level = profile.level;
-          _levelProgress = profile.levelProgress;
+          _bio = _savedBio = profile.bio;
           if (profile.characterIndex < _characters.length) {
             _selectedCharacter = profile.characterIndex;
           }
@@ -80,9 +83,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final photo = prefs.getString(_photoKey);
     final name = prefs.getString(_nameKey);
     final character = prefs.getInt(_characterKey);
+    final bio = prefs.getString(_bioKey);
     if (!mounted) return;
 
     setState(() {
+      if (bio != null) _bio = _savedBio = bio;
       if (photo != null) _profilePhotoBytes = base64Decode(photo);
       if (name != null && name.isNotEmpty) _playerName = name;
       if (character != null &&
@@ -101,7 +106,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await ProfileService.updateMine(
           displayName: _playerName,
           characterIndex: _selectedCharacter,
+          bio: _bio == _savedBio ? null : _bio,
         );
+        _savedBio = _bio;
       } catch (_) {
         _showSnack(AppStrings.profileSaveError);
         return;
@@ -117,6 +124,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       await prefs.setString(_nameKey, _playerName);
       await prefs.setInt(_characterKey, _selectedCharacter);
+      await prefs.setString(_bioKey, _bio);
     }
 
     _showSnack(AppStrings.profileSaved);
@@ -211,6 +219,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _editBio() async {
+    final controller = TextEditingController(text: _bio);
+    final updatedBio = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(AppStrings.editBio),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: Profile.bioMaxLength,
+          minLines: 3,
+          maxLines: 4,
+          keyboardType: TextInputType.multiline,
+          decoration: const InputDecoration(
+            labelText: AppStrings.bioLabel,
+            hintText: AppStrings.bioHint,
+            alignLabelWithHint: true,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text(AppStrings.cancelButton),
+          ),
+          TextButton(
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(controller.text.trim()),
+            child: const Text(AppStrings.saveButton),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+
+    // An empty bio is allowed: it clears it.
+    if (updatedBio != null && mounted) {
+      setState(() => _bio = updatedBio);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -275,7 +323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// Photo (tap to import), name with an edit button, level and its bar.
+  /// Photo (tap to import), name with an edit button, and the bio.
   Widget _buildPlayerCard() {
     return FantasyCard(
       padding: const EdgeInsets.fromLTRB(18, 18, 14, 18),
@@ -366,30 +414,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
-                Text(
-                  AppStrings.levelLabel(_level),
-                  style: FantasyText.mono(size: 14, color: AppColors.inkMuted),
-                ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 6),
+                // The bio; tap it (or its pencil) to edit.
                 Semantics(
-                  label: AppStrings.levelProgress(_level, _levelProgress),
-                  child: Container(
-                    height: 14,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.parchmentDim,
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(
-                        color: AppColors.ink.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: _levelProgress.clamp(0.0, 1.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppColors.ink,
-                          borderRadius: BorderRadius.circular(7),
+                  button: true,
+                  label: _bio.isEmpty
+                      ? AppStrings.editBio
+                      : '${AppStrings.bioLabel}: $_bio. ${AppStrings.editBio}',
+                  excludeSemantics: true,
+                  child: Tooltip(
+                    message: AppStrings.editBio,
+                    child: InkWell(
+                      onTap: _editBio,
+                      borderRadius: BorderRadius.circular(6),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _bio.isEmpty ? AppStrings.bioEmpty : _bio,
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                    FantasyText.mono(
+                                      size: 13,
+                                      color: AppColors.inkMuted,
+                                    ).copyWith(
+                                      fontStyle: _bio.isEmpty
+                                          ? FontStyle.italic
+                                          : FontStyle.normal,
+                                      height: 1.35,
+                                    ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 1, right: 10),
+                              child: Icon(
+                                Icons.edit_note,
+                                size: 20,
+                                color: AppColors.frameBrown,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

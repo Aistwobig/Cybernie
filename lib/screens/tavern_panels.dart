@@ -325,6 +325,19 @@ class _PlayerCardPanelState extends State<PlayerCardPanel> {
               textAlign: TextAlign.center,
               style: _muted(),
             ),
+          if (profile != null && profile.bio.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              profile.bio,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                height: 1.35,
+                color: AppColors.ink,
+              ),
+            ),
+            const SizedBox(height: 4),
+          ],
           const SizedBox(height: 4),
           Text(
             AppStrings.inThisRoom,

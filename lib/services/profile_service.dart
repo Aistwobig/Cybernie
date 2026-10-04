@@ -32,6 +32,7 @@ class ProfileService {
     String? displayName,
     int? characterIndex,
     String? avatarUrl,
+    String? bio,
   }) async {
     await _client
         .from('profiles')
@@ -39,6 +40,7 @@ class ProfileService {
           'display_name': ?displayName,
           'character_index': ?characterIndex,
           'avatar_url': ?avatarUrl,
+          'bio': ?bio,
         })
         .eq('id', _userId);
   }
