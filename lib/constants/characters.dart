@@ -68,6 +68,7 @@ const List<GameCharacter> gameCharacters = [
     name: AppStrings.characterLily,
     sheet: AppImages.lilySheet,
     idleSheet: AppImages.lilyIdleSheet,
+    sitBackSheet: AppImages.lilySitBackSheet,
     feetFraction: 374 / 384,
   ),
   GameCharacter(
