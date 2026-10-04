@@ -45,33 +45,36 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
 
   Facing facing = Facing.south;
   bool moving = false;
-  late final TextComponent _nameTag;
   _ChatBubble? _bubble;
   SpriteComponent? _emote;
 
+  late final TextComponent _nameTag = TextComponent(
+    text: _name,
+    anchor: Anchor.bottomCenter,
+    textRenderer: TextPaint(
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: Colors.white,
+        shadows: [Shadow(blurRadius: 3, color: Colors.black)],
+      ),
+    ),
+  );
+
+  /// Counts sheet loads. A load that finishes after a newer one has started
+  /// is thrown away, so a quick switch (e.g. the profile arriving while the
+  /// default character is still loading) never mixes two characters' sheets.
+  int _loads = 0;
+
   set name(String value) {
     _name = value;
-    if (isLoaded) _nameTag.text = value;
+    _nameTag.text = value;
   }
 
   @override
   Future<void> onLoad() async {
-    await _loadSheet();
-
-    _nameTag = TextComponent(
-      text: _name,
-      anchor: Anchor.bottomCenter,
-      position: Vector2(size.x / 2, 2),
-      textRenderer: TextPaint(
-        style: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w700,
-          color: Colors.white,
-          shadows: [Shadow(blurRadius: 3, color: Colors.black)],
-        ),
-      ),
-    );
     add(_nameTag);
+    await _loadSheet();
   }
 
   /// Switches to another character's sheet (e.g. once a player's chosen
@@ -95,9 +98,9 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     _horizontalRunSheetAsset = horizontalRunSheetAsset;
     _feetFraction = feetFraction;
     _frames = frames;
-    if (!isLoaded) return; // onLoad will pick up the new sheet.
-    await _loadSheet();
-    _nameTag.position = Vector2(size.x / 2, 2);
+    // Not added to the game yet: onLoad will load the new sheet. Otherwise
+    // load it now; this also supersedes a first load still in progress.
+    if (isLoading || isLoaded) await _loadSheet();
   }
 
   /// Builds animations from the walk sheet ([_frames] columns x 4 rows),
@@ -107,25 +110,41 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
   /// The idle and run sheets must use the same cell size and feet line as
   /// the walk sheet (assets/sheets has the tool notes), so switching between
   /// walking, running and standing never makes the character jump or resize.
-  Future<void> _loadSheet() async {
-    final image = await game.images.load(_sheetAsset);
-    final cell = Vector2(image.width / _frames, image.height / 4);
+  Future<void> _loadSheet() => _latestLoad = _load();
+
+  /// The most recent sheet load; a superseded load waits for it instead.
+  Future<void>? _latestLoad;
+
+  Future<void> _load() async {
+    final load = ++_loads;
+    // Read every setting once, before any waiting, so the whole load
+    // describes one character even if useSheet changes them meanwhile.
+    final sheetAsset = _sheetAsset;
+    final idleSheetAsset = _idleSheetAsset;
+    final runSheetAsset = _horizontalRunSheetAsset;
+    final frames = _frames;
+    final feetFraction = _feetFraction;
+
+    final image = await game.images.load(sheetAsset);
+    final idleImage = idleSheetAsset == null
+        ? null
+        : await game.images.load(idleSheetAsset);
+    final runImage = runSheetAsset == null
+        ? null
+        : await game.images.load(runSheetAsset);
+    // A newer character was picked meanwhile: finish when that one has.
+    if (load != _loads) return _latestLoad;
+
+    final cell = Vector2(image.width / frames, image.height / 4);
     final walkSheet = SpriteSheet(image: image, srcSize: cell);
     // A whole cycle lasts as long as 8 frames would, however many there are.
-    final perFrame = 8 / _frames;
-
-    final idleImage = _idleSheetAsset == null
-        ? null
-        : await game.images.load(_idleSheetAsset!);
+    final perFrame = 8 / frames;
     final idleSheet = idleImage == null
         ? null
         : SpriteSheet(
             image: idleImage,
-            srcSize: Vector2(idleImage.width / _frames, idleImage.height / 4),
+            srcSize: Vector2(idleImage.width / frames, idleImage.height / 4),
           );
-    final runImage = _horizontalRunSheetAsset == null
-        ? null
-        : await game.images.load(_horizontalRunSheetAsset!);
     final runSheet = runImage == null
         ? null
         : SpriteSheet(
@@ -161,7 +180,8 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, bool)>
     animations = builtAnimations;
     current = (facing, moving);
     size = cell * (displayHeight / cell.y);
-    anchor = Anchor(0.5, _feetFraction);
+    anchor = Anchor(0.5, feetFraction);
+    _nameTag.position = Vector2(size.x / 2, 2);
     // Keep pixel art crisp when scaled.
     paint.filterQuality = FilterQuality.none;
   }
