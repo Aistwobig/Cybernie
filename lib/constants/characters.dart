@@ -37,7 +37,7 @@ class GameCharacter {
 
 /// The choosable characters, in the order `profiles.character_index` uses.
 ///
-/// Luna, Rogue, Lily and Dancer still share the original sprite until their
+/// Luna, Rogue and Dancer still share the original sprite until their
 /// own sheets are added; swap `sheet` here when they are.
 const List<GameCharacter> gameCharacters = [
   GameCharacter(
@@ -59,8 +59,10 @@ const List<GameCharacter> gameCharacters = [
   ),
   GameCharacter(
     name: AppStrings.characterLily,
-    sheet: AppImages.characterMenAnim,
-    idleSheet: AppImages.boyIdleSheet,
+    sheet: AppImages.lilySheet,
+    // Breathing idle built from her standing walk frames.
+    idleSheet: AppImages.lilyIdleSheet,
+    feetFraction: 374 / 384,
   ),
   GameCharacter(
     name: AppStrings.characterDancer,

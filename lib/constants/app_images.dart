@@ -10,6 +10,8 @@ class AppImages {
   static const String mageIdleSheet = 'assets/images/Idle_mage.png';
   static const String mageRunSheet = 'assets/images/mage_left_right.png';
   static const String boyIdleSheet = 'assets/images/idle_anim_boy.png';
+  static const String lilySheet = 'assets/images/lily_walk.png';
+  static const String lilyIdleSheet = 'assets/images/lily_idle.png';
   static const String slimeSheet = 'assets/images/slime_walk.png';
   static const String slimeIdleSheet = 'assets/images/slime_idle.png';
   static const String flowerBanner = 'assets/images/flower_banner.png';
