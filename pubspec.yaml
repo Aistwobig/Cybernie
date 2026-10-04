@@ -25,6 +25,7 @@ dependencies:
   shared_preferences: ^2.5.5
   supabase_flutter: ^2.17.2
   flame: ^1.38.2
+  audioplayers: ^6.8.1
  
 dev_dependencies:
   flutter_test:
@@ -36,4 +37,5 @@ flutter:
   # Put images, fonts and sounds in assets/ and list them here, for example:
   assets:
     - assets/images/
+    - assets/audio/
  

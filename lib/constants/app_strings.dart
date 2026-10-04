@@ -24,6 +24,9 @@ class AppStrings {
   static const String enteringTavern = 'Opening the tavern doors...';
   static const String enteringTavernSubtitle = "Bernie's Tavern awaits.";
   static const String menuButton = 'Menu';
+  static const String musicLabel = 'Music';
+  static const String muteMusic = 'Mute music';
+  static const String unmuteMusic = 'Unmute music';
   static const String nightMode = 'Night mode';
   static const String dayMode = 'Day mode';
   static const String characterPreviewTitle = 'Character Preview';

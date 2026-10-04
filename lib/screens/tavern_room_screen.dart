@@ -438,14 +438,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   }
 }
 
-enum _Panel {
-  none,
-  players,
-  playerCard,
-  report,
-  noticeBoard,
-  directChat,
-}
+enum _Panel { none, players, playerCard, report, noticeBoard, directChat }
 
 /// The reactions, as big tappable pictures above the chat box. They share
 /// the row's width, up to 48 px each.

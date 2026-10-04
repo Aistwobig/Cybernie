@@ -7,6 +7,7 @@ import '../constants/app_images.dart';
 import '../constants/characters.dart';
 import '../constants/app_strings.dart';
 import '../services/auth_service.dart';
+import '../services/music_service.dart';
 import '../services/profile_service.dart';
 import '../services/room_service.dart';
 import '../theme/app_theme.dart';
@@ -258,6 +259,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
             color: AppColors.card,
             position: PopupMenuPosition.under,
             itemBuilder: (context) => [
+              const _MusicVolumeEntry(),
+              const PopupMenuDivider(),
               PopupMenuItem(
                 onTap: ThemeModeController.toggle,
                 child: Row(
@@ -832,6 +835,110 @@ class _EnteringTavernState extends State<_EnteringTavern>
           ),
         ),
       ),
+    );
+  }
+}
+
+/// The music volume in the Home menu: a speaker button that mutes and
+/// unmutes, the percentage, and a slider. Dragging it doesn't close the
+/// menu.
+class _MusicVolumeEntry extends PopupMenuEntry<void> {
+  const _MusicVolumeEntry();
+
+  @override
+  double get height => 84;
+
+  @override
+  bool represents(void value) => false;
+
+  @override
+  State<_MusicVolumeEntry> createState() => _MusicVolumeEntryState();
+}
+
+class _MusicVolumeEntryState extends State<_MusicVolumeEntry> {
+  /// The volume to go back to when unmuting.
+  double _beforeMute = MusicService.defaultVolume;
+
+  void _toggleMute(double volume) {
+    if (volume > 0) {
+      _beforeMute = volume;
+      MusicService.setVolume(0);
+    } else {
+      MusicService.setVolume(_beforeMute > 0 ? _beforeMute : 0.5);
+    }
+    MusicService.saveVolume();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<double>(
+      valueListenable: MusicService.volume,
+      builder: (context, volume, _) {
+        final percent = (volume * 100).round();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(8, 6, 12, 2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: volume > 0
+                        ? AppStrings.muteMusic
+                        : AppStrings.unmuteMusic,
+                    onPressed: () => _toggleMute(volume),
+                    icon: Icon(
+                      volume == 0
+                          ? Icons.volume_off_outlined
+                          : volume < 0.5
+                          ? Icons.volume_down_outlined
+                          : Icons.volume_up_outlined,
+                      size: 20,
+                    ),
+                    color: AppColors.ink,
+                  ),
+                  Expanded(
+                    child: Text(
+                      AppStrings.musicLabel,
+                      style: FantasyText.mono(
+                        size: 14,
+                        color: AppColors.ink,
+                        weight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '$percent%',
+                    style: FantasyText.mono(
+                      size: 14,
+                      color: AppColors.inkMuted,
+                      weight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  activeTrackColor: AppColors.frameBrown,
+                  inactiveTrackColor: AppColors.parchmentDim,
+                  thumbColor: AppColors.ink,
+                  overlayColor: AppColors.ink.withValues(alpha: 0.12),
+                  trackHeight: 3,
+                ),
+                child: Slider(
+                  value: volume,
+                  divisions: 20,
+                  label: '$percent%',
+                  semanticFormatterCallback: (v) => '${(v * 100).round()}%',
+                  onChanged: MusicService.setVolume,
+                  onChangeEnd: (_) => MusicService.saveVolume(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
