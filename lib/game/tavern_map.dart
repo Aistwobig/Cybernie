@@ -24,9 +24,10 @@ class TavernMap {
   static const Offset noticeBoardSpot = Offset(1245, 310);
   static const double noticeBoardReach = 95;
 
-  /// Where a seated character's feet go on each seat: low enough that the
-  /// skirt or trousers cover the cushion and the legs hang down in front of
-  /// the stool, so they read as sitting rather than standing on it. Standing within
+  /// Where a seated character's feet line goes on each seat. Seated-from-
+  /// behind sprites stop at the skirt hem (legs point away from the camera,
+  /// hidden by the body), so this puts the hem on the cushion with the stool
+  /// legs showing below. Standing within
   /// [seatReach] of a free one offers "Click to sit".
   ///
   /// Only seats you sit on with your back to the camera for now (the bar
@@ -35,21 +36,21 @@ class TavernMap {
   /// here with their own [Seat.facing] once those animations exist.
   static const List<Seat> seats = [
     // Bar stools, facing the bar.
-    Seat(378, 412),
-    Seat(443, 412),
-    Seat(508, 412),
-    Seat(571, 412),
-    Seat(633, 412),
-    Seat(696, 412),
-    Seat(761, 412),
-    Seat(826, 412),
+    Seat(378, 404),
+    Seat(443, 404),
+    Seat(508, 404),
+    Seat(571, 404),
+    Seat(633, 404),
+    Seat(696, 404),
+    Seat(761, 404),
+    Seat(826, 404),
     // Stools in front of tables, facing the table.
-    Seat(229, 884), // long table (left)
-    Seat(320, 884),
-    Seat(1068, 572), // table (top-right)
-    Seat(1162, 739), // table (middle-right)
-    Seat(983, 946), // big table (bottom-right)
-    Seat(1073, 946),
+    Seat(229, 876), // long table (left)
+    Seat(320, 876),
+    Seat(1068, 564), // table (top-right)
+    Seat(1162, 731), // table (middle-right)
+    Seat(983, 938), // big table (bottom-right)
+    Seat(1073, 938),
   ];
   static const double seatReach = 62;
 
