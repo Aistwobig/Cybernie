@@ -152,6 +152,29 @@ void main() {
       expect(game.player.current?.$2, isNot(Pose.sit));
       expect(sentSitting.last, isFalse);
 
+      // Bernie stands behind the bar: the counter is drawn over him. His
+      // name plate shows only while he's selected.
+      final bernie = game.bernie;
+      expect(bernie.isLoaded, isTrue);
+      expect(bernie.size.y, closeTo(87, 0.01));
+      final counter = game.world.children.whereType<SpriteComponent>().where(
+        (c) =>
+            c.position ==
+            Vector2(
+              TavernMap.barCounterFront.left,
+              TavernMap.barCounterFront.top,
+            ),
+      );
+      expect(counter, hasLength(1));
+      expect(counter.single.priority, greaterThan(bernie.priority));
+      expect(bernie.children.whereType<PositionComponent>(), isEmpty);
+      bernie.selected = true;
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(bernie.children.whereType<PositionComponent>(), hasLength(1));
+      bernie.selected = false;
+      await tester.pump(const Duration(milliseconds: 16));
+      expect(bernie.children.whereType<PositionComponent>(), isEmpty);
+
       game.syncOtherPlayers([]);
       expect(game.otherPlayerCount, 0);
     },

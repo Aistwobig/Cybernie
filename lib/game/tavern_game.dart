@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 
 import '../constants/app_images.dart';
 import '../constants/characters.dart';
+import 'bernie.dart';
 import 'player.dart';
 import 'remote_player.dart';
 import 'tavern_map.dart';
@@ -60,6 +61,9 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   static const double _sendInterval = 0.15;
 
   late final Player player;
+
+  /// Bernie the bartender, behind the bar.
+  late final Bernie bernie;
   late final JoystickComponent _joystick;
   late final _keyboardInput = _KeyboardInput(onInteract: interact);
   _HitboxOverlay? _hitboxOverlay;
@@ -275,11 +279,31 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   @override
   Future<void> onLoad() async {
     final mapImage = await images.load(AppImages.tavernRoom);
-    final map = SpriteComponent(
+    final map = _Floor(
       sprite: Sprite(mapImage),
       size: Vector2(TavernMap.width, TavernMap.height),
       // Characters use their y position as priority; the floor stays below.
       priority: -1,
+      // Tapping anywhere else on the map lets go of Bernie.
+      onTap: () => bernie.selected = false,
+    )..paint.filterQuality = FilterQuality.none;
+
+    bernie = Bernie(
+      position: Vector2(TavernMap.bartenderSpot.dx, TavernMap.bartenderSpot.dy),
+    );
+    // The counter top drawn again over Bernie, so the bar hides him from
+    // the waist down. Layered by its bottom edge, like the stools: in front
+    // of him, behind anyone sitting at or walking past the bar.
+    const counter = TavernMap.barCounterFront;
+    final counterFront = SpriteComponent(
+      sprite: Sprite(
+        mapImage,
+        srcPosition: Vector2(counter.left, counter.top),
+        srcSize: Vector2(counter.width, counter.height),
+      ),
+      position: Vector2(counter.left, counter.top),
+      size: Vector2(counter.width, counter.height),
+      priority: counter.bottom.round(),
     )..paint.filterQuality = FilterQuality.none;
 
     // Each stool's front as its own sprite over the map, layered by depth
@@ -309,7 +333,14 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       sitBackSheetAsset: _character.sitBackSheet,
     )..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy);
 
-    world.addAll([map, ...stoolFronts, player, _keyboardInput]);
+    world.addAll([
+      map,
+      bernie,
+      counterFront,
+      ...stoolFronts,
+      player,
+      _keyboardInput,
+    ]);
 
     _joystick = JoystickComponent(
       background: _JoystickBase(radius: 48),
@@ -388,6 +419,22 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       world.add(_hitboxOverlay!);
     }
   }
+}
+
+/// The tavern picture, which reports taps that land on empty floor (not on
+/// a player or Bernie).
+class _Floor extends SpriteComponent with TapCallbacks {
+  _Floor({
+    required super.sprite,
+    required super.size,
+    required super.priority,
+    required this.onTap,
+  });
+
+  final VoidCallback onTap;
+
+  @override
+  void onTapUp(TapUpEvent event) => onTap();
 }
 
 /// Dark ring with a crosshair, matching the mockup's joystick.

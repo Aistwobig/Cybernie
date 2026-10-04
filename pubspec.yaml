@@ -38,4 +38,10 @@ flutter:
   assets:
     - assets/images/
     - assets/audio/
+  # Pixel font for in-game name plates (Press Start 2P, SIL Open Font
+  # License: assets/fonts/PressStart2P-OFL.txt).
+  fonts:
+    - family: PressStart2P
+      fonts:
+        - asset: assets/fonts/PressStart2P-Regular.ttf
  

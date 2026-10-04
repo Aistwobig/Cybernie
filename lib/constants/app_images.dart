@@ -19,6 +19,9 @@ class AppImages {
   static const String slimeIdleSheet = 'assets/images/slime_idle.png';
   static const String slimeSitBackSheet = 'assets/images/slime_sit_back.png';
   static const String flowerBanner = 'assets/images/flower_banner.png';
+
+  /// Bernie the bartender (an NPC): 8-frame idle, 300 x 384 cells.
+  static const String bernieIdle = 'assets/images/bernie_idle.png';
   static const String profileLuna = 'assets/images/3.png';
   static const String profileRogue = 'assets/images/4.png';
   static const String profileMage = 'assets/images/5.png';

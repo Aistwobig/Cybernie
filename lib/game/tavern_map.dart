@@ -24,6 +24,12 @@ class TavernMap {
   static const Offset noticeBoardSpot = Offset(1245, 310);
   static const double noticeBoardReach = 95;
 
+  /// Where Bernie the bartender stands (his feet), behind the bar counter.
+  /// [barCounterFront] is the counter top, drawn again over him so the bar
+  /// hides him from the waist down (the bottles and menu on it stay in front).
+  static const Offset bartenderSpot = Offset(625, 335);
+  static const Rect barCounterFront = Rect.fromLTRB(372, 306, 800, 345);
+
   /// The seats. Each has where a seated character's feet line goes, and the
   /// stool's front (cushion edge and legs) as a rectangle of this picture.
   /// The game draws that front again as its own sprite, layered by depth:
