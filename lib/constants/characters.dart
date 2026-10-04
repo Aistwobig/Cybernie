@@ -94,12 +94,12 @@ const List<GameCharacter> gameCharacters = [
     sitBackSheet: AppImages.lilySitBackSheet,
     feetFraction: 374 / 384,
   ),
-  // Took the Dancer's place (same index, so saved picks carry over). Walk
-  // only for now: standing holds the first walk frame until his idle and
-  // seated sheets are added (and he can't sit until then).
+  // Took the Dancer's place (same index, so saved picks carry over). He
+  // can't sit until his seated sheet is added.
   GameCharacter(
     name: AppStrings.characterThief,
     sheet: AppImages.thiefSheet,
+    idleSheet: AppImages.thiefIdleSheet,
     feetFraction: 374 / 384,
   ),
   // His sheets bake in the bounce: stretched frames are drawn in the air
