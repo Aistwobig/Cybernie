@@ -409,25 +409,25 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
               onShowPlayers: _openPlayers,
             ),
           ),
-          // Next to a free seat: offer to sit. Seated: offer to stand.
+          // Next to a free seat: offer to sit. Seated: offer to stand. A
+          // small chip under the room title, so it doesn't cover the bar
+          // and Bernie in the middle of the view.
           if ((_nearSeat || _sitting) && _panel == _Panel.none)
             Positioned(
-              top: 62,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: _HudButton(
-                  label: _sitting
-                      ? AppStrings.standUpButton
-                      : AppStrings.clickToSitButton,
-                  icon: _sitting ? Icons.directions_walk : Icons.event_seat,
-                  onPressed: () {
-                    _sitting ? _game.standUp() : _game.sitDown();
-                    // Keep WASD / E working after clicking.
-                    _gameFocus.requestFocus();
-                  },
-                  filled: true,
-                ),
+              top: 58,
+              left: 12,
+              child: _HudButton(
+                label: _sitting
+                    ? AppStrings.standUpButton
+                    : AppStrings.clickToSitButton,
+                icon: _sitting ? Icons.directions_walk : Icons.event_seat,
+                onPressed: () {
+                  _sitting ? _game.standUp() : _game.sitDown();
+                  // Keep WASD / E working after clicking.
+                  _gameFocus.requestFocus();
+                },
+                filled: true,
+                compact: true,
               ),
             ),
           if (_nearNoticeBoard && _panel != _Panel.noticeBoard)
@@ -662,6 +662,7 @@ class _HudButton extends StatelessWidget {
     required this.onPressed,
     this.filled = false,
     this.icon,
+    this.compact = false,
   });
 
   final String label;
@@ -669,28 +670,34 @@ class _HudButton extends StatelessWidget {
   final bool filled;
   final IconData? icon;
 
+  /// A small chip (for prompts that shouldn't hide the room).
+  final bool compact;
+
   @override
   Widget build(BuildContext context) {
     final style = GoogleFonts.inter(
-      fontSize: 11,
+      fontSize: compact ? 10 : 11,
       fontWeight: FontWeight.w700,
-      letterSpacing: 0.6,
+      letterSpacing: compact ? 0.3 : 0.6,
     );
     final buttonStyle = OutlinedButton.styleFrom(
       backgroundColor: filled ? AppColors.ink : AppColors.parchment,
       foregroundColor: filled ? AppColors.onInk : AppColors.ink,
       side: BorderSide(color: AppColors.ink),
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 14),
+      minimumSize: compact ? const Size(0, 26) : null,
+      tapTargetSize: compact ? MaterialTapTargetSize.shrinkWrap : null,
+      visualDensity: compact ? VisualDensity.compact : null,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
     );
     final iconData = icon;
     if (iconData != null) {
       return SizedBox(
-        height: 36,
+        height: compact ? 26 : 36,
         child: OutlinedButton.icon(
           style: buttonStyle,
           onPressed: onPressed,
-          icon: Icon(iconData, size: 16),
+          icon: Icon(iconData, size: compact ? 13 : 16),
           label: Text(label, style: style),
         ),
       );
