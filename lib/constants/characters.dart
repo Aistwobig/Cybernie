@@ -58,11 +58,11 @@ class GameCharacter {
 const List<GameCharacter> gameCharacters = [
   GameCharacter(
     name: AppStrings.characterLuna,
-    // In the tavern Luna still uses the shared sprite until her walk sheets
-    // are made; her own idle shows on the Profile tile.
-    sheet: AppImages.characterMenAnim,
-    idleSheet: AppImages.boyIdleSheet,
-    sitBackSheet: AppImages.boySitBackSheet,
+    // Her own walk. Until her idle sheets arrive she stands on her first
+    // walk frame in the tavern, and can't sit yet (no sitting art); her
+    // front idle from the GIF plays on the Profile tile.
+    sheet: AppImages.lunaSheet,
+    feetFraction: 374 / 384,
     profileIdleSheet: AppImages.lunaIdleFront,
     profileIdleFrames: 24,
     profileIdleFrameMs: 125,
