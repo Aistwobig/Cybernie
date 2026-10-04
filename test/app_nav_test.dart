@@ -113,24 +113,24 @@ void main() {
       await tester.pump(AppNav.tabTransition * 2);
     }
 
-    // Home -> Friends: the screens move right. Friends comes in from the
-    // left, Home leaves off the right edge.
+    // Home -> Friends: Friends comes in from the right edge, pushing Home
+    // off to the left.
     await halfway('friends');
-    expect(x('screen:friends'), lessThan(0));
-    expect(x('screen:welcome'), greaterThan(0));
+    expect(x('screen:friends'), greaterThan(0));
+    expect(x('screen:welcome'), lessThan(0));
     await finish();
 
     // Friends -> Profile: same way. Home never shows in between.
     await halfway('profile');
-    expect(x('screen:profile'), lessThan(0));
-    expect(x('screen:friends'), greaterThan(0));
+    expect(x('screen:profile'), greaterThan(0));
+    expect(x('screen:friends'), lessThan(0));
     expect(find.text('screen:welcome'), findsNothing);
     await finish();
 
-    // Profile -> Friends: the screens move left.
+    // Profile -> Friends: the other way; Friends comes in from the left.
     await halfway('friends');
-    expect(x('screen:friends'), greaterThan(0));
-    expect(x('screen:profile'), lessThan(0));
+    expect(x('screen:friends'), lessThan(0));
+    expect(x('screen:profile'), greaterThan(0));
     await finish();
 
     // Friends -> Profile again, with a slow first frame for the new screen
@@ -140,16 +140,16 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump();
     await tester.pump(AppNav.tabTransition ~/ 2);
-    expect(x('screen:profile'), lessThan(0));
-    expect(x('screen:friends'), greaterThan(0));
+    expect(x('screen:profile'), greaterThan(0));
+    expect(x('screen:friends'), lessThan(0));
     await finish();
     await halfway('friends');
     await finish();
 
-    // Friends -> Home: Home comes back from the right.
+    // Friends -> Home: Home comes back in from the left.
     await halfway('home');
-    expect(x('screen:welcome'), greaterThan(0));
-    expect(x('screen:friends'), lessThan(0));
+    expect(x('screen:welcome'), lessThan(0));
+    expect(x('screen:friends'), greaterThan(0));
     await finish();
     expect(find.text('screen:welcome'), findsOneWidget);
     expect(x('screen:welcome'), 0);
