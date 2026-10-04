@@ -12,42 +12,55 @@ const Color highlightGold = Color(0xFFFFC966);
 /// shows around its edges.
 void renderGlow(Canvas canvas, Sprite sprite, Vector2 size, double strength) {
   if (strength <= 0) return;
-  final bounds = Rect.fromLTWH(-12, -12, size.x + 24, size.y + 24);
+  final bounds = Rect.fromLTWH(-16, -16, size.x + 32, size.y + 32);
   canvas.saveLayer(
     bounds,
     Paint()
-      ..imageFilter = ImageFilter.blur(sigmaX: 3.5, sigmaY: 3.5)
+      ..imageFilter = ImageFilter.blur(sigmaX: 4, sigmaY: 4)
       ..colorFilter = ColorFilter.mode(
         highlightGold.withValues(alpha: strength.clamp(0.0, 1.0)),
         BlendMode.srcIn,
       ),
   );
-  // Twice, a pixel apart, so the glow reads as an outline and not just haze.
-  sprite.render(canvas, size: size);
-  sprite.render(canvas, position: Vector2(0, -1), size: size);
+  // The shape nudged a pixel each way, so the glow is a thick, bright rim
+  // and not just a faint haze.
+  for (final offset in _rim) {
+    sprite.render(canvas, position: offset, size: size);
+  }
   canvas.restore();
 }
 
-/// Fades a highlight in and out and makes it pulse while it's on.
+final List<Vector2> _rim = [
+  Vector2(0, 0),
+  Vector2(-1.5, 0),
+  Vector2(1.5, 0),
+  Vector2(0, -1.5),
+  Vector2(0, 1.5),
+];
+
+/// A glow that's always on and breathes gently, brightening smoothly when
+/// [update] is told to.
 class GlowPulse {
-  double _level = 0;
+  static const double _base = 0.8;
+  double _level = _base;
   double _time = 0;
 
-  /// Advances by [dt]; [on] says whether the glow should be showing, and
-  /// [strong] makes it brighter (for something not used yet).
-  double update(double dt, {required bool on, bool strong = false}) {
+  /// Advances by [dt]. [bright] (close enough to use it, or not used yet)
+  /// turns it up; otherwise it settles back to its resting glow.
+  double update(double dt, {required bool bright}) {
     _time += dt;
-    final target = on ? 1.0 : 0.0;
+    final target = bright ? 1.0 : _base;
     _level += (target - _level) * math.min(1, dt * 6);
-    final pulse = 0.75 + 0.25 * math.sin(_time * 3);
-    return _level * pulse * (strong ? 0.95 : 0.7);
+    // Never dims below 80% of its level, so it never seems to go out.
+    final pulse = 0.9 + 0.1 * math.sin(_time * 3);
+    return _level * pulse;
   }
 }
 
 /// Something the player can use (Bernie, the notice board) that can glow
 /// and carry a "!" marker. Draw the glow with [renderGlow] using [glow].
 mixin Highlightable on PositionComponent {
-  /// Glows (gently) while true, e.g. while the player is close enough.
+  /// Always glows; brighter while true (e.g. the player is close enough).
   bool highlighted = false;
 
   /// Glows brighter and shows a "!" above, for a player who hasn't used it
@@ -79,7 +92,7 @@ mixin Highlightable on PositionComponent {
       _hint = null;
     }
     _hint?.scale = Vector2.all(hideHint ? 0 : 1);
-    _glow = _pulse.update(dt, on: highlighted || showHint, strong: showHint);
+    _glow = _pulse.update(dt, bright: highlighted || showHint);
   }
 }
 

@@ -487,7 +487,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
 
   late final HighlightableCutout _noticeBoard;
 
-  /// Each also glows softly while the player is close enough to use it.
+  /// Both always glow, brighter while the player is close enough to use them.
   void _updateHighlights() {
     bernie
       ..showHint = bernieHint
