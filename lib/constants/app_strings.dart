@@ -162,7 +162,6 @@ class AppStrings {
   static const String emotesButton = 'Emotes';
 
   // Private messages between friends
-  static const String messagesTitle = 'Messages';
   static const String messageButton = 'MESSAGE';
   static String messageFriend(String name) => 'Message $name';
   static String dmHint(String name) => 'Message $name…';
@@ -181,10 +180,6 @@ class AppStrings {
   static const String dmSend = 'Send';
   static const String dmSaveEdit = 'Save edit';
   static const String dmMessageActionsHint = 'Edit or delete';
-  static const String noFriendsToMessage =
-      'Add friends to message them privately.';
-  static String unreadMessages(int count) =>
-      count == 1 ? '1 new message' : '$count new messages';
   static const String chatTitle = 'CHAT';
   static String chatNewMessages(int count) =>
       count == 1 ? '1 NEW MESSAGE' : '$count NEW MESSAGES';

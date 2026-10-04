@@ -13,7 +13,6 @@ import '../game/tavern_game.dart';
 import '../models/profile.dart';
 import '../services/auth_service.dart';
 import '../services/chat_service.dart';
-import '../services/direct_message_service.dart';
 import '../services/profile_service.dart';
 import '../services/room_service.dart';
 import '../game/tavern_map.dart';
@@ -58,14 +57,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   bool _chatCollapsed = false;
   int _unreadMessages = 0;
 
-  /// Private messages: who the chat panel is with, new messages per friend
-  /// that haven't been opened yet, and the live feed that counts them.
+  /// The friend in the private chat panel, opened from their player card.
   Profile? _chatFriend;
-  bool _chatFromList = false;
-  final Map<String, int> _unreadBySender = {};
-  DirectMessageFeed? _dmFeed;
-
-  int get _unreadPrivate => _unreadBySender.values.fold(0, (a, b) => a + b);
 
   @override
   void initState() {
@@ -82,29 +75,6 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _game.onInteract = _openNoticeBoard;
     _enterRoom();
     _connectChat();
-    _listenForPrivateMessages();
-  }
-
-  /// Counts private messages that arrive while you're not reading that chat.
-  void _listenForPrivateMessages() {
-    if (!AuthService.isSignedIn) return;
-    _dmFeed = DirectMessageService.listen(
-      onNew: (message) {
-        if (!mounted) return;
-        final reading =
-            _panel == _Panel.directChat && _chatFriend?.id == message.senderId;
-        if (reading) return;
-        setState(() {
-          _unreadBySender.update(
-            message.senderId,
-            (n) => n + 1,
-            ifAbsent: () => 1,
-          );
-        });
-      },
-      onEdited: (_) {},
-      onDeleted: (_) {},
-    );
   }
 
   @override
@@ -118,7 +88,6 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onInteract = null;
     _room?.leave();
     _chat?.dispose();
-    _dmFeed?.close();
     _gameFocus.dispose();
     _messageController.dispose();
     super.dispose();
@@ -271,19 +240,11 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     });
   }
 
-  void _openMessages() => setState(() {
-    _panel = _Panel.messages;
+  void _openDirectChat(Profile friend) => setState(() {
+    _chatFriend = friend;
+    _panel = _Panel.directChat;
     _emotesOpen = false;
   });
-
-  void _openDirectChat(Profile friend, {required bool fromList}) =>
-      setState(() {
-        _chatFriend = friend;
-        _chatFromList = fromList;
-        _unreadBySender.remove(friend.id);
-        _panel = _Panel.directChat;
-        _emotesOpen = false;
-      });
 
   void _closePanel() {
     setState(() => _panel = _Panel.none);
@@ -326,7 +287,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           onReport: _openReport,
           onClose: _closePanel,
           onBack: _cameFromList ? _openPlayers : null,
-          onMessage: (friend) => _openDirectChat(friend, fromList: false),
+          onMessage: _openDirectChat,
         );
       case _Panel.report:
         if (cardId == null) return null;
@@ -340,12 +301,6 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         );
       case _Panel.noticeBoard:
         return NoticeBoardPanel(roomId: _roomId, onClose: _closePanel);
-      case _Panel.messages:
-        return MessagesPanel(
-          unreadBySender: Map.of(_unreadBySender),
-          onSelect: (friend) => _openDirectChat(friend, fromList: true),
-          onClose: _closePanel,
-        );
       case _Panel.directChat:
         final friend = _chatFriend;
         if (friend == null) return null;
@@ -353,7 +308,10 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           key: ValueKey('dm-'),
           friend: friend,
           onClose: _closePanel,
-          onBack: _chatFromList ? _openMessages : null,
+          // Back to their player card.
+          onBack: cardId == null
+              ? null
+              : () => _openPlayerCard(cardId, fromList: _cameFromList),
         );
     }
   }
@@ -389,8 +347,6 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
               onBack: _leaveRoom,
               playerCount: _playersInRoom,
               onShowPlayers: _openPlayers,
-              unreadPrivate: _unreadPrivate,
-              onShowMessages: _openMessages,
             ),
           ),
           if (_nearNoticeBoard && _panel != _Panel.noticeBoard)
@@ -488,7 +444,6 @@ enum _Panel {
   playerCard,
   report,
   noticeBoard,
-  messages,
   directChat,
 }
 
@@ -550,15 +505,11 @@ class _RoomTitle extends StatelessWidget {
     required this.onBack,
     required this.playerCount,
     required this.onShowPlayers,
-    required this.unreadPrivate,
-    required this.onShowMessages,
   });
 
   final VoidCallback onBack;
   final int playerCount;
   final VoidCallback onShowPlayers;
-  final int unreadPrivate;
-  final VoidCallback onShowMessages;
 
   @override
   Widget build(BuildContext context) {
@@ -620,52 +571,6 @@ class _RoomTitle extends StatelessWidget {
                       ),
                     ),
                     Icon(Icons.expand_more, size: 16, color: AppColors.ink),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          // Private messages with friends, with a count of new ones.
-          Tooltip(
-            message: unreadPrivate > 0
-                ? '${AppStrings.messagesTitle} '
-                      '(${AppStrings.unreadMessages(unreadPrivate)})'
-                : AppStrings.messagesTitle,
-            child: InkWell(
-              onTap: onShowMessages,
-              borderRadius: BorderRadius.circular(5),
-              child: SizedBox(
-                width: 36,
-                height: 32,
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    Icon(Icons.mail_outline, size: 20, color: AppColors.ink),
-                    if (unreadPrivate > 0)
-                      Positioned(
-                        top: -2,
-                        right: -2,
-                        child: Container(
-                          constraints: const BoxConstraints(minWidth: 16),
-                          height: 16,
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFB3261E),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '$unreadPrivate',
-                            style: GoogleFonts.inter(
-                              fontSize: 9.5,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
                   ],
                 ),
               ),

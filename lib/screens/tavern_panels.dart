@@ -161,14 +161,12 @@ class _PlayerTile extends StatelessWidget {
     required this.avatarUrl,
     required this.trailing,
     this.onTap,
-    this.subtitle,
   });
 
   final String name;
   final String? avatarUrl;
   final Widget trailing;
   final VoidCallback? onTap;
-  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -181,18 +179,11 @@ class _PlayerTile extends StatelessWidget {
             PlayerAvatar(photoUrl: avatarUrl, radius: 18),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: _body(size: 14, weight: FontWeight.w600),
-                  ),
-                  if (subtitle != null)
-                    Text(subtitle!, maxLines: 1, style: _muted(size: 11.5)),
-                ],
+              child: Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: _body(size: 14, weight: FontWeight.w600),
               ),
             ),
             trailing,
@@ -873,138 +864,6 @@ class _NoteCard extends StatelessWidget {
 }
 
 // --- Private messages ------------------------------------------------------------
-
-/// Your friends, to pick who to message privately. Friends with new
-/// messages show a count.
-class MessagesPanel extends StatefulWidget {
-  const MessagesPanel({
-    super.key,
-    required this.unreadBySender,
-    required this.onSelect,
-    required this.onClose,
-  });
-
-  final Map<String, int> unreadBySender;
-  final void Function(Profile friend) onSelect;
-  final VoidCallback onClose;
-
-  @override
-  State<MessagesPanel> createState() => _MessagesPanelState();
-}
-
-class _MessagesPanelState extends State<MessagesPanel> {
-  List<Profile>? _friends;
-  bool _failed = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final entries = await FriendsService.fetchAll();
-      if (!mounted) return;
-      final friends =
-          [
-            for (final e in entries)
-              if (e.status == FriendStatus.friends) e.profile,
-          ]..sort(
-            (a, b) => a.displayName.toLowerCase().compareTo(
-              b.displayName.toLowerCase(),
-            ),
-          );
-      setState(() => _friends = friends);
-    } catch (_) {
-      if (mounted) setState(() => _failed = true);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final friends = _friends;
-    final now = DateTime.now();
-
-    return TavernPanel(
-      title: AppStrings.messagesTitle,
-      onClose: widget.onClose,
-      child: _failed
-          ? Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(AppStrings.friendsLoadError, style: _muted(size: 13)),
-            )
-          : friends == null
-          ? Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.ink,
-                ),
-              ),
-            )
-          : friends.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                AppStrings.noFriendsToMessage,
-                style: _muted(size: 13),
-              ),
-            )
-          : ListView(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              children: [
-                for (final friend in friends)
-                  _PlayerTile(
-                    name: friend.displayName,
-                    avatarUrl: friend.avatarUrl,
-                    subtitle: lastSeenLabel(friend, now),
-                    onTap: () => widget.onSelect(friend),
-                    trailing: _UnreadBadge(
-                      count: widget.unreadBySender[friend.id] ?? 0,
-                    ),
-                  ),
-              ],
-            ),
-    );
-  }
-}
-
-class _UnreadBadge extends StatelessWidget {
-  const _UnreadBadge({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    if (count == 0) {
-      return Icon(Icons.chat_bubble_outline, size: 18, color: AppColors.ink);
-    }
-    return Semantics(
-      label: AppStrings.unreadMessages(count),
-      child: Container(
-        constraints: const BoxConstraints(minWidth: 20),
-        height: 20,
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: const Color(0xFFB3261E),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          '$count',
-          style: GoogleFonts.inter(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 /// A private chat with one friend, inside the tavern.
 class DirectChatPanel extends StatelessWidget {
