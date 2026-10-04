@@ -19,6 +19,7 @@ class AppImages {
   static const String lilySheet = 'assets/images/lily_walk.png';
   static const String lilyIdleSheet = 'assets/images/lily_idle.png';
   static const String lilySitBackSheet = 'assets/images/lily_sit_back.png';
+  static const String thiefSheet = 'assets/images/thief_walk.png';
   static const String slimeSheet = 'assets/images/slime_walk.png';
   static const String slimeIdleSheet = 'assets/images/slime_idle.png';
   static const String slimeSitBackSheet = 'assets/images/slime_sit_back.png';

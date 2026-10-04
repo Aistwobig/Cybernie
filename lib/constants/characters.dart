@@ -58,8 +58,6 @@ class GameCharacter {
 
 /// The choosable characters, in the order `profiles.character_index` uses.
 ///
-/// Luna, Rogue and Dancer still share the original sprite until their
-/// own sheets are added; swap `sheet` here when they are.
 const List<GameCharacter> gameCharacters = [
   GameCharacter(
     name: AppStrings.characterLuna,
@@ -96,11 +94,13 @@ const List<GameCharacter> gameCharacters = [
     sitBackSheet: AppImages.lilySitBackSheet,
     feetFraction: 374 / 384,
   ),
+  // Took the Dancer's place (same index, so saved picks carry over). Walk
+  // only for now: standing holds the first walk frame until his idle and
+  // seated sheets are added (and he can't sit until then).
   GameCharacter(
-    name: AppStrings.characterDancer,
-    sheet: AppImages.characterMenAnim,
-    idleSheet: AppImages.boyIdleSheet,
-    sitBackSheet: AppImages.boySitBackSheet,
+    name: AppStrings.characterThief,
+    sheet: AppImages.thiefSheet,
+    feetFraction: 374 / 384,
   ),
   // His sheets bake in the bounce: stretched frames are drawn in the air
   // above a shadow on the ground. 16 frames: every drawn pose is followed

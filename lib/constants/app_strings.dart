@@ -59,7 +59,7 @@ class AppStrings {
   static const String characterRogue = 'Rogue';
   static const String characterMage = 'Mage';
   static const String characterLily = 'Lily';
-  static const String characterDancer = 'Dancer';
+  static const String characterThief = 'Thief';
   static const String characterSlime = 'Slime';
   static const String moreCharacters = '+ MORE';
   static const String saveButton = 'SAVE';
