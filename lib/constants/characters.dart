@@ -95,11 +95,12 @@ const List<GameCharacter> gameCharacters = [
     feetFraction: 374 / 384,
   ),
   // Took the Dancer's place (same index, so saved picks carry over). He
-  // can't sit until his seated sheet is added.
+  // sits with his seated idle cut under the jacket and lowered onto the seat.
   GameCharacter(
     name: AppStrings.characterThief,
     sheet: AppImages.thiefSheet,
     idleSheet: AppImages.thiefIdleSheet,
+    sitBackSheet: AppImages.thiefSitBackSheet,
     feetFraction: 374 / 384,
   ),
   // His sheets bake in the bounce: stretched frames are drawn in the air
