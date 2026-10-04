@@ -43,6 +43,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         frames: _character.frames,
         sitBackSheetAsset: _character.sitBackSheet,
       );
+      player.sitsOverSeat = _character.sitsOverSeat;
       // The new character may not have a seated pose.
       if (sitting) standUp();
     }
@@ -168,6 +169,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
           frames: look.frames,
           sitBackSheetAsset: look.sitBackSheet,
         );
+        existing.sitsOverSeat = look.sitsOverSeat;
         continue;
       }
       final other = RemotePlayer(
@@ -181,7 +183,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         sitBackSheetAsset: look.sitBackSheet,
         name: p.name,
         start: Vector2(p.x, p.y),
-      );
+      )..sitsOverSeat = look.sitsOverSeat;
       _others[p.id] = other;
       world.add(other);
     }
@@ -383,15 +385,18 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         )..paint.filterQuality = FilterQuality.none,
     ];
 
-    player = Player(
-      sheetAsset: _character.sheet,
-      feetFraction: _character.feetFraction,
-      name: _playerName,
-      idleSheetAsset: _character.idleSheet,
-      horizontalRunSheetAsset: _character.horizontalRunSheet,
-      frames: _character.frames,
-      sitBackSheetAsset: _character.sitBackSheet,
-    )..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy);
+    player =
+        Player(
+            sheetAsset: _character.sheet,
+            feetFraction: _character.feetFraction,
+            name: _playerName,
+            idleSheetAsset: _character.idleSheet,
+            horizontalRunSheetAsset: _character.horizontalRunSheet,
+            frames: _character.frames,
+            sitBackSheetAsset: _character.sitBackSheet,
+          )
+          ..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy)
+          ..sitsOverSeat = _character.sitsOverSeat;
 
     // Invisible double-tap areas over each stool (seat and legs), for
     // sitting on phones without the button.

@@ -57,6 +57,13 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   /// when the character has one for that direction.
   bool sitting = false;
 
+  /// While sitting, drawn over the stool's front instead of behind it.
+  bool sitsOverSeat = false;
+
+  /// Lifts a seated [sitsOverSeat] character above the stool front, whose
+  /// bottom edge is at most this far below the seat.
+  static const int _overSeatLift = 26;
+
   /// Whether this character has a seated animation facing [direction].
   bool canSitFacing(Facing direction) =>
       animations?.containsKey((direction, Pose.sit)) ?? false;
@@ -225,7 +232,9 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     final pose = _pose;
     if (current != pose) current = pose;
     // Whoever is lower on screen is drawn in front.
-    priority = position.y.round();
+    priority =
+        position.y.round() +
+        (sitting && sitsOverSeat && canSitFacing(facing) ? _overSeatLift : 0);
   }
 
   /// The animation to show now. Sitting without a seated animation for

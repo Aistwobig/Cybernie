@@ -17,6 +17,7 @@ class GameCharacter {
     this.profileIdleSheet,
     this.profileIdleFrames = 8,
     this.profileIdleFrameMs = 200,
+    this.sitsOverSeat = false,
   });
 
   final String name;
@@ -49,6 +50,10 @@ class GameCharacter {
   final String? profileIdleSheet;
   final int profileIdleFrames;
   final int profileIdleFrameMs;
+
+  /// Drawn in front of the stool while seated (a full skirt draped over the
+  /// cushion) instead of having the stool's front cover the lower body.
+  final bool sitsOverSeat;
 }
 
 /// The choosable characters, in the order `profiles.character_index` uses.
@@ -58,11 +63,12 @@ class GameCharacter {
 const List<GameCharacter> gameCharacters = [
   GameCharacter(
     name: AppStrings.characterLuna,
-    // Her own walk and idle. She sits with her back idle lowered onto the
-    // seat; her front idle from the GIF plays on the Profile tile.
+    // Her own walk and idle. She sits with her skirt spread over the stool;
+    // her front idle from the GIF plays on the Profile tile.
     sheet: AppImages.lunaSheet,
     idleSheet: AppImages.lunaIdleSheet,
     sitBackSheet: AppImages.lunaSitBackSheet,
+    sitsOverSeat: true,
     feetFraction: 374 / 384,
     profileIdleSheet: AppImages.lunaIdleFront,
     profileIdleFrames: 24,
