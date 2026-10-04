@@ -60,7 +60,6 @@ const List<GameCharacter> gameCharacters = [
   GameCharacter(
     name: AppStrings.characterLily,
     sheet: AppImages.lilySheet,
-    // Breathing idle built from her standing walk frames.
     idleSheet: AppImages.lilyIdleSheet,
     feetFraction: 374 / 384,
   ),
