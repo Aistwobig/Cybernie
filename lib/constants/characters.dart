@@ -83,6 +83,8 @@ const List<GameCharacter> gameCharacters = [
     name: AppStrings.characterSlime,
     sheet: AppImages.slimeSheet,
     idleSheet: AppImages.slimeIdleSheet,
+    // His back-facing idle without the floor shadow, resting on the seat.
+    sitBackSheet: AppImages.slimeSitBackSheet,
     feetFraction: 246 / 256,
     frames: 16,
   ),

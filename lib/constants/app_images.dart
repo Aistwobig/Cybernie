@@ -16,6 +16,7 @@ class AppImages {
   static const String lilySitBackSheet = 'assets/images/lily_sit_back.png';
   static const String slimeSheet = 'assets/images/slime_walk.png';
   static const String slimeIdleSheet = 'assets/images/slime_idle.png';
+  static const String slimeSitBackSheet = 'assets/images/slime_sit_back.png';
   static const String flowerBanner = 'assets/images/flower_banner.png';
   static const String profileLuna = 'assets/images/3.png';
   static const String profileRogue = 'assets/images/4.png';
