@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../constants/drinks.dart';
 import 'auth_service.dart';
 import 'blackjack_service.dart';
 
@@ -21,6 +22,30 @@ class CoinService {
   static BlackjackTable get table => AuthService.isSignedIn
       ? SupabaseBlackjackTable()
       : (_offline ??= LocalBlackjackTable());
+
+  /// Pays for [drink] at Bernie's bar. Returns false (charging nothing) if
+  /// the player can't afford it.
+  static Future<bool> buyDrink(Drink drink) async {
+    final have = coins.value ?? 0;
+    if (have < drink.price) return false;
+    if (!AuthService.isSignedIn) {
+      final offline = table as LocalBlackjackTable;
+      offline.coins -= drink.price;
+      coins.value = offline.coins;
+      return true;
+    }
+    try {
+      final left = await Supabase.instance.client.rpc<dynamic>(
+        'buy_drink',
+        params: {'p_drink': drink.id},
+      );
+      coins.value = (left as num).toInt();
+      return true;
+    } catch (error) {
+      debugPrint('Buying a drink: $error');
+      return false;
+    }
+  }
 
   /// Loads the coins on entering the tavern, adding the daily bonus once a
   /// day. Returns the coins just added (0 if already claimed today).

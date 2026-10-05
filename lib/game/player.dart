@@ -41,7 +41,7 @@ class Player extends Character {
     if (!moving) return;
 
     if (input.length > 1) input.normalize();
-    final step = input * speed * dt;
+    final step = input * speed * speedMultiplier * dt;
 
     final nextX = position.x + step.x;
     if (!TavernMap.isBlocked(feetAt(nextX, position.y))) position.x = nextX;

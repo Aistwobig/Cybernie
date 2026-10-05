@@ -1,4 +1,5 @@
 import 'package:final_project/constants/app_images.dart';
+import 'package:final_project/constants/drinks.dart';
 import 'package:final_project/game/character.dart' show SpeechBubble;
 import 'package:final_project/game/highlight.dart';
 import 'package:final_project/game/player.dart';
@@ -255,6 +256,14 @@ void main() {
       );
       game.orderDrink('not-a-drink');
       expect(ordered, ['ale']);
+
+      // Drinks have effects: ale makes you merry; cider makes you fast.
+      expect(game.player.hasEffect(DrinkEffect.tipsy), isTrue);
+      expect(game.player.speedMultiplier, 1);
+      game.orderDrink('cider');
+      expect(game.player.hasEffect(DrinkEffect.swift), isTrue);
+      expect(game.player.speedMultiplier, greaterThan(1));
+      expect(game.player.effectLeft(DrinkEffect.swift), closeTo(30, 0.1));
 
       game.syncOtherPlayers([]);
       expect(game.otherPlayerCount, 0);

@@ -42,6 +42,10 @@ class AppImages {
   static const String profileMage = 'assets/images/5.png';
   static const String tavernRoom = 'assets/images/tavern.png';
 
+  /// The fireplace's fire: 16 frames (4 x 4 cells of 144 x 128), drawn
+  /// over the painted fireplace at TavernMap.fireplaceFire.
+  static const String fireplaceFire = 'assets/images/fireplace_fire.png';
+
   // Fantasy UI kit, cut from assets/sheets/ui_sheet.png.
   static const String headerCastle = 'assets/images/header_castle.png';
   static const String compassStar = 'assets/images/icon_compass_star.png';

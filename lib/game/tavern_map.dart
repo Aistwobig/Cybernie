@@ -24,6 +24,9 @@ class TavernMap {
   static const Offset noticeBoardSpot = Offset(1245, 310);
   static const double noticeBoardReach = 95;
 
+  /// The inside of the fireplace, where the burning fire is drawn.
+  static const Rect fireplaceFire = Rect.fromLTWH(82, 268, 72, 64);
+
   /// The notice board's frame in the picture, drawn again so it can glow.
   static const Rect noticeBoardRect = Rect.fromLTRB(1214, 174, 1334, 278);
 

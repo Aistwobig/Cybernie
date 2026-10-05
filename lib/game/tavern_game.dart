@@ -123,13 +123,21 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     final drink = drinkById(drinkId);
     if (drink == null || !isLoaded) return;
     bernie.say(drink.bernieSays);
-    player.holdDrink(drink.id);
+    player
+      ..holdDrink(drink.id)
+      ..applyDrinkEffect(drink);
     onDrinkOrdered?.call(drink.id);
   }
 
-  /// Another player got a drink: show it in their hand.
-  void otherPlayerDrinks(String id, String drinkId) =>
-      _others[id]?.holdDrink(drinkId);
+  /// Another player got a drink: show it in their hand, with its effect.
+  void otherPlayerDrinks(String id, String drinkId) {
+    final drink = drinkById(drinkId);
+    final other = _others[id];
+    if (drink == null || other == null) return;
+    other
+      ..holdDrink(drink.id)
+      ..applyDrinkEffect(drink);
+  }
 
   late final JoystickComponent _joystick;
   late final _keyboardInput = _KeyboardInput(onInteract: interact);
@@ -450,10 +458,33 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       priority: 0,
     )..paint.filterQuality = FilterQuality.none;
 
+    // The fire in the fireplace, burning (16 frames over the painted one).
+    final fireImage = await images.load(AppImages.fireplaceFire);
+    const hearth = TavernMap.fireplaceFire;
+    final fire = SpriteAnimationComponent(
+      position: Vector2(hearth.left, hearth.top),
+      size: Vector2(hearth.width, hearth.height),
+      priority: 0,
+    );
+    fire.animation = SpriteAnimation.spriteList([
+      for (var row = 0; row < 4; row++)
+        for (var col = 0; col < 4; col++)
+          Sprite(
+            fireImage,
+            srcPosition: Vector2(
+              col * fireImage.width / 4,
+              row * fireImage.height / 4,
+            ),
+            srcSize: Vector2(fireImage.width / 4, fireImage.height / 4),
+          ),
+    ], stepTime: 0.1);
+
     // Night mode: the map (and the bits of it drawn over characters) dims
     // like the app's other scenes, and its lanterns glow warm.
     final sceneFilter = AppColors.sceneFilter;
     if (sceneFilter != null) {
+      // The fire stays bright: it's a light source.
+      fire.paint.colorFilter = AppColors.artFilter;
       for (final part in [map, counterFront, _noticeBoard, ...stoolFronts]) {
         part.paint.colorFilter = sceneFilter;
       }
@@ -461,6 +492,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
 
     world.addAll([
       map,
+      fire,
       _noticeBoard,
       bernie,
       counterFront,

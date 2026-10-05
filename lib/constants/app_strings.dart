@@ -163,6 +163,8 @@ class AppStrings {
   static const String bernieComeCloser =
       "Come up to the bar and I'll pour you something!";
   static const String orderButton = 'ORDER';
+  static String cantAffordDrink(int price) =>
+      'That one costs $price coins. Win some at blackjack first!';
 
   // Coins and Bernie's blackjack table
   static String coinsLabel(int coins) => '$coins coins';

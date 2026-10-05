@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_strings.dart';
 import '../constants/drinks.dart';
 import '../models/profile.dart';
+import '../services/coin_service.dart';
 import '../services/friends_service.dart';
 import '../services/notice_board_service.dart';
 import '../services/profile_service.dart';
@@ -11,6 +12,7 @@ import '../services/report_service.dart';
 import '../services/room_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/last_seen.dart';
+import '../widgets/coin_chip.dart';
 import '../widgets/direct_chat_view.dart';
 import '../widgets/player_avatar.dart';
 
@@ -971,9 +973,15 @@ class BarMenuPanel extends StatelessWidget {
             const SizedBox(height: 10),
           ],
           for (final drink in drinks)
-            _DrinkTile(
-              drink: drink,
-              onOrder: atBar && canOrder ? () => onOrder(drink.id) : null,
+            ValueListenableBuilder<int?>(
+              valueListenable: CoinService.coins,
+              builder: (context, coins, _) => _DrinkTile(
+                drink: drink,
+                // Coins not loaded (e.g. no coins migration yet): free.
+                onOrder: atBar && canOrder && (coins ?? 1 << 30) >= drink.price
+                    ? () => onOrder(drink.id)
+                    : null,
+              ),
             ),
         ],
       ),
@@ -1017,6 +1025,17 @@ class _DrinkTile extends StatelessWidget {
                   style: _body(size: 14, weight: FontWeight.w700),
                 ),
                 Text(drink.description, style: _muted(size: 11.5)),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const CoinIcon(size: 13),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${drink.price}',
+                      style: _body(size: 12, weight: FontWeight.w800),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),

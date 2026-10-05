@@ -232,16 +232,129 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
       ..colorFilter = AppColors.artFilter;
   }
 
+  /// Drink effects still running, with the seconds they have left.
+  final Map<DrinkEffect, double> _effects = {};
+  double _effectClock = 0;
+  double _nextPuff = 0;
+
+  bool hasEffect(DrinkEffect effect) => _effects.containsKey(effect);
+
+  /// Seconds left on [effect] (0 when it isn't running).
+  double effectLeft(DrinkEffect effect) => _effects[effect] ?? 0;
+
+  /// Goblin Cider makes you walk this much faster.
+  static const double swiftBoost = 1.7;
+
+  double get speedMultiplier => hasEffect(DrinkEffect.swift) ? swiftBoost : 1;
+
+  /// Starts (or restarts) [drink]'s effect.
+  void applyDrinkEffect(Drink drink) {
+    _effects[drink.effect] = drink.effectSeconds.toDouble();
+  }
+
   @override
   void update(double dt) {
     super.update(dt);
     if (!isLoaded) return;
     final pose = _pose;
     if (current != pose) current = pose;
+    _updateEffects(dt);
     // Whoever is lower on screen is drawn in front.
     priority =
         position.y.round() +
         (sitting && sitsOverSeat && canSitFacing(facing) ? _overSeatLift : 0);
+  }
+
+  void _updateEffects(double dt) {
+    _effectClock += dt;
+    _effects.updateAll((_, left) => left - dt);
+    _effects.removeWhere((_, left) => left <= 0);
+
+    // Ale: a merry sway from the feet.
+    angle = hasEffect(DrinkEffect.tipsy)
+        ? math.sin(_effectClock * 3.2) * 0.07
+        : 0;
+
+    _nextPuff -= dt;
+    if (_nextPuff > 0) return;
+    if (hasEffect(DrinkEffect.swift) && moving) {
+      _puff('✦', const Color(0xFF7CFF6B), rise: 6, life: 0.5, size: 9);
+      _nextPuff = 0.12;
+    } else if (hasEffect(DrinkEffect.hearts)) {
+      _puff('♥', const Color(0xFFFF5C8A), rise: 26, life: 1.4, size: 11);
+      _nextPuff = 0.45;
+    } else if (hasEffect(DrinkEffect.tipsy)) {
+      _puff('°', const Color(0xFFFFE9A8), rise: 22, life: 1.2, size: 13);
+      _nextPuff = 0.35;
+    }
+  }
+
+  final math.Random _random = math.Random();
+
+  /// A little symbol that floats up from the character and fades out.
+  void _puff(
+    String symbol,
+    Color color, {
+    required double rise,
+    required double life,
+    required double size,
+  }) {
+    final puff = TextComponent(
+      text: symbol,
+      anchor: Anchor.center,
+      position: Vector2(
+        this.size.x * (0.3 + 0.4 * _random.nextDouble()),
+        this.size.y * (moving ? 0.85 : 0.35 + 0.3 * _random.nextDouble()),
+      ),
+      textRenderer: TextPaint(
+        style: TextStyle(
+          fontSize: size,
+          color: color,
+          shadows: const [Shadow(blurRadius: 2, color: Color(0x99000000))],
+        ),
+      ),
+    );
+    puff.addAll([
+      MoveByEffect(
+        Vector2((_random.nextDouble() - 0.5) * 10, -rise),
+        EffectController(duration: life, curve: Curves.easeOut),
+      ),
+      OpacityEffect.fadeOut(EffectController(duration: life)),
+      RemoveEffect(delay: life),
+    ]);
+    add(puff);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    if (hasEffect(DrinkEffect.glow)) _renderMoonGlow(canvas);
+    super.render(canvas);
+  }
+
+  /// Moonberry: a pale blue glow around the character, pulsing gently.
+  /// At night it's bigger and lights up the floor around them.
+  void _renderMoonGlow(Canvas canvas) {
+    final night = AppColors.sceneFilter != null;
+    final pulse = 0.85 + 0.15 * math.sin(_effectClock * 2.4);
+    // Fades out over the last 3 seconds.
+    final fade = (effectLeft(DrinkEffect.glow) / 3).clamp(0.0, 1.0);
+    final centre = Offset(size.x / 2, size.y * 0.55);
+    final radius = size.y * (night ? 0.95 : 0.6) * pulse;
+    const moon = Color(0xFFBFE3FF);
+    canvas.drawCircle(
+      centre,
+      radius,
+      Paint()
+        ..blendMode = night ? BlendMode.plus : BlendMode.srcOver
+        ..shader = RadialGradient(
+          colors: [
+            moon.withValues(alpha: (night ? 0.55 : 0.45) * fade),
+            moon.withValues(alpha: (night ? 0.22 : 0.15) * fade),
+            moon.withValues(alpha: 0),
+          ],
+          stops: const [0, 0.45, 1],
+        ).createShader(Rect.fromCircle(center: centre, radius: radius)),
+    );
   }
 
   /// The animation to show now. Sitting without a seated animation for

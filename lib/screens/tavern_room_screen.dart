@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/app_strings.dart';
 import '../constants/characters.dart';
+import '../constants/drinks.dart';
 import '../constants/emotes.dart';
 import '../game/tavern_game.dart';
 import '../models/profile.dart';
@@ -151,6 +152,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onFootstep = null
       ..onInteract = null;
     _orderPause?.cancel();
+    _effectTicker?.cancel();
     _typingIdle?.cancel();
     for (final timer in _typers.values) {
       timer.cancel();
@@ -423,17 +425,48 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 
   /// Orders from Bernie, then closes his menu. Ordering pauses for a few
   /// seconds so drinks can't be spammed.
-  void _orderDrink(String drinkId) {
-    if (_justOrdered) return;
-    _game.orderDrink(drinkId);
-    SfxService.play(Sfx.coin);
+  Future<void> _orderDrink(String drinkId) async {
+    final drink = drinkById(drinkId);
+    if (_justOrdered || drink == null) return;
     _orderPause?.cancel();
     setState(() => _justOrdered = true);
     _orderPause = Timer(const Duration(seconds: 5), () {
       if (mounted) setState(() => _justOrdered = false);
     });
+    // Pay first. Before the coins have loaded (e.g. the coins migration
+    // isn't run yet) drinks are on the house.
+    if (CoinService.coins.value != null && !await CoinService.buyDrink(drink)) {
+      _showSnack(AppStrings.cantAffordDrink(drink.price));
+      return;
+    }
+    if (!mounted) return;
+    _game.orderDrink(drinkId);
+    SfxService.play(Sfx.coin);
     _closePanel();
+    _startEffectTicker();
   }
+
+  /// Ticks once a second while a drink effect is running, for the chip
+  /// that counts it down.
+  Timer? _effectTicker;
+
+  void _startEffectTicker() {
+    _effectTicker?.cancel();
+    setState(() {});
+    _effectTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {});
+      if (_activeEffects.isEmpty) timer.cancel();
+    });
+  }
+
+  /// Drinks whose effect is still on us, with whole seconds left.
+  List<(Drink, int)> get _activeEffects => [
+    if (_game.isLoaded)
+      for (final drink in drinks)
+        if (_game.player.hasEffect(drink.effect))
+          (drink, _game.player.effectLeft(drink.effect).ceil()),
+  ];
 
   /// Bernie's blackjack table, over the whole room while it's open.
   bool _blackjackOpen = false;
@@ -594,6 +627,21 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                 compact: true,
               ),
             ),
+          // Drink effects still running, counting down.
+          Positioned(
+            top: 90,
+            left: 12,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final (drink, seconds) in _activeEffects)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: _EffectChip(drink: drink, seconds: seconds),
+                  ),
+              ],
+            ),
+          ),
           if (_nearNoticeBoard && _panel != _Panel.noticeBoard)
             Positioned(
               top: 62,
@@ -697,6 +745,46 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           ),
         ),
     ];
+  }
+}
+
+/// "Swift 24s" with the drink's mug, while a drink's effect lasts.
+class _EffectChip extends StatelessWidget {
+  const _EffectChip({required this.drink, required this.seconds});
+
+  final Drink drink;
+  final int seconds;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 26,
+      padding: const EdgeInsets.fromLTRB(4, 0, 10, 0),
+      decoration: BoxDecoration(
+        color: const Color(0xE61B1712),
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: const Color(0xFFD4A86A)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            drink.asset,
+            width: 20,
+            filterQuality: FilterQuality.none,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            '${drink.effectName}  ${seconds}s',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFFFFE3A3),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
