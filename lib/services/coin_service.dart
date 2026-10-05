@@ -41,9 +41,15 @@ class CoinService {
       );
       coins.value = (left as num).toInt();
       return true;
+    } on PostgrestException catch (error) {
+      // Only a real "can't afford it" refuses the drink. Anything else
+      // (e.g. the drink-prices migration not run yet) and Bernie serves it
+      // on the house, so ordering never silently does nothing.
+      debugPrint('Buying a drink: ${error.message}');
+      return !error.message.contains('not enough coins');
     } catch (error) {
       debugPrint('Buying a drink: $error');
-      return false;
+      return true;
     }
   }
 

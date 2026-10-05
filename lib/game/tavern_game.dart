@@ -538,7 +538,46 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     _checkSeats();
     _checkBar();
     _updateHighlights();
+    if (!sitting) _pullTowardCharmers(dt);
     _followPlayer();
+    _shakeIfDizzy(dt);
+  }
+
+  double _shakeClock = 0;
+
+  /// Tavern Ale: the view sways and shakes while we're dizzy, easing off
+  /// over the last couple of seconds.
+  void _shakeIfDizzy(double dt) {
+    final left = player.effectLeft(DrinkEffect.tipsy);
+    if (left <= 0) return;
+    _shakeClock += dt;
+    final strength = 7 * (left / 2).clamp(0.0, 1.0);
+    final t = _shakeClock;
+    camera.viewfinder.position += Vector2(
+      (math.sin(t * 2.3) * 0.7 + math.sin(t * 17) * 0.3) * strength,
+      (math.cos(t * 1.9) * 0.6 + math.sin(t * 13) * 0.4) * strength,
+    );
+    camera.viewfinder.angle = math.sin(t * 1.6) * 0.03 * (strength / 7);
+  }
+
+  /// Berry Wine: anyone who drank it slowly draws nearby players toward
+  /// them. Each player's own game moves them, so this pulls us toward
+  /// other charmers (and their games pull them toward us).
+  static const double _charmReach = 320;
+  static const double _charmSpeed = 45;
+
+  void _pullTowardCharmers(double dt) {
+    if (camera.viewfinder.angle != 0 && !player.hasEffect(DrinkEffect.tipsy)) {
+      camera.viewfinder.angle = 0;
+    }
+    for (final other in _others.values) {
+      if (!other.hasEffect(DrinkEffect.hearts)) continue;
+      final toward = other.position - player.position;
+      final distance = toward.length;
+      // Close enough already, or too far to feel it.
+      if (distance < 36 || distance > _charmReach) continue;
+      player.nudge(toward.normalized() * _charmSpeed * math.min(dt, 1 / 30));
+    }
   }
 
   /// Show a "!" (and a bright glow) over Bernie / the notice board until the

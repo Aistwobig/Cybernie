@@ -339,7 +339,8 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     // Fades out over the last 3 seconds.
     final fade = (effectLeft(DrinkEffect.glow) / 3).clamp(0.0, 1.0);
     final centre = Offset(size.x / 2, size.y * 0.55);
-    final radius = size.y * (night ? 0.95 : 0.6) * pulse;
+    // At night it's a lantern: a wide pool of light you can see by.
+    final radius = size.y * (night ? 2.2 : 0.7) * pulse;
     const moon = Color(0xFFBFE3FF);
     canvas.drawCircle(
       centre,
@@ -348,8 +349,8 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
         ..blendMode = night ? BlendMode.plus : BlendMode.srcOver
         ..shader = RadialGradient(
           colors: [
-            moon.withValues(alpha: (night ? 0.55 : 0.45) * fade),
-            moon.withValues(alpha: (night ? 0.22 : 0.15) * fade),
+            moon.withValues(alpha: (night ? 0.5 : 0.45) * fade),
+            moon.withValues(alpha: (night ? 0.28 : 0.15) * fade),
             moon.withValues(alpha: 0),
           ],
           stops: const [0, 0.45, 1],

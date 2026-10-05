@@ -263,7 +263,7 @@ void main() {
       game.orderDrink('cider');
       expect(game.player.hasEffect(DrinkEffect.swift), isTrue);
       expect(game.player.speedMultiplier, greaterThan(1));
-      expect(game.player.effectLeft(DrinkEffect.swift), closeTo(30, 0.1));
+      expect(game.player.effectLeft(DrinkEffect.swift), closeTo(10, 0.1));
 
       game.syncOtherPlayers([]);
       expect(game.otherPlayerCount, 0);

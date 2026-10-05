@@ -48,6 +48,20 @@ class Player extends Character {
     final nextY = position.y + step.y;
     if (!TavernMap.isBlocked(feetAt(position.x, nextY))) position.y = nextY;
 
+    _face(input);
+  }
+
+  /// Slides by [step] without changing pose (e.g. being drawn toward a
+  /// charming player), stopping at walls like walking does.
+  void nudge(Vector2 step) {
+    if (!isLoaded) return;
+    final nextX = position.x + step.x;
+    if (!TavernMap.isBlocked(feetAt(nextX, position.y))) position.x = nextX;
+    final nextY = position.y + step.y;
+    if (!TavernMap.isBlocked(feetAt(position.x, nextY))) position.y = nextY;
+  }
+
+  void _face(Vector2 input) {
     facing = input.x.abs() > input.y.abs()
         ? (input.x < 0 ? Facing.west : Facing.east)
         : (input.y < 0 ? Facing.north : Facing.south);
