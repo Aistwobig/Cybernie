@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
@@ -7,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
 import '../constants/characters.dart';
 import '../constants/drinks.dart';
@@ -130,6 +132,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _game.onFootstep = (left) =>
         SfxService.play(left ? Sfx.step1 : Sfx.step2, gain: 0.45);
     _messageController.addListener(_onDraftChanged);
+    _prepare();
     _loadHints();
     _loadCoins();
     _fireSound = Timer.periodic(
@@ -171,10 +174,59 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     super.dispose();
   }
 
+  /// The loading screen stays up until [_ready]; [_loadStep] and
+  /// [_loadProgress] describe how far along it is.
+  bool _ready = false;
+  bool _loadingGone = false;
+  int _loadStep = 0;
+  double _loadProgress = 0;
+  final Completer<void> _profileReady = Completer<void>();
+
+  /// Waits for everything the room shows before revealing it: all pictures,
+  /// the map and Bernie, then our own character (in our chosen look, with
+  /// our name). Each step gives up after a while rather than hang.
+  Future<void> _prepare() async {
+    final started = DateTime.now();
+    void progress(int step, double value) {
+      if (mounted) {
+        setState(() {
+          _loadStep = step;
+          _loadProgress = value;
+        });
+      }
+    }
+
+    Future<void> step(Future<void> work) => work
+        .timeout(const Duration(seconds: 15))
+        .catchError((Object error) => debugPrint('Loading tavern: $error'));
+
+    // 1. Every picture (60% of the bar).
+    await step(_game.preloadAssets((p) => progress(0, p * 0.6)));
+    // 2. The room itself: map, fire, Bernie.
+    progress(1, 0.65);
+    await step(_game.loaded);
+    progress(1, 0.75);
+    // 3. Us: our profile, then our character's sheets and name.
+    progress(2, 0.8);
+    await step(_profileReady.future);
+    await step(_game.player.sheetsReady);
+    progress(2, 1);
+    // A moment on the full bar so it doesn't flash by.
+    final shown = DateTime.now().difference(started);
+    const minimum = Duration(milliseconds: 900);
+    if (shown < minimum) await Future<void>.delayed(minimum - shown);
+    if (!mounted) return;
+    setState(() => _ready = true);
+    _gameFocus.requestFocus();
+  }
+
   /// Loads our name, then joins the room's live channel so we see the other
   /// players and they see us.
   Future<void> _enterRoom() async {
-    if (!AuthService.isSignedIn) return;
+    if (!AuthService.isSignedIn) {
+      _profileReady.complete();
+      return;
+    }
 
     var name = AppStrings.profilePlayerName;
     try {
@@ -186,6 +238,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     } catch (_) {
       // Keep the default name.
     }
+    if (!_profileReady.isCompleted) _profileReady.complete();
     if (!mounted) return;
     _game.playerName = name;
     setState(() => _myName = name);
@@ -701,6 +754,27 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
               ),
             ),
           ..._buildHud(constraints, panel),
+          // Over everything until the room is fully ready, then fades away
+          // (and is removed once it has).
+          if (!_loadingGone)
+            Positioned.fill(
+              child: IgnorePointer(
+                ignoring: _ready,
+                child: AnimatedOpacity(
+                  opacity: _ready ? 0 : 1,
+                  duration: const Duration(milliseconds: 450),
+                  curve: Curves.easeOut,
+                  onEnd: () {
+                    if (_ready && mounted) setState(() => _loadingGone = true);
+                  },
+                  child: _LoadingScreen(
+                    key: const Key('tavern-loading'),
+                    step: _loadStep,
+                    progress: _loadProgress,
+                  ),
+                ),
+              ),
+            ),
           if (_blackjackOpen)
             Positioned.fill(
               child: BlackjackOverlay(
@@ -828,6 +902,109 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           ),
         ),
     ];
+  }
+}
+
+/// Shown while the tavern loads: the tavern itself, dimmed, with the room's
+/// name, what's being prepared and a brass progress bar.
+class _LoadingScreen extends StatelessWidget {
+  const _LoadingScreen({super.key, required this.step, required this.progress});
+
+  final int step;
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final line =
+        AppStrings.tavernLoadingSteps[step.clamp(
+          0,
+          AppStrings.tavernLoadingSteps.length - 1,
+        )];
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const ColoredBox(color: Color(0xFF120B07)),
+        // The room in the background, dark and blurred.
+        Opacity(
+          opacity: 0.35,
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: Image.asset(
+              AppImages.tavernRoom,
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.low,
+            ),
+          ),
+        ),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    AppStrings.tavernRoomName,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.lora(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFFFFE3A3),
+                      shadows: const [
+                        Shadow(blurRadius: 8, color: Color(0xFF000000)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  // Brass-framed bar, filling with warm firelight.
+                  Container(
+                    height: 16,
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A1A10),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFFD4A86A),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(end: progress.clamp(0.0, 1.0)),
+                        duration: const Duration(milliseconds: 250),
+                        builder: (context, value, _) => FractionallySizedBox(
+                          widthFactor: value,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFE07A2E), Color(0xFFFFC966)],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    line,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFFF1E3C4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 

@@ -116,6 +116,13 @@ class AppStrings {
   // Select room screen
   static const String selectRoomTitle = 'Select Room';
   static const String tavernRoomName = "Bernie's Tavern";
+
+  /// What the tavern's loading screen says at each step.
+  static const List<String> tavernLoadingSteps = [
+    'Lighting the lanterns...',
+    'Stoking the fire...',
+    'Finding your seat...',
+  ];
   static String tavernRoomDetails(int players, int max) =>
       '$players / $max Players • 1 voice channel';
   static String playerCount(int players, int max) => '$players / $max';

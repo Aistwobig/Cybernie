@@ -144,6 +144,12 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   /// The most recent sheet load; a superseded load waits for it instead.
   Future<void>? _latestLoad;
 
+  /// Completes once the current character's sheets are loaded and in use.
+  Future<void> get sheetsReady async {
+    await loaded;
+    await _latestLoad;
+  }
+
   Future<void> _load() async {
     final load = ++_loads;
     // Read every setting once, before any waiting, so the whole load

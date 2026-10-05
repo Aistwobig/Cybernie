@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import '../constants/app_images.dart';
 import '../constants/characters.dart';
 import '../constants/drinks.dart';
+import '../constants/emotes.dart';
 import '../theme/app_theme.dart';
 import 'bernie.dart';
 import 'highlight.dart';
@@ -35,6 +36,35 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   String _playerName;
 
   /// Switches our character, e.g. once the profile has loaded.
+  /// Every picture the tavern can show: the map, Bernie, the fire, the
+  /// joystick, all characters' sheets (so other players' characters appear
+  /// fully drawn), drinks and emotes.
+  static List<String> get allAssets => {
+    AppImages.tavernRoom,
+    AppImages.bernieIdle,
+    AppImages.fireplaceFire,
+    AppImages.joystickBase,
+    AppImages.joystickKnob,
+    for (final c in gameCharacters) ...[
+      c.sheet,
+      ?c.idleSheet,
+      ?c.horizontalRunSheet,
+      ?c.sitBackSheet,
+    ],
+    for (final drink in drinks) drink.asset,
+    for (final emote in emotes) emote.asset,
+  }.toList();
+
+  /// Loads [allAssets] into the image cache, reporting progress (0 to 1).
+  Future<void> preloadAssets(void Function(double progress) onProgress) async {
+    final assets = allAssets;
+    var done = 0;
+    await Future.wait([
+      for (final asset in assets)
+        images.load(asset).then((_) => onProgress(++done / assets.length)),
+    ]);
+  }
+
   set playerCharacter(int index) {
     _character = characterAt(index);
     if (isLoaded) {

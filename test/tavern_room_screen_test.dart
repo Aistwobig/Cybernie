@@ -12,6 +12,14 @@ void main() {
   setUpAll(() async {
     // A tap that lands on something else (e.g. an overlapping button) fails.
     WidgetController.hitTestWarningShouldBeFatal = true;
+    // The test waits in real time for the loading screen, which lets
+    // google_fonts try to download fonts; tests have no network, so ignore
+    // just those failures.
+    final report = reportTestException;
+    reportTestException = (details, description) {
+      if (details.exception.toString().contains('Failed to load font')) return;
+      report(details, description);
+    };
     SharedPreferences.setMockInitialValues({});
     await Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -31,6 +39,18 @@ void main() {
         MaterialApp(theme: AppTheme.theme, home: const TavernRoomScreen()),
       );
       await tester.pump(const Duration(milliseconds: 100));
+      expect(tester.takeException(), isNull);
+
+      // The loading screen covers the room until everything has loaded.
+      final loading = find.byKey(const Key('tavern-loading'));
+      expect(loading, findsOneWidget);
+      for (var i = 0; i < 60 && loading.evaluate().isNotEmpty; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 50)),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(loading, findsNothing, reason: 'the room is ready and shown');
       expect(tester.takeException(), isNull);
 
       // Open "Who's here" from the player count.
