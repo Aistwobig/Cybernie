@@ -143,6 +143,7 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
   void initState() {
     super.initState();
     _thinkTimer; // starts it
+    preloadKitFrames();
     _run(widget.table.load, revealSlowly: false);
   }
 
@@ -699,9 +700,10 @@ class _HandRow extends StatelessWidget {
     final step = cardWidth * 0.62;
     final width = cardWidth + step * (cards.length - 1);
     final value = KitPlate(
-      kit: Kit.dark,
+      kit: Kit.tag,
       scale: 3.2,
-      padding: const EdgeInsets.fromLTRB(12, 7, 12, 8),
+      // Extra room on the right for the arrow.
+      padding: const EdgeInsets.fromLTRB(14, 8, 24, 9),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -853,8 +855,8 @@ class _ResultBanner extends StatelessWidget {
     final kit = net > 0
         ? Kit.green
         : net < 0
-        ? Kit.red
-        : Kit.dark;
+        ? Kit.banner
+        : Kit.button;
     final colour = net > 0
         ? const Color(0xFF9CF08A)
         : net < 0
@@ -868,7 +870,12 @@ class _ResultBanner extends StatelessWidget {
           Transform.scale(scale: scale, child: child),
       child: KitPlate(
         kit: kit,
-        scale: 1.8,
+        // Each frame was drawn at its own size.
+        scale: switch (kit) {
+          Kit.banner => 3.2,
+          Kit.button => 3.6,
+          _ => 1.8,
+        },
         // Full width of the panel, coin and amount centred in the frame.
         height: 40,
         padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -950,9 +957,9 @@ class _Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return KitPlate(
-      kit: Kit.dark,
-      scale: 2,
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      kit: Kit.panel,
+      scale: 3.4,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1002,8 +1009,8 @@ class _ActionButton extends StatelessWidget {
     return _Pressable(
       onPressed: busy ? null : onPressed,
       child: KitPlate(
-        kit: Kit.gold,
-        scale: 1.6,
+        kit: Kit.goldButton,
+        scale: 3.9,
         height: 42,
         padding: EdgeInsets.zero,
         child: Center(
@@ -1042,8 +1049,8 @@ class _ChipButton extends StatelessWidget {
     return _Pressable(
       onPressed: onPressed,
       child: KitPlate(
-        kit: Kit.dark,
-        scale: 3.4,
+        kit: Kit.button,
+        scale: 3.6,
         height: 38,
         padding: EdgeInsets.zero,
         child: Center(
