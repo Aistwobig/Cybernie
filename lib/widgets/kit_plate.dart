@@ -6,11 +6,11 @@ import 'coin_chip.dart';
 /// (assets/sheets/original_blackjack_ui_kit.png), drawn as nine-slices:
 /// the corners stay crisp and the middle stretches to fit.
 enum Kit {
-  dark('assets/images/bj_plate_dark.png', Rect.fromLTWH(24, 24, 189, 43)),
-  cream('assets/images/bj_plate_cream.png', Rect.fromLTWH(24, 24, 206, 50)),
-  red('assets/images/bj_plate_red.png', Rect.fromLTWH(18, 18, 113, 21)),
-  green('assets/images/bj_plate_green.png', Rect.fromLTWH(18, 18, 162, 24)),
-  gold('assets/images/bj_plate_gold.png', Rect.fromLTWH(16, 16, 51, 23)),
+  dark('assets/images/bj_plate_dark.png', Rect.fromLTWH(24, 23, 189, 42)),
+  cream('assets/images/bj_plate_cream.png', Rect.fromLTWH(24, 15, 206, 49)),
+  red('assets/images/bj_plate_red.png', Rect.fromLTWH(18, 13, 113, 21)),
+  green('assets/images/bj_plate_green.png', Rect.fromLTWH(18, 13, 162, 23)),
+  gold('assets/images/bj_plate_gold.png', Rect.fromLTWH(16, 10, 51, 22)),
 
   /// Bernie's speech bubble: name tag top left, tail on the left.
   bubble('assets/images/bj_bubble.png', Rect.fromLTWH(124, 36, 146, 26));

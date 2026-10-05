@@ -570,10 +570,7 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
       children: [
         // How the last hand went.
         if (last != null && last.outcome != null) ...[
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: _ResultBanner(hand: last),
-          ),
+          _ResultBanner(hand: last),
           const SizedBox(height: 8),
         ],
         Row(
@@ -872,21 +869,29 @@ class _ResultBanner extends StatelessWidget {
       child: KitPlate(
         kit: kit,
         scale: 1.8,
-        padding: const EdgeInsets.fromLTRB(14, 8, 16, 9),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const KitCoin(size: 20),
-            const SizedBox(width: 8),
-            Text(
-              AppStrings.blackjackNet(net),
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: colour,
-              ),
+        // Full width of the panel, coin and amount centred in the frame.
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const KitCoin(size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  AppStrings.blackjackNet(net),
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    height: 1,
+                    fontWeight: FontWeight.w900,
+                    color: colour,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
