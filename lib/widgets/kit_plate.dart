@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'coin_chip.dart';
+
 /// The ornate frames from Bernie's blackjack UI kit
 /// (assets/sheets/original_blackjack_ui_kit.png), drawn as nine-slices:
 /// the corners stay crisp and the middle stretches to fit.
@@ -58,17 +60,12 @@ class KitPlate extends StatelessWidget {
   }
 }
 
-/// The kit's gold coin.
+/// The gold coin shown with coin amounts (the app's own drawn coin).
 class KitCoin extends StatelessWidget {
   const KitCoin({super.key, this.size = 20});
 
   final double size;
 
   @override
-  Widget build(BuildContext context) => Image.asset(
-    'assets/images/bj_coin.png',
-    width: size,
-    height: size,
-    filterQuality: FilterQuality.medium,
-  );
+  Widget build(BuildContext context) => CoinIcon(size: size);
 }
