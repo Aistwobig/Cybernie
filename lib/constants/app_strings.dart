@@ -170,6 +170,19 @@ class AppStrings {
   static const String bernieComeCloser =
       "Come up to the bar and I'll pour you something!";
   static const String orderButton = 'ORDER';
+  // Bernie's lucky wheel
+  static const String lotteryTitle = "Bernie's Lucky Wheel";
+  static const String lotteryIntro =
+      'A free spin is waiting! Spin to win coins.';
+  static const String lotterySpin = 'SPIN';
+  static const String lotterySpinning = 'SPINNING...';
+  static const String lotteryCollect = 'COLLECT';
+  static const String lotteryLater = 'Maybe later';
+  static const String lotteryFreeSpin = 'Free spin!';
+  static String lotteryWon(int coins) => 'You won $coins coins!';
+  static const String lotteryAlreadySpun =
+      'You already used this spin. Next one at 12 AM or 8 PM!';
+  static const String lotteryError = "The wheel is stuck. Try again later.";
   static String itemSentToInventory(String item) =>
       '$item sent to your inventory!';
   static const String inventoryTitle = 'Inventory';
@@ -180,7 +193,6 @@ class AppStrings {
   static const String tasksIntro = 'Finish a task, then claim its coins.';
   static const String claimButton = 'CLAIM';
   static const String taskClaimed = 'Claimed';
-  static const String taskNotReady = "That task isn't done yet.";
   static String cantAffordDrink(int price) =>
       'That one costs $price coins. Win some at blackjack first!';
 

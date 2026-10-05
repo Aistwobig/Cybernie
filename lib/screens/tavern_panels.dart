@@ -1089,6 +1089,22 @@ class TasksPanel extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
           children: [
             Text(AppStrings.tasksIntro, style: _muted(size: 12.5)),
+            // Why the tasks couldn't be checked, if they couldn't.
+            ValueListenableBuilder<String?>(
+              valueListenable: TaskService.problem,
+              builder: (context, problem, _) => problem == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        problem,
+                        style: _body(
+                          size: 12,
+                          weight: FontWeight.w700,
+                        ).copyWith(color: const Color(0xFFB3261E)),
+                      ),
+                    ),
+            ),
             const SizedBox(height: 10),
             for (final state in tasks)
               _TaskTile(state: state, onClaim: () => onClaim(state.task.id)),

@@ -1,4 +1,5 @@
 import 'package:final_project/screens/tavern_room_screen.dart';
+import 'package:final_project/services/sfx_service.dart';
 import 'package:final_project/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,6 +13,8 @@ void main() {
   setUpAll(() async {
     // A tap that lands on something else (e.g. an overlapping button) fails.
     WidgetController.hitTestWarningShouldBeFatal = true;
+    // No audio plugin in tests.
+    SfxService.volume.value = 0;
     // The test waits in real time for the loading screen, which lets
     // google_fonts try to download fonts; tests have no network, so ignore
     // just those failures.
@@ -51,6 +54,21 @@ void main() {
         await tester.pump(const Duration(milliseconds: 100));
       }
       expect(loading, findsNothing, reason: 'the room is ready and shown');
+
+      // A free spin is waiting, so Bernie's wheel pops up; put it off.
+      for (
+        var i = 0;
+        i < 10 && find.text('Maybe later').evaluate().isEmpty;
+        i++
+      ) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await tester.tap(find.text('Maybe later'));
+      await tester.pump();
+      expect(find.text('Free spin!'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       // Open "Who's here" from the player count.

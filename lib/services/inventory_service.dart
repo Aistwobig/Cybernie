@@ -110,8 +110,15 @@ class TaskService {
   /// Every task's reward has been claimed (the "!" goes away).
   static bool get allClaimed => tasks.value.every((t) => t.claimed);
 
+  /// Why the tasks couldn't be loaded (e.g. the migration isn't run), or
+  /// null when they loaded fine.
+  static final ValueNotifier<String?> problem = ValueNotifier(null);
+
   static Future<void> load() async {
-    if (!AuthService.isSignedIn) return;
+    if (!AuthService.isSignedIn) {
+      problem.value = 'Sign in to do tasks.';
+      return;
+    }
     try {
       final result = await Supabase.instance.client.rpc<dynamic>('my_tasks');
       final rows = {
@@ -126,13 +133,15 @@ class TaskService {
             claimed: rows[task.id]?['claimed'] == true,
           ),
       ];
+      problem.value = null;
     } catch (error) {
       debugPrint('Tasks: $error');
+      problem.value = _explain(error);
     }
   }
 
-  /// Claims [taskId]'s coins. False if it can't be claimed (yet).
-  static Future<bool> claim(String taskId) async {
+  /// Claims [taskId]'s coins. Returns null on success, or why it failed.
+  static Future<String?> claim(String taskId) async {
     try {
       final coins = await Supabase.instance.client.rpc<dynamic>(
         'claim_task',
@@ -140,11 +149,23 @@ class TaskService {
       );
       CoinService.coins.value = (coins as num).toInt();
       await load();
-      return true;
+      return null;
     } catch (error) {
       debugPrint('Claiming $taskId: $error');
       await load();
-      return false;
+      return _explain(error);
     }
+  }
+
+  static String _explain(Object error) {
+    final text = error is PostgrestException ? error.message : '$error';
+    if (text.contains('task not done')) return "That task isn't done yet.";
+    if (text.contains('already claimed')) return 'Already claimed.';
+    if (text.contains('Could not find the function') ||
+        text.contains('does not exist')) {
+      return 'Tasks need the inventory/tasks database update '
+          '(migration 20261010000000).';
+    }
+    return "Couldn't reach the tavern's ledger. Try again.";
   }
 }

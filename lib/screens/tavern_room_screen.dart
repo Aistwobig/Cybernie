@@ -19,6 +19,7 @@ import '../services/auth_service.dart';
 import '../services/chat_service.dart';
 import '../services/coin_service.dart';
 import '../services/inventory_service.dart';
+import '../services/lottery_service.dart';
 import '../services/profile_service.dart';
 import '../services/room_service.dart';
 import '../services/sfx_service.dart';
@@ -27,6 +28,7 @@ import '../theme/app_theme.dart';
 import '../widgets/coin_chip.dart';
 import '../widgets/leaderboard_panel.dart';
 import 'blackjack_overlay.dart';
+import 'lottery_overlay.dart';
 import 'tavern_panels.dart';
 
 /// Bernie's Tavern. Always landscape and full screen: phones are asked to
@@ -165,6 +167,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onInteract = null;
     _orderPause?.cancel();
     _fireSound?.cancel();
+    _lotteryCheck?.cancel();
     _fireLoop.dispose();
     _effectTicker?.cancel();
     _typingIdle?.cancel();
@@ -222,6 +225,54 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     if (!mounted) return;
     setState(() => _ready = true);
     _gameFocus.requestFocus();
+    // A free spin may be waiting; and check again now and then, so the
+    // wheel pops up right when the 8 PM / 12 AM spin opens.
+    _checkLottery();
+    _lotteryCheck = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => _checkLottery(),
+    );
+  }
+
+  /// The lucky wheel: open, and whether a free spin is waiting (and which,
+  /// so "Maybe later" doesn't keep popping it up for the same spin).
+  bool _lotteryOpen = false;
+  bool _spinWaiting = false;
+  String? _lotterySeen;
+  Timer? _lotteryCheck;
+
+  Future<void> _checkLottery() async {
+    if (!mounted || _lotteryOpen) return;
+    try {
+      final status = await LotteryService.status();
+      if (!mounted) return;
+      setState(() => _spinWaiting = status.available);
+      // Pops up by itself once per spin, when nothing else is open.
+      if (status.available &&
+          status.slot != _lotterySeen &&
+          !_blackjackOpen &&
+          _panel == _Panel.none) {
+        _lotterySeen = status.slot;
+        _openLottery();
+      }
+    } catch (error) {
+      // The lottery migration isn't run yet, or no connection.
+      debugPrint('Lottery: $error');
+    }
+  }
+
+  void _openLottery() {
+    SfxService.play(Sfx.sparkle);
+    setState(() {
+      _lotteryOpen = true;
+      _emotesOpen = false;
+    });
+  }
+
+  void _closeLottery() {
+    setState(() => _lotteryOpen = false);
+    _gameFocus.requestFocus();
+    _checkLottery();
   }
 
   /// Loads our name, then joins the room's live channel so we see the other
@@ -547,10 +598,11 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   }
 
   Future<void> _claimTask(String taskId) async {
-    if (await TaskService.claim(taskId)) {
+    final problem = await TaskService.claim(taskId);
+    if (problem == null) {
       SfxService.play(Sfx.coin);
     } else {
-      _showSnack(AppStrings.taskNotReady);
+      _showSnack(problem);
     }
   }
 
@@ -771,13 +823,25 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                 compact: true,
               ),
             ),
-          // Drink effects still running, counting down.
+          // Drink effects still running, counting down; and the free spin,
+          // if one is waiting (after "Maybe later").
           Positioned(
             top: 90,
             left: 12,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (_spinWaiting && !_lotteryOpen)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: _HudButton(
+                      label: AppStrings.lotteryFreeSpin,
+                      icon: Icons.casino,
+                      onPressed: _openLottery,
+                      filled: true,
+                      compact: true,
+                    ),
+                  ),
                 for (final (drink, seconds) in _activeEffects)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),
@@ -822,6 +886,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                 ),
               ),
             ),
+          if (_lotteryOpen)
+            Positioned.fill(child: LotteryOverlay(onClose: _closeLottery)),
           if (_blackjackOpen)
             Positioned.fill(
               child: BlackjackOverlay(
