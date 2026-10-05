@@ -170,6 +170,17 @@ class AppStrings {
   static const String bernieComeCloser =
       "Come up to the bar and I'll pour you something!";
   static const String orderButton = 'ORDER';
+  static String itemSentToInventory(String item) =>
+      '$item sent to your inventory!';
+  static const String inventoryTitle = 'Inventory';
+  static const String inventoryEmpty =
+      'Your bag is empty. Buy drinks from Bernie at the bar!';
+  static const String useButton = 'USE';
+  static const String tasksTitle = 'Tasks';
+  static const String tasksIntro = 'Finish a task, then claim its coins.';
+  static const String claimButton = 'CLAIM';
+  static const String taskClaimed = 'Claimed';
+  static const String taskNotReady = "That task isn't done yet.";
   static String cantAffordDrink(int price) =>
       'That one costs $price coins. Win some at blackjack first!';
 

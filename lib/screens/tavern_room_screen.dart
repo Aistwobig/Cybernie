@@ -18,6 +18,7 @@ import '../models/profile.dart';
 import '../services/auth_service.dart';
 import '../services/chat_service.dart';
 import '../services/coin_service.dart';
+import '../services/inventory_service.dart';
 import '../services/profile_service.dart';
 import '../services/room_service.dart';
 import '../services/sfx_service.dart';
@@ -65,6 +66,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   bool _nearSeat = false;
   bool _sitting = false;
   bool _emotesOpen = false;
+
   /// The chat log starts folded so the room is clear on entering; new
   /// messages show as "N NEW MESSAGES" on its header until it's opened.
   bool _chatCollapsed = true;
@@ -500,20 +502,56 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     if (_justOrdered || drink == null) return;
     _orderPause?.cancel();
     setState(() => _justOrdered = true);
-    _orderPause = Timer(const Duration(seconds: 5), () {
+    _orderPause = Timer(const Duration(seconds: 1), () {
       if (mounted) setState(() => _justOrdered = false);
     });
-    // Pay first. Before the coins have loaded (e.g. the coins migration
-    // isn't run yet) drinks are on the house.
-    if (CoinService.coins.value != null && !await CoinService.buyDrink(drink)) {
+    // Pay, and it goes to the inventory (not drunk yet). Before the coins
+    // have loaded (e.g. the coins migration isn't run) it's on the house.
+    if (CoinService.coins.value == null) {
+      await InventoryService.added(drink.id);
+    } else if (!await CoinService.buyDrink(drink)) {
       _showSnack(AppStrings.cantAffordDrink(drink.price));
       return;
     }
     if (!mounted) return;
-    _game.orderDrink(drinkId);
+    _game.serveDrink(drinkId);
     SfxService.play(Sfx.coin);
+    _showSnack(AppStrings.itemSentToInventory(drink.name));
+  }
+
+  /// Drinks one [drinkId] from the inventory: its effect starts now.
+  Future<void> _useItem(String drinkId) async {
+    if (!await InventoryService.use(drinkId)) return;
+    if (!mounted) return;
+    _game.drink(drinkId);
+    SfxService.play(Sfx.pop);
     _closePanel();
     _startEffectTicker();
+  }
+
+  void _openTasks() {
+    SfxService.play(Sfx.click, gain: 0.6);
+    TaskService.load();
+    setState(() {
+      _panel = _Panel.tasks;
+      _emotesOpen = false;
+    });
+  }
+
+  void _openInventory() {
+    SfxService.play(Sfx.click, gain: 0.6);
+    setState(() {
+      _panel = _Panel.inventory;
+      _emotesOpen = false;
+    });
+  }
+
+  Future<void> _claimTask(String taskId) async {
+    if (await TaskService.claim(taskId)) {
+      SfxService.play(Sfx.coin);
+    } else {
+      _showSnack(AppStrings.taskNotReady);
+    }
   }
 
   /// Ticks once a second while a drink effect is running, for the chip
@@ -579,8 +617,11 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _gameFocus.requestFocus();
   }
 
-  /// Loads our coins (adding the once-a-day bonus) for the top-right corner.
+  /// Loads our coins (adding the once-a-day bonus) for the top-right corner,
+  /// and our inventory and tasks.
   Future<void> _loadCoins() async {
+    InventoryService.load();
+    TaskService.load();
     try {
       final bonus = await CoinService.enterTavern();
       if (bonus > 0) {
@@ -641,6 +682,10 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           onClose: _closePanel,
           onBack: () => _openPlayerCard(cardId, fromList: _cameFromList),
         );
+      case _Panel.tasks:
+        return TasksPanel(onClaim: _claimTask, onClose: _closePanel);
+      case _Panel.inventory:
+        return InventoryPanel(onUse: _useItem, onClose: _closePanel);
       case _Panel.leaderboard:
         // Reloads when our coins change.
         return LeaderboardPanel(
@@ -804,34 +849,27 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           right: 12,
           child: Row(
             children: [
-              Tooltip(
-                message: AppStrings.leaderboardTitle,
-                child: Semantics(
-                  button: true,
-                  label: AppStrings.leaderboardTitle,
-                  excludeSemantics: true,
-                  child: InkWell(
-                    onTap: _openLeaderboard,
-                    customBorder: const CircleBorder(),
-                    child: Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: const Color(0xE61B1712),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFD4A86A),
-                          width: 1.5,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.emoji_events,
-                        size: 18,
-                        color: Color(0xFFFFC966),
-                      ),
-                    ),
-                  ),
+              // Tasks: a "!" until every reward has been claimed.
+              ValueListenableBuilder<List<TaskState>>(
+                valueListenable: TaskService.tasks,
+                builder: (context, _, _) => _HudIcon(
+                  asset: AppImages.hudTask,
+                  label: AppStrings.tasksTitle,
+                  onTap: _openTasks,
+                  badge: !TaskService.allClaimed,
                 ),
+              ),
+              const SizedBox(width: 6),
+              _HudIcon(
+                asset: AppImages.hudInventory,
+                label: AppStrings.inventoryTitle,
+                onTap: _openInventory,
+              ),
+              const SizedBox(width: 6),
+              _HudIcon(
+                asset: AppImages.hudTrophy,
+                label: AppStrings.leaderboardTitle,
+                onTap: _openLeaderboard,
               ),
               const SizedBox(width: 8),
               const CoinChip(),
@@ -904,6 +942,67 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           ),
         ),
     ];
+  }
+}
+
+/// A framed square HUD button (tasks, inventory, leaderboard), with an
+/// optional red "!" badge on its corner.
+class _HudIcon extends StatelessWidget {
+  const _HudIcon({
+    required this.asset,
+    required this.label,
+    required this.onTap,
+    this.badge = false,
+  });
+
+  final String asset;
+  final String label;
+  final VoidCallback onTap;
+  final bool badge;
+
+  static const double size = 40;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        label: badge ? '$label (new)' : label,
+        excludeSemantics: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: SizedBox(
+            width: size * 99 / 90,
+            height: size,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned.fill(
+                  child: Image.asset(
+                    asset,
+                    fit: BoxFit.fill,
+                    filterQuality: FilterQuality.medium,
+                  ),
+                ),
+                if (badge)
+                  Positioned(
+                    top: -5,
+                    right: -5,
+                    child: Image.asset(
+                      AppImages.hudBadge,
+                      width: 17,
+                      height: 17,
+                      filterQuality: FilterQuality.medium,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -1059,6 +1158,8 @@ enum _Panel {
   directChat,
   bar,
   leaderboard,
+  tasks,
+  inventory,
 }
 
 /// The reactions, as big tappable pictures above the chat box. They share

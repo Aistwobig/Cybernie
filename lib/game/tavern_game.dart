@@ -148,11 +148,24 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     }
   }
 
-  /// Orders [drinkId] from Bernie: he says his line, and we hold the drink.
+  /// Orders [drinkId] from Bernie and drinks it straight away.
   void orderDrink(String drinkId) {
+    serveDrink(drinkId);
+    drink(drinkId);
+  }
+
+  /// Bernie serves [drinkId] (it goes to the inventory): he says his line.
+  void serveDrink(String drinkId) {
+    final served = drinkById(drinkId);
+    if (served == null || !isLoaded) return;
+    bernie.say(served.bernieSays);
+  }
+
+  /// We drink [drinkId] (from the inventory): we hold it, its effect
+  /// starts, and the other players are told.
+  void drink(String drinkId) {
     final drink = drinkById(drinkId);
     if (drink == null || !isLoaded) return;
-    bernie.say(drink.bernieSays);
     player
       ..holdDrink(drink.id)
       ..applyDrinkEffect(drink);

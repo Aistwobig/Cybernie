@@ -6,6 +6,7 @@ import '../constants/drinks.dart';
 import '../models/profile.dart';
 import '../services/coin_service.dart';
 import '../services/friends_service.dart';
+import '../services/inventory_service.dart';
 import '../services/notice_board_service.dart';
 import '../services/profile_service.dart';
 import '../services/report_service.dart';
@@ -1056,6 +1057,287 @@ class _DrinkTile extends StatelessWidget {
               onPressed: onOrder,
               child: Text(
                 AppStrings.orderButton,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The player's tasks: each pays coins once, claimed with its button.
+class TasksPanel extends StatelessWidget {
+  const TasksPanel({super.key, required this.onClaim, required this.onClose});
+
+  final Future<void> Function(String taskId) onClaim;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return TavernPanel(
+      title: AppStrings.tasksTitle,
+      onClose: onClose,
+      child: ValueListenableBuilder<List<TaskState>>(
+        valueListenable: TaskService.tasks,
+        builder: (context, tasks, _) => ListView(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          children: [
+            Text(AppStrings.tasksIntro, style: _muted(size: 12.5)),
+            const SizedBox(height: 10),
+            for (final state in tasks)
+              _TaskTile(state: state, onClaim: () => onClaim(state.task.id)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TaskTile extends StatefulWidget {
+  const _TaskTile({required this.state, required this.onClaim});
+
+  final TaskState state;
+  final Future<void> Function() onClaim;
+
+  @override
+  State<_TaskTile> createState() => _TaskTileState();
+}
+
+class _TaskTileState extends State<_TaskTile> {
+  bool _claiming = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
+    final task = state.task;
+    final Widget action;
+    if (state.claimed) {
+      action = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check_circle, size: 18, color: AppColors.online),
+          const SizedBox(width: 4),
+          Text(AppStrings.taskClaimed, style: _muted(size: 12)),
+        ],
+      );
+    } else {
+      action = SizedBox(
+        height: 32,
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFFE0A945),
+            foregroundColor: const Color(0xFF2A1C12),
+            disabledBackgroundColor: AppColors.parchmentDim,
+            disabledForegroundColor: AppColors.inkMuted,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(5),
+            ),
+          ),
+          onPressed: state.done && !_claiming
+              ? () async {
+                  setState(() => _claiming = true);
+                  await widget.onClaim();
+                  if (mounted) setState(() => _claiming = false);
+                }
+              : null,
+          child: Text(
+            AppStrings.claimButton,
+            style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800),
+          ),
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppColors.ink.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              state.done ? Icons.task_alt : Icons.radio_button_unchecked,
+              size: 20,
+              color: state.done ? AppColors.online : AppColors.inkMuted,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    task.title,
+                    style: _body(size: 13, weight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const CoinIcon(size: 13),
+                      const SizedBox(width: 4),
+                      Text('+${task.reward}', style: _muted(size: 12)),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            action,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The player's items (drinks bought from Bernie), each with a USE button.
+class InventoryPanel extends StatelessWidget {
+  const InventoryPanel({super.key, required this.onUse, required this.onClose});
+
+  final void Function(String itemId) onUse;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return TavernPanel(
+      title: AppStrings.inventoryTitle,
+      onClose: onClose,
+      child: ValueListenableBuilder<Map<String, int>>(
+        valueListenable: InventoryService.items,
+        builder: (context, items, _) {
+          final owned = [
+            for (final drink in drinks)
+              if ((items[drink.id] ?? 0) > 0) drink,
+          ];
+          if (owned.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  AppStrings.inventoryEmpty,
+                  textAlign: TextAlign.center,
+                  style: _muted(size: 13),
+                ),
+              ),
+            );
+          }
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            children: [
+              for (final drink in owned)
+                _InventoryTile(
+                  drink: drink,
+                  count: items[drink.id] ?? 0,
+                  onUse: () => onUse(drink.id),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _InventoryTile extends StatelessWidget {
+  const _InventoryTile({
+    required this.drink,
+    required this.count,
+    required this.onUse,
+  });
+
+  final Drink drink;
+  final int count;
+  final VoidCallback onUse;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(
+                    color: AppColors.ink.withValues(alpha: 0.25),
+                  ),
+                ),
+                child: Image.asset(
+                  drink.asset,
+                  filterQuality: FilterQuality.none,
+                  semanticLabel: drink.name,
+                ),
+              ),
+              Positioned(
+                right: -6,
+                bottom: -6,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.ink,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Text(
+                    'x$count',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onInk,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  drink.name,
+                  style: _body(size: 14, weight: FontWeight.w700),
+                ),
+                Text(
+                  '${drink.effectName}: ${drink.description}',
+                  style: _muted(size: 11.5),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            height: 32,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.ink,
+                foregroundColor: AppColors.onInk,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              ),
+              onPressed: onUse,
+              child: Text(
+                AppStrings.useButton,
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,

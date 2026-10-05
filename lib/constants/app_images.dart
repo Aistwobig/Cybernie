@@ -43,6 +43,14 @@ class AppImages {
   static const String profileMage = 'assets/images/5.png';
   static const String tavernRoom = 'assets/images/tavern.png';
 
+  /// Tavern HUD buttons (cut from assets/sheets/original_tavern_hud_kit.png):
+  /// tasks, inventory, leaderboard, the red "!" badge and the coin.
+  static const String hudTask = 'assets/images/hud_task.png';
+  static const String hudInventory = 'assets/images/hud_bag.png';
+  static const String hudTrophy = 'assets/images/hud_trophy.png';
+  static const String hudBadge = 'assets/images/hud_badge.png';
+  static const String hudCoin = 'assets/images/hud_coin.png';
+
   /// The on-screen joystick: its brass ring and the wooden knob.
   static const String joystickBase = 'assets/images/joystick_base.png';
   static const String joystickKnob = 'assets/images/joystick_knob.png';

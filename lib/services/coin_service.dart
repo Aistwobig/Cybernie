@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/drinks.dart';
 import 'auth_service.dart';
+import 'inventory_service.dart';
 import 'blackjack_service.dart';
 
 /// The player's tavern coins, shown in the tavern's top-right corner and
@@ -23,9 +24,15 @@ class CoinService {
       ? SupabaseBlackjackTable()
       : (_offline ??= LocalBlackjackTable());
 
-  /// Pays for [drink] at Bernie's bar. Returns false (charging nothing) if
-  /// the player can't afford it.
+  /// Pays for [drink] at Bernie's bar and puts it in the inventory. Returns
+  /// false (charging nothing) if the player can't afford it.
   static Future<bool> buyDrink(Drink drink) async {
+    final bought = await _pay(drink);
+    if (bought) await InventoryService.added(drink.id);
+    return bought;
+  }
+
+  static Future<bool> _pay(Drink drink) async {
     final have = coins.value ?? 0;
     if (have < drink.price) return false;
     if (!AuthService.isSignedIn) {

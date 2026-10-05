@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-
-import '../constants/app_strings.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../constants/app_images.dart';
+import '../constants/app_strings.dart';
 import '../services/coin_service.dart';
 import 'kit_plate.dart';
 
@@ -70,7 +70,12 @@ class CoinChip extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const KitCoin(size: 24),
+                Image.asset(
+                  AppImages.hudCoin,
+                  width: 24,
+                  height: 24,
+                  filterQuality: FilterQuality.medium,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   '$coins',
