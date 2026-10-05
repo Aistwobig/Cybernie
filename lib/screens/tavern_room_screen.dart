@@ -22,6 +22,7 @@ import '../services/sfx_service.dart';
 import '../game/tavern_map.dart';
 import '../theme/app_theme.dart';
 import '../widgets/coin_chip.dart';
+import '../widgets/leaderboard_panel.dart';
 import 'blackjack_overlay.dart';
 import 'tavern_panels.dart';
 
@@ -408,6 +409,14 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     });
   }
 
+  void _openLeaderboard() {
+    SfxService.play(Sfx.click, gain: 0.6);
+    setState(() {
+      _panel = _Panel.leaderboard;
+      _emotesOpen = false;
+    });
+  }
+
   void _openDirectChat(Profile friend) => setState(() {
     _chatFriend = friend;
     _panel = _Panel.directChat;
@@ -548,6 +557,12 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           onClose: _closePanel,
           onBack: () => _openPlayerCard(cardId, fromList: _cameFromList),
         );
+      case _Panel.leaderboard:
+        // Reloads when our coins change.
+        return LeaderboardPanel(
+          key: ValueKey('board-${CoinService.coins.value}'),
+          onClose: _closePanel,
+        );
       case _Panel.noticeBoard:
         return NoticeBoardPanel(roomId: _roomId, onClose: _closePanel);
       case _Panel.bar:
@@ -676,9 +691,48 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         : 340.0;
 
     return [
-      // Our coins, top right (an open panel takes that side).
+      // Our coins, top right, with the leaderboard button beside them (an
+      // open panel takes that side).
       if (panel == null)
-        const Positioned(top: 12, right: 12, child: CoinChip()),
+        Positioned(
+          top: 12,
+          right: 12,
+          child: Row(
+            children: [
+              Tooltip(
+                message: AppStrings.leaderboardTitle,
+                child: Semantics(
+                  button: true,
+                  label: AppStrings.leaderboardTitle,
+                  excludeSemantics: true,
+                  child: InkWell(
+                    onTap: _openLeaderboard,
+                    customBorder: const CircleBorder(),
+                    child: Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: const Color(0xE61B1712),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFFD4A86A),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.emoji_events,
+                        size: 18,
+                        color: Color(0xFFFFC966),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const CoinChip(),
+            ],
+          ),
+        ),
       // Leaving is the back arrow in the room title. In debug builds only,
       // the hitbox toggle sits under the coins.
       if (kDebugMode && _panel == _Panel.none)
@@ -788,7 +842,16 @@ class _EffectChip extends StatelessWidget {
   }
 }
 
-enum _Panel { none, players, playerCard, report, noticeBoard, directChat, bar }
+enum _Panel {
+  none,
+  players,
+  playerCard,
+  report,
+  noticeBoard,
+  directChat,
+  bar,
+  leaderboard,
+}
 
 /// The reactions, as big tappable pictures above the chat box. They share
 /// the row's width, up to 48 px each.
