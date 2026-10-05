@@ -38,14 +38,15 @@ class BlackjackOverlay extends StatefulWidget {
   State<BlackjackOverlay> createState() => _BlackjackOverlayState();
 }
 
-/// Bernie's poses, by cell in AppImages.bernieDealer (row by row). Cells
-/// 9-16 are his shuffle.
+/// Bernie's poses, by cell in AppImages.bernieDealer (5 x 5, row by row).
+/// Cells 9-16 are his shuffle and 17-24 his thinking loop.
 enum _Face {
   idle(0),
   smile(1),
   sly(2),
   laugh(3),
-  smug(4),
+  // Side-eye with a paw on his chin: sulking when he loses.
+  sulk(4),
   surprised(5),
   shocked(6),
   wink(7),
@@ -58,6 +59,24 @@ enum _Face {
 
 const int _shuffleFirstCell = 9;
 const int _shuffleFrames = 8;
+
+/// While you decide, Bernie waits with his paw on his chin, eyes on you.
+const int _thinkFirstCell = 17;
+const int _thinkFrames = 8;
+const Duration _thinkFrame = Duration(milliseconds: 200);
+
+/// How Bernie may react to each result; one is picked at random per hand.
+const Map<BlackjackOutcome, List<_Face>> _reactions = {
+  // He lost: surprised, shocked, or sulking.
+  BlackjackOutcome.blackjack: [_Face.shocked, _Face.surprised, _Face.sulk],
+  BlackjackOutcome.win: [_Face.surprised, _Face.sulk, _Face.shocked],
+  BlackjackOutcome.dealerBust: [_Face.shocked, _Face.sulk, _Face.surprised],
+  // He won: delighted.
+  BlackjackOutcome.lose: [_Face.pleased, _Face.laugh, _Face.wink, _Face.smile],
+  BlackjackOutcome.dealerBlackjack: [_Face.laugh, _Face.pleased, _Face.wink],
+  BlackjackOutcome.bust: [_Face.laugh, _Face.wink, _Face.smile, _Face.pleased],
+  BlackjackOutcome.push: [_Face.wink, _Face.smile, _Face.sly],
+};
 
 /// One frame per 120 ms: the 8 frames last as long as the shuffle sound.
 const Duration _shuffleFrame = Duration(milliseconds: 120);
@@ -74,7 +93,8 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
   /// Where Bernie stands (AppImages.bernieDealer cells are drawn here),
   /// the table's back edge that hides him from the waist down, and where
   /// his speech bubble goes (to the right of his head).
-  static const Rect _bernieBox = Rect.fromLTWH(415, 80, 640, 600);
+  // Low enough that the bottom edge of every frame is behind the table.
+  static const Rect _bernieBox = Rect.fromLTWH(415, 113, 640, 640);
   static const double _tableEdgeY = 652;
   static const Offset _bubbleAt = Offset(900, 200);
 
@@ -98,6 +118,19 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
 
   bool _leaderboardOpen = false;
 
+  /// Bernie's thinking loop while it's your turn (always ticking; it only
+  /// shows while you decide).
+  int _thinkStep = 0;
+  late final Timer _thinkTimer = Timer.periodic(_thinkFrame, (_) {
+    if (mounted && (_hand?.playing ?? false) && _shuffleStep == null) {
+      setState(() => _thinkStep = (_thinkStep + 1) % _thinkFrames);
+    }
+  });
+
+  /// His reaction to the last hand, picked at random when it ends.
+  _Face? _reaction;
+  final math.Random _random = math.Random();
+
   BlackjackHand? get _hand => _state?.hand;
   int get _coins => _state?.coins ?? CoinService.coins.value ?? 0;
 
@@ -109,11 +142,13 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
   @override
   void initState() {
     super.initState();
+    _thinkTimer; // starts it
     _run(widget.table.load, revealSlowly: false);
   }
 
   @override
   void dispose() {
+    _thinkTimer.cancel();
     _reveal?.cancel();
     _shuffleTimer?.cancel();
     super.dispose();
@@ -162,6 +197,10 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
         _state = state;
         if (newRound) _round++;
         final hand = state.hand;
+        final choices = _reactions[hand?.outcome];
+        _reaction = choices == null
+            ? null
+            : choices[_random.nextInt(choices.length)];
         if (hand == null) {
           _dealerShown = 0;
         } else if (hand.playing || !revealSlowly) {
@@ -261,42 +300,39 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
     if (step != null) {
       return (_shuffleFirstCell + step, _pick(AppStrings.bernieShuffle));
     }
-    final (face, line) = _faceAndLine(hand);
-    return (face.cell, line);
-  }
-
-  (_Face, String) _faceAndLine(BlackjackHand? hand) {
-    if (_failed) return (_Face.smug, AppStrings.bernieTableError);
+    if (_failed) return (_Face.sulk.cell, AppStrings.bernieTableError);
     if (hand == null) {
       return _coins < BlackjackTable.minBet
-          ? (_Face.smug, AppStrings.bernieBroke)
-          : (_Face.idle, _pick(AppStrings.bernieWelcome));
+          ? (_Face.sulk.cell, AppStrings.bernieBroke)
+          : (_Face.idle.cell, _pick(AppStrings.bernieWelcome));
     }
+    // Your turn: he waits, paw on chin, while you think.
     if (hand.playing) {
-      return handValue(hand.player) >= 17
-          ? (_Face.smug, _pick(AppStrings.bernieHighHand))
-          : (_Face.sly, _pick(AppStrings.bernieYourTurn));
+      return (
+        _thinkFirstCell + _thinkStep,
+        handValue(hand.player) >= 17
+            ? _pick(AppStrings.bernieHighHand)
+            : _pick(AppStrings.bernieYourTurn),
+      );
     }
-    if (_revealing) return (_Face.sly, _pick(AppStrings.bernieRevealing));
-    return switch (hand.outcome) {
-      BlackjackOutcome.blackjack => (
-        _Face.shocked,
-        _pick(AppStrings.bernieBlackjack),
-      ),
-      BlackjackOutcome.win => (_Face.surprised, _pick(AppStrings.bernieWin)),
-      BlackjackOutcome.dealerBust => (
-        _Face.surprised,
-        _pick(AppStrings.bernieDealerBust),
-      ),
-      BlackjackOutcome.lose => (_Face.pleased, _pick(AppStrings.bernieLose)),
-      BlackjackOutcome.dealerBlackjack => (
-        _Face.laugh,
-        _pick(AppStrings.bernieDealerBlackjack),
-      ),
-      BlackjackOutcome.bust => (_Face.smug, _pick(AppStrings.bernieBust)),
-      BlackjackOutcome.push => (_Face.wink, _pick(AppStrings.berniePush)),
-      null => (_Face.smile, _pick(AppStrings.bernieWelcome)),
-    };
+    if (_revealing) return (_Face.sly.cell, _pick(AppStrings.bernieRevealing));
+    final face = _reaction ?? _Face.smile;
+    // Sulking gets its own sad lines.
+    final line = face == _Face.sulk
+        ? _pick(AppStrings.bernieSad)
+        : switch (hand.outcome) {
+            BlackjackOutcome.blackjack => _pick(AppStrings.bernieBlackjack),
+            BlackjackOutcome.win => _pick(AppStrings.bernieWin),
+            BlackjackOutcome.dealerBust => _pick(AppStrings.bernieDealerBust),
+            BlackjackOutcome.lose => _pick(AppStrings.bernieLose),
+            BlackjackOutcome.dealerBlackjack => _pick(
+              AppStrings.bernieDealerBlackjack,
+            ),
+            BlackjackOutcome.bust => _pick(AppStrings.bernieBust),
+            BlackjackOutcome.push => _pick(AppStrings.berniePush),
+            null => _pick(AppStrings.bernieWelcome),
+          };
+    return (face.cell, line);
   }
 
   @override
@@ -381,10 +417,10 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
             rect: bernieRect,
             child: SheetCell(
               asset: AppImages.bernieDealer,
-              cols: 6,
-              rows: 3,
-              col: pose % 6,
-              row: pose ~/ 6,
+              cols: 5,
+              rows: 5,
+              col: pose % 5,
+              row: pose ~/ 5,
               width: bernieRect.width,
               height: bernieRect.height,
             ),

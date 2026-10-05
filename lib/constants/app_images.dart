@@ -31,8 +31,9 @@ class AppImages {
   static const String bernieIdle = 'assets/images/bernie_idle.png';
 
   /// Bernie's blackjack table: the scene (with no Bernie in it), Bernie as
-  /// the dealer (6 x 3 cells of 448 x 420: his idle pose, 8 faces and an
-  /// 8-frame shuffle, all lined up on the same spot) and the 52 cards
+  /// the dealer (5 x 5 cells of 336 px: his idle pose, 8 faces, an 8-frame
+  /// shuffle and an 8-frame thinking loop, all lined up on the same spot)
+  /// and the 52 cards
   /// (13 ranks x 4 suits, 150 x 166 cells).
   static const String catBlackjack = 'assets/images/cat_blackjack.jpg';
   static const String bernieDealer = 'assets/images/bernie_dealer.png';

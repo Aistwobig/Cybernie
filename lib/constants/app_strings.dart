@@ -235,6 +235,11 @@ class AppStrings {
     'Bust! One card too many, friend.',
     "Over 21... that's a bust.",
   ];
+  static const List<String> bernieSad = [
+    'Aww... you got me. Take it.',
+    "Hmph. My paws aren't lucky today...",
+    'Lost again? My poor coin purse...',
+  ];
   static const List<String> berniePush = [
     'A tie! Your coins stay with you.',
     'Even. Call it a draw, friend.',
