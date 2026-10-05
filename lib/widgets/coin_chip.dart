@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_strings.dart';
+import 'package:google_fonts/google_fonts.dart';
+
 import '../services/coin_service.dart';
+import 'kit_plate.dart';
 
 /// A small gold coin.
 class CoinIcon extends StatelessWidget {
@@ -58,26 +61,24 @@ class CoinChip extends StatelessWidget {
         return Semantics(
           label: AppStrings.coinsLabel(coins),
           excludeSemantics: true,
-          child: Container(
-            height: 34,
-            padding: const EdgeInsets.fromLTRB(6, 0, 12, 0),
-            decoration: BoxDecoration(
-              color: const Color(0xE61B1712),
-              borderRadius: BorderRadius.circular(17),
-              border: Border.all(color: const Color(0xFFD4A86A), width: 1.5),
-            ),
+          // The kit's ornate dark plate with its gold coin.
+          child: KitPlate(
+            kit: Kit.dark,
+            scale: 2.8,
+            height: 38,
+            padding: const EdgeInsets.fromLTRB(9, 0, 14, 0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const CoinIcon(size: 22),
-                const SizedBox(width: 7),
+                const KitCoin(size: 24),
+                const SizedBox(width: 10),
                 Text(
                   '$coins',
-                  style: const TextStyle(
-                    fontFamily: 'PressStart2P',
-                    fontSize: 11,
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
                     height: 1,
-                    color: Color(0xFFFFE3A3),
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFFFFE3A3),
                   ),
                 ),
               ],

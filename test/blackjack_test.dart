@@ -120,7 +120,17 @@ void main() {
       expect(find.text('DEAL'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
-      await tester.tap(find.text('Leave table'));
+      // The kit's button image has the words drawn in; tap the image.
+      await tester.tap(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Image &&
+              w.image is AssetImage &&
+              (w.image as AssetImage).assetName.contains('bj_btn_leave'),
+        ),
+        warnIfMissed: true,
+      );
+      await tester.pump();
       expect(closed, isTrue);
     });
   }

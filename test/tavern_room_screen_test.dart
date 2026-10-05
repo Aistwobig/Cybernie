@@ -47,7 +47,15 @@ void main() {
       // All eight pictures fit in the row at this size.
       expect(find.byTooltip('Wave'), findsOneWidget);
       expect(find.byTooltip('Crying'), findsOneWidget);
-      expect(find.byType(Image), findsNWidgets(8));
+      expect(
+        find.byWidgetPredicate(
+          (w) =>
+              w is Image &&
+              w.image is AssetImage &&
+              (w.image as AssetImage).assetName.contains('emote_'),
+        ),
+        findsNWidgets(8),
+      );
       expect(tester.takeException(), isNull);
 
       // Leave the screen so the game's timers stop.

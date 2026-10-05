@@ -12,6 +12,7 @@ import '../services/blackjack_service.dart';
 import '../services/coin_service.dart';
 import '../services/sfx_service.dart';
 import '../widgets/coin_chip.dart';
+import '../widgets/kit_plate.dart';
 import '../widgets/leaderboard_panel.dart';
 import '../widgets/playing_card.dart';
 import '../widgets/sheet_cell.dart';
@@ -506,13 +507,15 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
               children: [
                 _TableButton(
                   label: AppStrings.leaveTableButton,
-                  icon: Icons.arrow_back,
+                  asset: 'assets/images/bj_btn_leave.png',
+                  aspect: 210 / 68,
                   onPressed: widget.onClose,
                 ),
                 const SizedBox(width: 8),
                 _TableButton(
                   label: AppStrings.leaderboardButton,
-                  icon: Icons.emoji_events_outlined,
+                  asset: 'assets/images/bj_btn_richest.png',
+                  aspect: 178 / 69,
                   onPressed: () {
                     SfxService.play(Sfx.click, gain: 0.6);
                     setState(() => _leaderboardOpen = !_leaderboardOpen);
@@ -537,7 +540,7 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
           Positioned(
             right: 12,
             bottom: 12,
-            width: sideWidth - 20,
+            width: math.min(math.max(sideWidth, 240), w * 0.32),
             child: _betting ? _buildBetting() : _buildActions(hand!),
           ),
           if (widget.offline)
@@ -567,14 +570,17 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
       children: [
         // How the last hand went.
         if (last != null && last.outcome != null) ...[
-          Center(child: _ResultBanner(hand: last)),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: _ResultBanner(hand: last),
+          ),
           const SizedBox(height: 8),
         ],
         Row(
           children: [
             Text(AppStrings.betLabel, style: _labelStyle),
             const Spacer(),
-            const CoinIcon(size: 16),
+            const KitCoin(size: 20),
             const SizedBox(width: 6),
             Text('$_bet', style: _numberStyle),
           ],
@@ -628,7 +634,7 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
           children: [
             Text(AppStrings.betLabel, style: _labelStyle),
             const Spacer(),
-            const CoinIcon(size: 16),
+            const KitCoin(size: 20),
             const SizedBox(width: 6),
             Text('${hand.bet}', style: _numberStyle),
           ],
@@ -661,17 +667,17 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
   }
 
   static final TextStyle _labelStyle = GoogleFonts.inter(
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: FontWeight.w800,
-    letterSpacing: 1.2,
-    color: const Color(0xFFD4A86A),
+    letterSpacing: 1,
+    color: const Color(0xFFF1E3C4),
   );
 
   static const TextStyle _numberStyle = TextStyle(
-    fontFamily: 'PressStart2P',
-    fontSize: 12,
+    fontWeight: FontWeight.w900,
+    fontSize: 17,
     height: 1,
-    color: Color(0xFFFFE3A3),
+    color: Colors.white,
   );
 }
 
@@ -695,31 +701,27 @@ class _HandRow extends StatelessWidget {
     final cardWidth = cardHeight * cardAspect;
     final step = cardWidth * 0.62;
     final width = cardWidth + step * (cards.length - 1);
-    final value = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: const Color(0xE61B1712),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFD4A86A)),
-      ),
+    final value = KitPlate(
+      kit: Kit.dark,
+      scale: 3.2,
+      padding: const EdgeInsets.fromLTRB(12, 7, 12, 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
             style: GoogleFonts.inter(
-              fontSize: 10,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: const Color(0xFFD4A86A),
+              color: const Color(0xFFF1E3C4),
             ),
           ),
-          const SizedBox(height: 3),
           Text(
             '${handValue(cards)}',
-            style: const TextStyle(
-              fontFamily: 'PressStart2P',
-              fontSize: 12,
-              height: 1,
+            style: GoogleFonts.inter(
+              fontSize: 20,
+              height: 1.1,
+              fontWeight: FontWeight.w900,
               color: Colors.white,
             ),
           ),
@@ -841,7 +843,8 @@ class _DealtCardState extends State<_DealtCard>
   }
 }
 
-/// "+50 coins" (or what was lost) once a hand is over.
+/// "+50 coins" (or what was lost) once a hand is over: the kit's green
+/// plate for a win, red for a loss, dark for a tie.
 class _ResultBanner extends StatelessWidget {
   const _ResultBanner({required this.hand});
 
@@ -850,10 +853,15 @@ class _ResultBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final net = hand.net;
-    final colour = net > 0
-        ? const Color(0xFFFFD36B)
+    final kit = net > 0
+        ? Kit.green
         : net < 0
-        ? const Color(0xFFFF8A7A)
+        ? Kit.red
+        : Kit.dark;
+    final colour = net > 0
+        ? const Color(0xFF9CF08A)
+        : net < 0
+        ? const Color(0xFFFF8F8F)
         : const Color(0xFFF5EFE0);
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.6, end: 1),
@@ -861,29 +869,32 @@ class _ResultBanner extends StatelessWidget {
       curve: Curves.easeOutBack,
       builder: (context, scale, child) =>
           Transform.scale(scale: scale, child: child),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xD91B1712),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: colour, width: 1.5),
-        ),
-        child: Text(
-          AppStrings.blackjackNet(net),
-          style: TextStyle(
-            fontFamily: 'PressStart2P',
-            fontSize: 12,
-            height: 1.2,
-            color: colour,
-          ),
+      child: KitPlate(
+        kit: kit,
+        scale: 1.8,
+        padding: const EdgeInsets.fromLTRB(14, 8, 16, 9),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const KitCoin(size: 20),
+            const SizedBox(width: 8),
+            Text(
+              AppStrings.blackjackNet(net),
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: colour,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Bernie's speech bubble, beside his head with its tail pointing at him.
-/// Each new line types itself out, as if he's saying it.
+/// Bernie's speech bubble (with his name tag) beside his head, its tail
+/// pointing at him. Each new line types itself out, as if he's saying it.
 class _SpeechBubble extends StatelessWidget {
   const _SpeechBubble({required this.line});
 
@@ -891,102 +902,41 @@ class _SpeechBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = GoogleFonts.lora(
-      fontSize: 13,
+    final style = GoogleFonts.inter(
+      fontSize: 13.5,
       height: 1.3,
       fontWeight: FontWeight.w600,
-      color: const Color(0xFF1B1712),
+      color: const Color(0xFF2A1C12),
     );
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: CustomPaint(size: const Size(10, 14), painter: _TailPainter()),
-        ),
-        Flexible(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(11, 7, 11, 9),
-            decoration: BoxDecoration(
-              color: const Color(0xF7F5EFE0),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFF1B1712), width: 1.4),
-              boxShadow: const [
-                BoxShadow(color: Color(0x66000000), blurRadius: 6),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  AppStrings.bernieName,
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                    color: const Color(0xFF8A5A12),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                TweenAnimationBuilder<int>(
-                  key: ValueKey(line),
-                  tween: IntTween(begin: 0, end: line.length),
-                  duration: Duration(milliseconds: 22 * line.length),
-                  builder: (context, shown, _) => Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(text: line.substring(0, shown)),
-                        // The rest takes its space already, so the bubble
-                        // doesn't grow while he talks.
-                        TextSpan(
-                          text: line.substring(shown),
-                          style: const TextStyle(color: Color(0x00000000)),
-                        ),
-                      ],
-                    ),
-                    style: style,
-                  ),
-                ),
-              ],
-            ),
+    return KitPlate(
+      kit: Kit.bubble,
+      scale: 1.55,
+      // Clear of the name tag (top) and the tail (left).
+      padding: const EdgeInsets.fromLTRB(26, 27, 16, 13),
+      child: TweenAnimationBuilder<int>(
+        key: ValueKey(line),
+        tween: IntTween(begin: 0, end: line.length),
+        duration: Duration(milliseconds: 22 * line.length),
+        builder: (context, shown, _) => Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(text: line.substring(0, shown)),
+              // The rest takes its space already, so the bubble doesn't
+              // grow while he talks.
+              TextSpan(
+                text: line.substring(shown),
+                style: const TextStyle(color: Color(0x00000000)),
+              ),
+            ],
           ),
+          style: style,
         ),
-      ],
+      ),
     );
   }
 }
 
-class _TailPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(size.width + 1, 0)
-      ..lineTo(0, size.height / 2)
-      ..lineTo(size.width + 1, size.height)
-      ..close();
-    canvas
-      ..drawPath(path, Paint()..color = const Color(0xF7F5EFE0))
-      ..drawLine(
-        Offset(size.width, 0),
-        Offset(0, size.height / 2),
-        Paint()
-          ..color = const Color(0xFF1B1712)
-          ..strokeWidth = 1.4,
-      )
-      ..drawLine(
-        Offset(0, size.height / 2),
-        Offset(size.width, size.height),
-        Paint()
-          ..color = const Color(0xFF1B1712)
-          ..strokeWidth = 1.4,
-      );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
+/// The bet / actions panel: the kit's dark ornate plate.
 class _Panel extends StatelessWidget {
   const _Panel({required this.children});
 
@@ -994,13 +944,10 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xE61B1712),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFD4A86A), width: 1.5),
-      ),
+    return KitPlate(
+      kit: Kit.dark,
+      scale: 2,
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1010,7 +957,30 @@ class _Panel extends StatelessWidget {
   }
 }
 
-/// A big gold button (Deal, Hit, Stand).
+/// Makes [child] tappable, dimmed while [onPressed] is null.
+class _Pressable extends StatelessWidget {
+  const _Pressable({required this.onPressed, required this.child});
+
+  final VoidCallback? onPressed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: onPressed == null ? 0.5 : 1,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(8),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// A big gold button (Deal, Hit, Stand): the kit's gold plate.
 class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.label,
@@ -1024,40 +994,38 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 38,
-      child: FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFFE0A945),
-          foregroundColor: const Color(0xFF1B1712),
-          disabledBackgroundColor: const Color(0x55E0A945),
-          disabledForegroundColor: const Color(0x991B1712),
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+    return _Pressable(
+      onPressed: busy ? null : onPressed,
+      child: KitPlate(
+        kit: Kit.gold,
+        scale: 1.6,
+        height: 42,
+        padding: EdgeInsets.zero,
+        child: Center(
+          child: busy
+              ? const SizedBox.square(
+                  dimension: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF2A1C12),
+                  ),
+                )
+              : Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.8,
+                    color: const Color(0xFF2A1C12),
+                  ),
+                ),
         ),
-        onPressed: onPressed,
-        child: busy
-            ? const SizedBox.square(
-                dimension: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Color(0xFF1B1712),
-                ),
-              )
-            : Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
-                ),
-              ),
       ),
     );
   }
 }
 
-/// A small outlined button (bet chips, Clear, Double).
+/// A small button (bet chips, Clear, Double): the kit's dark plate.
 class _ChipButton extends StatelessWidget {
   const _ChipButton({required this.label, required this.onPressed});
 
@@ -1066,56 +1034,59 @@ class _ChipButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 32,
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xFFFFE3A3),
-          disabledForegroundColor: const Color(0x66FFE3A3),
-          side: const BorderSide(color: Color(0xFFD4A86A)),
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-        ),
-        onPressed: onPressed,
-        child: Text(
-          label,
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w800),
+    return _Pressable(
+      onPressed: onPressed,
+      child: KitPlate(
+        kit: Kit.dark,
+        scale: 3.4,
+        height: 38,
+        padding: EdgeInsets.zero,
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFFF5EFE0),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
+/// Leave Table / Richest: the kit's ready-made buttons.
 class _TableButton extends StatelessWidget {
   const _TableButton({
     required this.label,
-    required this.icon,
+    required this.asset,
+    required this.aspect,
     required this.onPressed,
   });
 
   final String label;
-  final IconData icon;
+  final String asset;
+
+  /// Width / height of [asset], so the button has its size before the
+  /// image has loaded.
+  final double aspect;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 34,
-      child: OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          backgroundColor: const Color(0xE61B1712),
-          foregroundColor: const Color(0xFFF5EFE0),
-          side: const BorderSide(color: Color(0xFFD4A86A)),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(17),
-          ),
-        ),
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: _Pressable(
         onPressed: onPressed,
-        icon: Icon(icon, size: 16),
-        label: Text(
-          label,
-          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
+        child: Image.asset(
+          asset,
+          height: 40,
+          width: 40 * aspect,
+          fit: BoxFit.fill,
+          filterQuality: FilterQuality.medium,
         ),
       ),
     );
