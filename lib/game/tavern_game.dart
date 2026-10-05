@@ -288,6 +288,20 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
 
   void otherPlayerEmotes(String id, String emoji) => _others[id]?.emote(emoji);
 
+  /// Where each other player is, by id (for proximity voice).
+  Map<String, Vector2> get otherPlayerPositions => {
+    for (final entry in _others.entries) entry.key: entry.value.position,
+  };
+
+  /// Shows the talking waves over everyone in [ids] ([myId] is us).
+  void setSpeaking(Set<String> ids, String? myId) {
+    if (!isLoaded) return;
+    player.speaking = myId != null && ids.contains(myId);
+    for (final entry in _others.entries) {
+      entry.value.speaking = ids.contains(entry.key);
+    }
+  }
+
   /// Shows or hides the "..." bubble over another player who is typing.
   void otherPlayerTyping(String id, bool typing) =>
       _others[id]?.showTyping(typing);

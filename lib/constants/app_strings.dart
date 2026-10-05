@@ -170,6 +170,14 @@ class AppStrings {
   static const String bernieComeCloser =
       "Come up to the bar and I'll pour you something!";
   static const String orderButton = 'ORDER';
+  // Voice chat
+  static const String voiceJoin = 'Join voice chat';
+  static const String voiceJoining = 'Joining voice chat...';
+  static const String voiceMute = 'Mute your mic';
+  static const String voiceUnmute = 'Unmute your mic';
+  static const String voiceLeave = 'Leave voice chat';
+  static const String voiceSignInRequired = 'Sign in to use voice chat.';
+
   // Bernie's lucky wheel
   static const String lotteryTitle = "Bernie's Lucky Wheel";
   static const String lotteryIntro =

@@ -1,0 +1,148 @@
+import 'dart:math' as math;
+
+import 'package:flame/components.dart' show Vector2;
+import 'package:flutter/foundation.dart';
+
+import 'room_service.dart';
+import 'voice_engine.dart';
+
+enum VoiceState { off, connecting, on }
+
+/// Proximity voice chat in a tavern room, directly between players.
+///
+/// Players who joined voice are flagged in the room's Presence. We call
+/// (WebRTC) only the ones within [connectRange] of us, hang up past
+/// [hangUpRange], and each voice fades with distance. Call setup messages
+/// travel over the room's Supabase channel; the voice itself goes player to
+/// player and never touches a server.
+class VoiceService {
+  VoiceService();
+
+  final ValueNotifier<VoiceState> state = ValueNotifier(VoiceState.off);
+  final ValueNotifier<bool> micOn = ValueNotifier(false);
+
+  /// Who is talking right now (player ids; [myId] for us).
+  final ValueNotifier<Set<String>> speaking = ValueNotifier(const {});
+
+  /// Full volume within [_near] map pixels, silent from [_far].
+  static const double _near = 110;
+  static const double _far = 420;
+  static const double connectRange = 450;
+  static const double hangUpRange = 550;
+
+  RoomService? _room;
+  String? myId;
+  VoiceEngine? _engine;
+
+  /// Joins voice chat in [room] with the mic on. Throws a readable message
+  /// if it can't (no permission, not supported, ...).
+  Future<void> join(RoomService room) async {
+    if (state.value != VoiceState.off) return;
+    state.value = VoiceState.connecting;
+    _room = room;
+    myId = room.myId;
+    final engine = VoiceEngine(
+      (to, signal) => room.sendVoiceSignal(to, signal),
+    );
+    _engine = engine;
+    try {
+      await engine.start();
+      await room.setVoice(true);
+      micOn.value = true;
+      state.value = VoiceState.on;
+    } catch (error) {
+      debugPrint('Voice: $error');
+      await leave();
+      throw _explain(error);
+    }
+  }
+
+  Future<void> leave() async {
+    final engine = _engine;
+    final room = _room;
+    _engine = null;
+    state.value = VoiceState.off;
+    micOn.value = false;
+    speaking.value = const {};
+    if (engine != null) {
+      for (final peer in engine.peers) {
+        room?.sendVoiceSignal(peer, {'kind': 'bye'});
+      }
+      await engine.stop();
+      await room?.setVoice(false);
+    }
+  }
+
+  void setMic(bool on) {
+    _engine?.setMic(on);
+    micOn.value = on;
+  }
+
+  /// A call setup message from another player.
+  void handleSignal(String fromId, Map<String, dynamic> signal) {
+    final engine = _engine;
+    if (engine == null || state.value != VoiceState.on) return;
+    engine.handleSignal(fromId, signal).catchError((Object error) {
+      debugPrint('Voice signal from $fromId: $error');
+    });
+  }
+
+  /// Called a few times a second: calls players who came close, hangs up on
+  /// those who walked away, and sets each voice's volume by distance.
+  /// [voicePlayers] are the players in voice chat, [positions] where
+  /// everyone is, [me] where we are.
+  void update({
+    required Vector2 me,
+    required Map<String, Vector2> positions,
+    required Set<String> voicePlayers,
+  }) {
+    final engine = _engine;
+    final self = myId;
+    if (engine == null || self == null || state.value != VoiceState.on) {
+      return;
+    }
+    final connected = engine.peers;
+    for (final id in voicePlayers) {
+      final at = positions[id];
+      if (at == null || id == self) continue;
+      final distance = me.distanceTo(at);
+      if (!connected.contains(id) && distance <= connectRange) {
+        // The player with the "smaller" id starts, so only one side does.
+        engine.connect(id, initiator: self.compareTo(id) < 0);
+      } else if (connected.contains(id) && distance > hangUpRange) {
+        _room?.sendVoiceSignal(id, {'kind': 'bye'});
+        engine.disconnect(id);
+      }
+      engine.setVolume(id, volumeAt(distance));
+    }
+    // Anyone who left voice (or the room): hang up.
+    for (final id in connected) {
+      if (!voicePlayers.contains(id) || !positions.containsKey(id)) {
+        engine.disconnect(id);
+      }
+    }
+    final talking = engine.speakers(me: self);
+    if (!setEquals(talking, speaking.value)) speaking.value = talking;
+  }
+
+  /// Volume for a voice [distance] map pixels away: full up close, fading
+  /// quickly, silent from [_far].
+  static double volumeAt(double distance) {
+    final t = ((distance - _near) / (_far - _near)).clamp(0.0, 1.0);
+    return math.pow(1 - t, 2).toDouble();
+  }
+
+  static String _explain(Object error) {
+    final text = '$error';
+    if (text.contains('NotAllowedError') || text.contains('Permission')) {
+      return 'Allow the microphone to use voice chat.';
+    }
+    if (text.contains('NotFoundError')) {
+      return 'No microphone found.';
+    }
+    if (text.contains('web version')) {
+      return 'Voice chat works in the web version.';
+    }
+    return "Couldn't start voice chat. Try again.";
+  }
+}

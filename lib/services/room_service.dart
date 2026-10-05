@@ -14,7 +14,11 @@ class RoomPlayer {
     required this.y,
     this.avatarUrl,
     this.character = 1,
+    this.voice = false,
   });
+
+  /// In voice chat right now (their mic may still be muted).
+  final bool voice;
 
   final String id;
   final String name;
@@ -114,6 +118,7 @@ class RoomService {
     required void Function(String playerId, String emoji) onEmote,
     void Function(String playerId, String drinkId)? onDrink,
     void Function(String playerId, bool typing)? onTyping,
+    void Function(String fromId, Map<String, dynamic> signal)? onVoiceSignal,
     required void Function() onError,
   }) async {
     await _client.realtime.setAuth(_client.auth.currentSession?.accessToken);
@@ -168,6 +173,20 @@ class RoomService {
             }
           },
         )
+        // Voice chat call setup (offers, answers, network candidates), each
+        // addressed to one player; the voice itself goes player to player.
+        .onBroadcast(
+          event: 'voice',
+          callback: (message) {
+            final data = message['payload'] is Map
+                ? Map<String, dynamic>.from(message['payload'] as Map)
+                : message;
+            final from = data['from'];
+            if (from is String && from != myId && data['to'] == myId) {
+              onVoiceSignal?.call(from, data);
+            }
+          },
+        )
         .onBroadcast(
           event: 'typing',
           callback: (message) {
@@ -182,13 +201,14 @@ class RoomService {
         )
         .subscribe((status, error) async {
           if (status == RealtimeSubscribeStatus.subscribed) {
-            await channel.track({
+            _presence = {
               'name': name,
               'avatar': ?avatarUrl,
               'char': character,
               'x': x.round(),
               'y': y.round(),
-            });
+            };
+            await channel.track(_presence);
           } else if (status == RealtimeSubscribeStatus.channelError ||
               status == RealtimeSubscribeStatus.timedOut) {
             onError();
@@ -226,6 +246,23 @@ class RoomService {
     );
   }
 
+  /// What we share through Presence (name, look, ...).
+  Map<String, dynamic> _presence = {};
+
+  /// Tells the room we joined (or left) voice chat.
+  Future<void> setVoice(bool on) async {
+    _presence = {..._presence, 'voice': on};
+    await _channel?.track(_presence);
+  }
+
+  /// Sends a voice call setup message to player [to].
+  Future<void> sendVoiceSignal(String to, Map<String, dynamic> signal) async {
+    await _channel?.sendBroadcastMessage(
+      event: 'voice',
+      payload: {...signal, 'from': myId, 'to': to},
+    );
+  }
+
   Future<void> sendMove(PlayerMove move) async {
     await _channel?.sendBroadcastMessage(
       event: 'move',
@@ -247,6 +284,7 @@ class RoomService {
         name: (data['name'] as String?) ?? 'Player',
         avatarUrl: data['avatar'] as String?,
         character: (data['char'] as num?)?.toInt() ?? 1,
+        voice: data['voice'] == true,
         x: (data['x'] as num?)?.toDouble() ?? 0,
         y: (data['y'] as num?)?.toDouble() ?? 0,
       );

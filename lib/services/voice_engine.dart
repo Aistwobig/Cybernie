@@ -1,0 +1,43 @@
+/// The low-level part of voice chat: the microphone and one direct
+/// (WebRTC) call per nearby player. VoiceService decides who to call.
+library;
+
+import 'voice_engine_stub.dart'
+    if (dart.library.js_interop) 'voice_engine_web.dart'
+    as impl;
+
+/// Sends a call setup message (offer / answer / candidate) to a player.
+typedef SignalSender = void Function(String toId, Map<String, dynamic> signal);
+
+abstract class VoiceEngine {
+  /// The browser's engine on the web; elsewhere one that isn't supported.
+  factory VoiceEngine(SignalSender send) => impl.createVoiceEngine(send);
+
+  bool get supported;
+
+  /// Opens the microphone (the browser asks permission the first time).
+  Future<void> start();
+
+  /// Hangs up every call and closes the microphone.
+  Future<void> stop();
+
+  /// Mutes or unmutes our microphone in every call.
+  void setMic(bool on);
+
+  /// Calls [peerId] ([initiator]: we send the offer).
+  Future<void> connect(String peerId, {required bool initiator});
+
+  void disconnect(String peerId);
+
+  /// A call setup message from [fromId].
+  Future<void> handleSignal(String fromId, Map<String, dynamic> signal);
+
+  /// How loud [peerId]'s voice plays, 0 to 1.
+  void setVolume(String peerId, double volume);
+
+  /// Players we're in a call with.
+  Set<String> get peers;
+
+  /// Who is making sound right now: player ids, plus [me] for us.
+  Set<String> speakers({required String me});
+}

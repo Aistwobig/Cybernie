@@ -335,6 +335,35 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   void render(Canvas canvas) {
     if (hasEffect(DrinkEffect.glow)) _renderMoonGlow(canvas);
     super.render(canvas);
+    if (speaking) _renderSpeaking(canvas);
+  }
+
+  /// Talking in voice chat: little sound waves pulse beside the name.
+  bool speaking = false;
+
+  static final Paint _wave = Paint()
+    ..color = const Color(0xFF7CFF8A)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.6
+    ..strokeCap = StrokeCap.round;
+
+  void _renderSpeaking(Canvas canvas) {
+    // To the right of the name tag (which sits centred at the top).
+    final x = size.x / 2 + _nameTag.width / 2 + 4;
+    const y = -5.0;
+    canvas.drawCircle(Offset(x, y), 2, Paint()..color = _wave.color);
+    final beat = (_effectClock * 3) % 1;
+    for (var i = 0; i < 2; i++) {
+      final r = 4.0 + i * 3.5 + beat * 1.5;
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset(x, y), radius: r),
+        -0.7,
+        1.4,
+        false,
+        _wave..color = _wave.color.withValues(alpha: 1 - i * 0.35 - beat * 0.3),
+      );
+    }
+    _wave.color = const Color(0xFF7CFF8A);
   }
 
   /// Moonberry: a pale blue glow around the character, pulsing gently.

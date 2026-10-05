@@ -20,6 +20,7 @@ import '../services/chat_service.dart';
 import '../services/coin_service.dart';
 import '../services/inventory_service.dart';
 import '../services/lottery_service.dart';
+import '../services/voice_service.dart';
 import '../services/profile_service.dart';
 import '../services/room_service.dart';
 import '../services/sfx_service.dart';
@@ -168,6 +169,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _orderPause?.cancel();
     _fireSound?.cancel();
     _lotteryCheck?.cancel();
+    _voiceTick?.cancel();
+    _voice.leave();
     _fireLoop.dispose();
     _effectTicker?.cancel();
     _typingIdle?.cancel();
@@ -350,6 +353,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       },
       onDrink: _game.otherPlayerDrinks,
       onTyping: _setTyping,
+      onVoiceSignal: _voice.handleSignal,
       onError: () => _showSnack(AppStrings.roomConnectionError),
     );
     // A little welcome jingle once we're in.
@@ -627,6 +631,51 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         if (_game.player.hasEffect(drink.effect))
           (drink, _game.player.effectLeft(drink.effect).ceil()),
   ];
+
+  /// Proximity voice chat, directly between players.
+  late final VoiceService _voice = VoiceService()
+    ..speaking.addListener(
+      () => _game.setSpeaking(_voice.speaking.value, _voice.myId),
+    );
+  Timer? _voiceTick;
+
+  Future<void> _joinVoice() async {
+    final room = _room;
+    if (room == null) {
+      _showSnack(AppStrings.voiceSignInRequired);
+      return;
+    }
+    SfxService.play(Sfx.click, gain: 0.6);
+    try {
+      await _voice.join(room);
+      _voiceTick?.cancel();
+      _voiceTick = Timer.periodic(
+        const Duration(milliseconds: 200),
+        (_) => _updateVoice(),
+      );
+    } catch (problem) {
+      _showSnack('$problem');
+    }
+  }
+
+  Future<void> _leaveVoice() async {
+    _voiceTick?.cancel();
+    _voiceTick = null;
+    await _voice.leave();
+    _game.setSpeaking(const {}, null);
+  }
+
+  void _updateVoice() {
+    if (!_game.isLoaded || !_game.player.isLoaded) return;
+    _voice.update(
+      me: _game.player.position,
+      positions: _game.otherPlayerPositions,
+      voicePlayers: {
+        for (final p in _others)
+          if (p.voice) p.id,
+      },
+    );
+  }
 
   /// The fireplace crackling: louder the closer we stand to it.
   final AmbientLoop _fireLoop = AmbientLoop('sfx_fire_loop');
@@ -1003,11 +1052,122 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                 emotesOpen: _emotesOpen,
                 onToggleEmotes: () =>
                     setState(() => _emotesOpen = !_emotesOpen),
+                leading: [
+                  _VoiceButtons(
+                    voice: _voice,
+                    onJoin: _joinVoice,
+                    onLeave: _leaveVoice,
+                  ),
+                ],
               ),
             ],
           ),
         ),
     ];
+  }
+}
+
+/// Voice chat controls beside the chat box: a headset to join; once in,
+/// a mic button (mute / unmute) and a red button to leave.
+class _VoiceButtons extends StatelessWidget {
+  const _VoiceButtons({
+    required this.voice,
+    required this.onJoin,
+    required this.onLeave,
+  });
+
+  final VoiceService voice;
+  final VoidCallback onJoin;
+  final VoidCallback onLeave;
+
+  Widget _button({
+    required String tooltip,
+    required Widget child,
+    required VoidCallback? onPressed,
+    Color? background,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: SizedBox(
+        width: 40,
+        height: 40,
+        child: OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            backgroundColor: background ?? AppColors.parchment,
+            padding: EdgeInsets.zero,
+            side: BorderSide(color: AppColors.ink),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+          onPressed: onPressed,
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<VoiceState>(
+      valueListenable: voice.state,
+      builder: (context, state, _) {
+        switch (state) {
+          case VoiceState.off:
+            return _button(
+              tooltip: AppStrings.voiceJoin,
+              onPressed: onJoin,
+              child: Icon(Icons.headset_mic, size: 20, color: AppColors.ink),
+            );
+          case VoiceState.connecting:
+            return _button(
+              tooltip: AppStrings.voiceJoining,
+              onPressed: null,
+              child: SizedBox.square(
+                dimension: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.ink,
+                ),
+              ),
+            );
+          case VoiceState.on:
+            return ValueListenableBuilder<bool>(
+              valueListenable: voice.micOn,
+              builder: (context, micOn, _) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _button(
+                    tooltip: micOn
+                        ? AppStrings.voiceMute
+                        : AppStrings.voiceUnmute,
+                    onPressed: () => voice.setMic(!micOn),
+                    background: micOn
+                        ? const Color(0xFF2E8B4E)
+                        : AppColors.parchment,
+                    child: Icon(
+                      micOn ? Icons.mic : Icons.mic_off,
+                      size: 20,
+                      color: micOn ? Colors.white : AppColors.ink,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  _button(
+                    tooltip: AppStrings.voiceLeave,
+                    onPressed: onLeave,
+                    background: const Color(0xFFB3261E),
+                    child: const Icon(
+                      Icons.call_end,
+                      size: 20,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            );
+        }
+      },
+    );
   }
 }
 
@@ -1592,6 +1752,7 @@ class _ChatInput extends StatelessWidget {
     required this.onSend,
     required this.emotesOpen,
     required this.onToggleEmotes,
+    this.leading = const [],
   });
 
   final TextEditingController controller;
@@ -1600,10 +1761,14 @@ class _ChatInput extends StatelessWidget {
   final bool emotesOpen;
   final VoidCallback onToggleEmotes;
 
+  /// Shown before the emote button (the voice chat buttons).
+  final List<Widget> leading;
+
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
+        for (final widget in leading) ...[widget, const SizedBox(width: 8)],
         Semantics(
           button: true,
           selected: emotesOpen,
