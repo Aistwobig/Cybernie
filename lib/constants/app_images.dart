@@ -43,6 +43,10 @@ class AppImages {
   static const String profileMage = 'assets/images/5.png';
   static const String tavernRoom = 'assets/images/tavern.png';
 
+  /// The on-screen joystick: its brass ring and the wooden knob.
+  static const String joystickBase = 'assets/images/joystick_base.png';
+  static const String joystickKnob = 'assets/images/joystick_knob.png';
+
   /// The fireplace's fire: 16 frames (4 x 4 cells of 144 x 128), drawn
   /// over the painted fireplace at TavernMap.fireplaceFire.
   static const String fireplaceFire = 'assets/images/fireplace_fire.png';

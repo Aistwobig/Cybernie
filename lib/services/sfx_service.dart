@@ -27,6 +27,58 @@ enum Sfx {
   final String file;
 }
 
+/// A sound that loops for as long as it's wanted (the fireplace's crackle),
+/// at a level set from moment to moment, e.g. by how close the player is.
+/// Follows the effects volume from the Home menu.
+class AmbientLoop {
+  AmbientLoop(this.file);
+
+  /// Asset name in assets/audio, without ".wav".
+  final String file;
+
+  AudioPlayer? _player;
+  bool _playing = false;
+  double _volume = -1;
+  DateTime _lastTry = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// [level] 0 (silent) to 1 (full).
+  Future<void> setLevel(double level) async {
+    final v = (level * SfxService.volume.value).clamp(0.0, 1.0);
+    if (!_playing) {
+      if (v < 0.01) return;
+      // Browsers block sound until the first tap: try again now and then.
+      final now = DateTime.now();
+      if (now.difference(_lastTry) < const Duration(seconds: 2)) return;
+      _lastTry = now;
+      try {
+        final player = _player ??= AudioPlayer()
+          ..setReleaseMode(ReleaseMode.loop);
+        _playing = true;
+        _volume = v;
+        await player.play(AssetSource('audio/$file.wav'), volume: v);
+      } catch (_) {
+        _playing = false;
+      }
+      return;
+    }
+    if ((v - _volume).abs() < 0.015) return;
+    _volume = v;
+    try {
+      await _player?.setVolume(v);
+    } catch (_) {}
+  }
+
+  Future<void> dispose() async {
+    final player = _player;
+    _player = null;
+    _playing = false;
+    try {
+      await player?.stop();
+      await player?.dispose();
+    } catch (_) {}
+  }
+}
+
 /// Plays [Sfx] at the volume chosen in the Home menu (remembered on this
 /// device). Nothing plays until the player has clicked or tapped once;
 /// browsers block sound before that, and a blocked sound is simply skipped.

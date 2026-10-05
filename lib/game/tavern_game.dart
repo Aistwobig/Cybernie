@@ -503,13 +503,23 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       if (sceneFilter != null) NightLighting(),
     ]);
 
+    // The wood-and-brass joystick: the ring stays put, the wooden knob
+    // moves inside its dark well.
+    final joystickBase = await images.load(AppImages.joystickBase);
+    final joystickKnob = await images.load(AppImages.joystickKnob);
+    const baseSize = 120.0;
     _joystick = JoystickComponent(
-      background: _JoystickBase(radius: 48),
-      knob: CircleComponent(
-        radius: 20,
-        paint: Paint()..color = const Color(0xE6F5EFE0),
+      background: SpriteComponent(
+        sprite: Sprite(joystickBase),
+        size: Vector2.all(baseSize),
       ),
-      margin: const EdgeInsets.only(left: 36, bottom: 32),
+      knob: SpriteComponent(
+        sprite: Sprite(joystickKnob),
+        size: Vector2.all(baseSize * 107 / 288),
+      ),
+      // How far the knob travels: to the edge of the dark well.
+      knobRadius: 22,
+      margin: const EdgeInsets.only(left: 24, bottom: 20),
     );
     camera.viewport.add(_joystick);
   }
@@ -678,48 +688,6 @@ class _Floor extends SpriteComponent with TapCallbacks {
 
   @override
   void onTapUp(TapUpEvent event) => onTap();
-}
-
-/// Dark ring with a crosshair, matching the mockup's joystick.
-class _JoystickBase extends CircleComponent {
-  _JoystickBase({required super.radius})
-    : super(paint: Paint()..color = const Color(0x661B1712));
-
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
-    final center = Offset(radius, radius);
-    final ring = Paint()
-      ..color = const Color(0xCCF5EFE0)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawCircle(center, radius - 1, ring);
-    final tick = Paint()
-      ..color = const Color(0x99F5EFE0)
-      ..strokeWidth = 2;
-    const inner = 8.0;
-    canvas
-      ..drawLine(
-        center.translate(0, -radius + 4),
-        center.translate(0, -radius + 4 + inner),
-        tick,
-      )
-      ..drawLine(
-        center.translate(0, radius - 4),
-        center.translate(0, radius - 4 - inner),
-        tick,
-      )
-      ..drawLine(
-        center.translate(-radius + 4, 0),
-        center.translate(-radius + 4 + inner, 0),
-        tick,
-      )
-      ..drawLine(
-        center.translate(radius - 4, 0),
-        center.translate(radius - 4 - inner, 0),
-        tick,
-      );
-  }
 }
 
 /// Turns held WASD / arrow keys into a direction vector.

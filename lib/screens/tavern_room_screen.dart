@@ -132,6 +132,10 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _messageController.addListener(_onDraftChanged);
     _loadHints();
     _loadCoins();
+    _fireSound = Timer.periodic(
+      const Duration(milliseconds: 150),
+      (_) => _updateFireSound(),
+    );
     _enterRoom();
     _connectChat();
   }
@@ -153,6 +157,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onFootstep = null
       ..onInteract = null;
     _orderPause?.cancel();
+    _fireSound?.cancel();
+    _fireLoop.dispose();
     _effectTicker?.cancel();
     _typingIdle?.cancel();
     for (final timer in _typers.values) {
@@ -476,6 +482,29 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         if (_game.player.hasEffect(drink.effect))
           (drink, _game.player.effectLeft(drink.effect).ceil()),
   ];
+
+  /// The fireplace crackling: louder the closer we stand to it.
+  final AmbientLoop _fireLoop = AmbientLoop('sfx_fire_loop');
+  Timer? _fireSound;
+
+  /// Full volume within [_fireNear] map pixels of the fire, fading to
+  /// silence at [_fireFar].
+  static const double _fireNear = 70;
+  static const double _fireFar = 650;
+
+  void _updateFireSound() {
+    if (!_game.isLoaded || !_game.player.isLoaded) return;
+    final fire = TavernMap.fireplaceFire.center;
+    final distance = _game.player.position.distanceTo(
+      Vector2(fire.dx, fire.dy),
+    );
+    final t = ((distance - _fireNear) / (_fireFar - _fireNear)).clamp(0.0, 1.0);
+    // Falls off like a real sound: loud close up, quickly quieter.
+    var level = (1 - t) * (1 - t) * 0.85;
+    // Muffled while sitting at Bernie's card table.
+    if (_blackjackOpen) level *= 0.35;
+    _fireLoop.setLevel(level);
+  }
 
   /// Bernie's blackjack table, over the whole room while it's open.
   bool _blackjackOpen = false;
