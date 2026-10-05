@@ -125,11 +125,15 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
         }
       });
       CoinService.coins.value = state.coins;
+      // Bernie turns over his face-down card.
+      if (revealSlowly && state.hand?.playing == false) {
+        SfxService.play(Sfx.card, gain: 0.7);
+      }
       if (_revealing) {
         _reveal = Timer.periodic(_revealStep, (timer) {
           if (!mounted) return;
           setState(() => _dealerShown++);
-          SfxService.play(Sfx.pop, gain: 0.5);
+          SfxService.play(Sfx.card, gain: 0.8);
           if (!_revealing) {
             timer.cancel();
             _celebrate();
@@ -148,21 +152,27 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
 
   void _celebrate() {
     final outcome = _hand?.outcome;
+    if (outcome == null) return;
     if (outcome == BlackjackOutcome.blackjack) {
       SfxService.play(Sfx.sparkle);
-    } else if (outcome != null && outcome.playerWon) {
-      SfxService.play(Sfx.coin);
+      SfxService.play(Sfx.win);
+    } else if (outcome.playerWon) {
+      SfxService.play(Sfx.win);
+      SfxService.play(Sfx.coin, gain: 0.6);
+    } else if (outcome != BlackjackOutcome.push) {
+      SfxService.play(Sfx.lose, gain: 0.8);
     }
   }
 
   void _deal() {
-    SfxService.play(Sfx.pop);
+    // Bernie shuffles while the cards go out.
+    SfxService.play(Sfx.shuffle);
     final bet = _bet;
     _run(() => widget.table.deal(bet), newRound: true);
   }
 
   void _hit() {
-    SfxService.play(Sfx.pop, gain: 0.7);
+    SfxService.play(Sfx.card);
     _run(widget.table.hit);
   }
 
@@ -173,6 +183,7 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
 
   void _double() {
     SfxService.play(Sfx.coin, gain: 0.6);
+    SfxService.play(Sfx.card);
     _run(widget.table.doubleDown);
   }
 

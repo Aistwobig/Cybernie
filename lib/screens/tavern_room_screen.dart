@@ -125,6 +125,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     };
     _game.onDrinkOrdered = (drinkId) => _room?.sendDrink(drinkId);
     _game.onSeatTooFar = () => _showSnack(AppStrings.walkCloserToSit);
+    _game.onFootstep = (left) =>
+        SfxService.play(left ? Sfx.step1 : Sfx.step2, gain: 0.45);
     _messageController.addListener(_onDraftChanged);
     _loadHints();
     _loadCoins();
@@ -146,6 +148,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onAtBarChanged = null
       ..onDrinkOrdered = null
       ..onSeatTooFar = null
+      ..onFootstep = null
       ..onInteract = null;
     _orderPause?.cancel();
     _typingIdle?.cancel();

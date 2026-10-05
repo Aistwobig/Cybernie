@@ -12,7 +12,15 @@ enum Sfx {
   message('sfx_message'),
   sparkle('sfx_sparkle'),
   coin('sfx_coin'),
-  join('sfx_join');
+  join('sfx_join'),
+  // Footsteps on the tavern boards (alternated, left and right foot).
+  step1('sfx_step1'),
+  step2('sfx_step2'),
+  // Bernie's blackjack table.
+  shuffle('sfx_shuffle'),
+  card('sfx_card'),
+  win('sfx_win'),
+  lose('sfx_lose');
 
   const Sfx(this.file);
 
@@ -33,7 +41,7 @@ class SfxService {
 
   /// A few players taken in turn, so quick sounds can overlap.
   static final List<AudioPlayer> _pool = [];
-  static const int _poolSize = 4;
+  static const int _poolSize = 6;
   static int _next = 0;
 
   /// Reads the saved volume. Call before runApp.

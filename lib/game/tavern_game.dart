@@ -83,6 +83,31 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   /// Called when we step up to the bar (true) or away from it (false).
   void Function(bool atBar)? onAtBarChanged;
 
+  /// Called on each footstep while we walk (alternating feet), for the
+  /// footstep sound.
+  void Function(bool leftFoot)? onFootstep;
+
+  /// Map pixels per footstep: two steps per walk cycle (0.72 s) at
+  /// Player.speed.
+  static const double _stepLength = 60;
+  double _stepProgress = 0;
+  bool _leftFoot = true;
+
+  /// Counts distance actually moved (walking into a wall makes no sound);
+  /// the first step of a walk lands almost at once.
+  void _countSteps(double moved) {
+    if (moved < 0.01) {
+      _stepProgress = _stepLength * 0.75;
+      return;
+    }
+    _stepProgress += moved;
+    if (_stepProgress >= _stepLength) {
+      _stepProgress -= _stepLength;
+      onFootstep?.call(_leftFoot);
+      _leftFoot = !_leftFoot;
+    }
+  }
+
   void _checkBar() {
     final at = TavernMap.barOrderArea.contains(
       Offset(player.position.x, player.position.y),
@@ -471,7 +496,11 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     // Moving while seated gets up first.
     if (sitting && input.length2 > 0.01) standUp();
     // Cap dt so a dropped frame can't carry the player through a wall.
-    if (!sitting) player.walk(input, math.min(dt, 1 / 30));
+    if (!sitting) {
+      final before = player.position.clone();
+      player.walk(input, math.min(dt, 1 / 30));
+      _countSteps(player.position.distanceTo(before));
+    }
     _maybeSendPosition(dt);
     _checkNoticeBoard();
     _checkSeats();
