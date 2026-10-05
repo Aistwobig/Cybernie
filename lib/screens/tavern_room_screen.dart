@@ -65,7 +65,9 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   bool _nearSeat = false;
   bool _sitting = false;
   bool _emotesOpen = false;
-  bool _chatCollapsed = false;
+  /// The chat log starts folded so the room is clear on entering; new
+  /// messages show as "N NEW MESSAGES" on its header until it's opened.
+  bool _chatCollapsed = true;
   int _unreadMessages = 0;
 
   /// The friend in the private chat panel, opened from their player card.
