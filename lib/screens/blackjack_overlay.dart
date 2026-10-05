@@ -10,8 +10,10 @@ import '../constants/app_strings.dart';
 import '../models/blackjack.dart';
 import '../services/blackjack_service.dart';
 import '../services/coin_service.dart';
+import '../services/leaderboard_service.dart';
 import '../services/sfx_service.dart';
 import '../widgets/coin_chip.dart';
+import '../widgets/player_avatar.dart';
 import '../widgets/playing_card.dart';
 import '../widgets/sheet_cell.dart';
 
@@ -36,21 +38,29 @@ class BlackjackOverlay extends StatefulWidget {
   State<BlackjackOverlay> createState() => _BlackjackOverlayState();
 }
 
-/// Bernie's faces, by cell in AppImages.bernieExpressions (row by row).
+/// Bernie's poses, by cell in AppImages.bernieDealer (row by row). Cells
+/// 9-16 are his shuffle.
 enum _Face {
-  smile(0),
-  sly(1),
-  laugh(2),
-  smug(3),
-  surprised(4),
-  shocked(5),
-  wink(6),
-  pleased(7);
+  idle(0),
+  smile(1),
+  sly(2),
+  laugh(3),
+  smug(4),
+  surprised(5),
+  shocked(6),
+  wink(7),
+  pleased(8);
 
   const _Face(this.cell);
 
   final int cell;
 }
+
+const int _shuffleFirstCell = 9;
+const int _shuffleFrames = 8;
+
+/// One frame per 120 ms: the 8 frames last as long as the shuffle sound.
+const Duration _shuffleFrame = Duration(milliseconds: 120);
 
 class _BlackjackOverlayState extends State<BlackjackOverlay> {
   // AppImages.catBlackjack is 1448 x 1086. Bernie's ears are at y 150 and
@@ -60,6 +70,13 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
   static const double _bandTop = 150;
   static const double _bandBottom = 870;
   static const double _counterY = 560;
+
+  /// Where Bernie stands (AppImages.bernieDealer cells are drawn here),
+  /// the table's back edge that hides him from the waist down, and where
+  /// his speech bubble goes (to the right of his head).
+  static const Rect _bernieBox = Rect.fromLTWH(415, 80, 640, 600);
+  static const double _tableEdgeY = 652;
+  static const Offset _bubbleAt = Offset(900, 200);
 
   BlackjackState? _state;
   bool _busy = false;
@@ -74,6 +91,12 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
 
   /// Bumped on each deal, so the new cards slide in again.
   int _round = 0;
+
+  /// Bernie shuffling before a deal: the frame of his shuffle, or null.
+  int? _shuffleStep;
+  Timer? _shuffleTimer;
+
+  bool _leaderboardOpen = false;
 
   BlackjackHand? get _hand => _state?.hand;
   int get _coins => _state?.coins ?? CoinService.coins.value ?? 0;
@@ -92,7 +115,31 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
   @override
   void dispose() {
     _reveal?.cancel();
+    _shuffleTimer?.cancel();
     super.dispose();
+  }
+
+  /// Plays Bernie's shuffle (with its sound) and completes when it's done.
+  Future<void> _shuffle() {
+    final done = Completer<void>();
+    SfxService.play(Sfx.shuffle);
+    _shuffleTimer?.cancel();
+    setState(() => _shuffleStep = 0);
+    _shuffleTimer = Timer.periodic(_shuffleFrame, (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final next = (_shuffleStep ?? 0) + 1;
+      if (next >= _shuffleFrames) {
+        timer.cancel();
+        setState(() => _shuffleStep = null);
+        done.complete();
+      } else {
+        setState(() => _shuffleStep = next);
+      }
+    });
+    return done.future;
   }
 
   /// Calls the table, then shows the result: Bernie's new cards are turned
@@ -165,10 +212,16 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
   }
 
   void _deal() {
-    // Bernie shuffles while the cards go out.
-    SfxService.play(Sfx.shuffle);
     final bet = _bet;
-    _run(() => widget.table.deal(bet), newRound: true);
+    // Bernie shuffles first; the cards go out once he's done (and the
+    // table has dealt).
+    _run(() async {
+      final done = await Future.wait<Object?>([
+        widget.table.deal(bet),
+        _shuffle(),
+      ]);
+      return done.first! as BlackjackState;
+    }, newRound: true);
   }
 
   void _hit() {
@@ -198,31 +251,51 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
       ? BlackjackTable.minBet
       : (_coins < BlackjackTable.maxBet ? _coins : BlackjackTable.maxBet);
 
-  (_Face, String) get _bernieSays {
+  /// One of [lines], the same one for the whole round.
+  String _pick(List<String> lines) => lines[_round % lines.length];
+
+  /// Bernie's pose (a cell of his sheet) and what he says right now.
+  (int, String) get _bernieSays {
     final hand = _hand;
+    final step = _shuffleStep;
+    if (step != null) {
+      return (_shuffleFirstCell + step, _pick(AppStrings.bernieShuffle));
+    }
+    final (face, line) = _faceAndLine(hand);
+    return (face.cell, line);
+  }
+
+  (_Face, String) _faceAndLine(BlackjackHand? hand) {
     if (_failed) return (_Face.smug, AppStrings.bernieTableError);
     if (hand == null) {
       return _coins < BlackjackTable.minBet
           ? (_Face.smug, AppStrings.bernieBroke)
-          : (_Face.smile, AppStrings.bernieWelcome);
+          : (_Face.idle, _pick(AppStrings.bernieWelcome));
     }
-    if (hand.playing) return (_Face.sly, AppStrings.bernieYourTurn);
-    if (_revealing) return (_Face.sly, AppStrings.bernieRevealing);
+    if (hand.playing) {
+      return handValue(hand.player) >= 17
+          ? (_Face.smug, _pick(AppStrings.bernieHighHand))
+          : (_Face.sly, _pick(AppStrings.bernieYourTurn));
+    }
+    if (_revealing) return (_Face.sly, _pick(AppStrings.bernieRevealing));
     return switch (hand.outcome) {
-      BlackjackOutcome.blackjack => (_Face.shocked, AppStrings.bernieBlackjack),
-      BlackjackOutcome.win => (_Face.surprised, AppStrings.bernieWin),
+      BlackjackOutcome.blackjack => (
+        _Face.shocked,
+        _pick(AppStrings.bernieBlackjack),
+      ),
+      BlackjackOutcome.win => (_Face.surprised, _pick(AppStrings.bernieWin)),
       BlackjackOutcome.dealerBust => (
         _Face.surprised,
-        AppStrings.bernieDealerBust,
+        _pick(AppStrings.bernieDealerBust),
       ),
-      BlackjackOutcome.lose => (_Face.pleased, AppStrings.bernieLose),
+      BlackjackOutcome.lose => (_Face.pleased, _pick(AppStrings.bernieLose)),
       BlackjackOutcome.dealerBlackjack => (
         _Face.laugh,
-        AppStrings.bernieDealerBlackjack,
+        _pick(AppStrings.bernieDealerBlackjack),
       ),
-      BlackjackOutcome.bust => (_Face.smug, AppStrings.bernieBust),
-      BlackjackOutcome.push => (_Face.wink, AppStrings.berniePush),
-      null => (_Face.smile, AppStrings.bernieWelcome),
+      BlackjackOutcome.bust => (_Face.smug, _pick(AppStrings.bernieBust)),
+      BlackjackOutcome.push => (_Face.wink, _pick(AppStrings.berniePush)),
+      null => (_Face.smile, _pick(AppStrings.bernieWelcome)),
     };
   }
 
@@ -248,11 +321,13 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
     final h = box.maxHeight;
     final w = box.maxWidth;
     final hand = _hand;
-    final dealerCards = hand == null
+    // The felt is cleared while Bernie shuffles.
+    final shuffling = _shuffleStep != null;
+    final dealerCards = hand == null || shuffling
         ? const <int>[]
         : hand.dealer.take(_dealerShown).toList();
-    final playerCards = hand?.player ?? const <int>[];
-    final (face, line) = _bernieSays;
+    final playerCards = hand == null || shuffling ? const <int>[] : hand.player;
+    final (pose, line) = _bernieSays;
     final sideWidth = (w * 0.24).clamp(170.0, 260.0);
 
     // The scene fills the screen, keeping the band from Bernie's ears to
@@ -275,12 +350,23 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
       playerTop - dealerHeight - 8,
     );
 
+    final sceneLeft = (w - sceneW) / 2;
+    // Bernie's box and the table edge in front of him, in scene pixels.
+    final bernieRect = Rect.fromLTWH(
+      sceneLeft + _bernieBox.left * scale,
+      sceneTop + _bernieBox.top * scale,
+      _bernieBox.width * scale,
+      _bernieBox.height * scale,
+    );
+    final tableTop = sceneTop + _tableEdgeY * scale;
+
     return Material(
       color: Colors.black,
       child: Stack(
         children: [
+          // The bar behind him...
           Positioned(
-            left: (w - sceneW) / 2,
+            left: sceneLeft,
             top: sceneTop,
             width: sceneW,
             height: sceneH,
@@ -289,6 +375,51 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
               fit: BoxFit.fill,
               filterQuality: FilterQuality.medium,
             ),
+          ),
+          // ...Bernie himself...
+          Positioned.fromRect(
+            rect: bernieRect,
+            child: SheetCell(
+              asset: AppImages.bernieDealer,
+              cols: 6,
+              rows: 3,
+              col: pose % 6,
+              row: pose ~/ 6,
+              width: bernieRect.width,
+              height: bernieRect.height,
+            ),
+          ),
+          // ...and the table in front of him, hiding him from the waist down.
+          Positioned(
+            left: sceneLeft,
+            top: tableTop,
+            width: sceneW,
+            height: sceneTop + sceneH - tableTop,
+            child: ClipRect(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    left: 0,
+                    top: -_tableEdgeY * scale,
+                    width: sceneW,
+                    height: sceneH,
+                    child: Image.asset(
+                      AppImages.catBlackjack,
+                      fit: BoxFit.fill,
+                      filterQuality: FilterQuality.medium,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // What he's saying, beside his head.
+          Positioned(
+            left: sceneLeft + _bubbleAt.dx * scale,
+            top: math.max(sceneTop + _bubbleAt.dy * scale, 54),
+            width: math.min(250, w - (sceneLeft + _bubbleAt.dx * scale) - 12),
+            child: _SpeechBubble(line: line),
           ),
           // Darker along the bottom so the hands and buttons stand out.
           const Positioned.fill(
@@ -336,23 +467,38 @@ class _BlackjackOverlayState extends State<BlackjackOverlay> {
           Positioned(
             top: 12,
             left: 12,
-            child: _TableButton(
-              label: AppStrings.leaveTableButton,
-              icon: Icons.arrow_back,
-              onPressed: widget.onClose,
+            child: Row(
+              children: [
+                _TableButton(
+                  label: AppStrings.leaveTableButton,
+                  icon: Icons.arrow_back,
+                  onPressed: widget.onClose,
+                ),
+                const SizedBox(width: 8),
+                _TableButton(
+                  label: AppStrings.leaderboardButton,
+                  icon: Icons.emoji_events_outlined,
+                  onPressed: () {
+                    SfxService.play(Sfx.click, gain: 0.6);
+                    setState(() => _leaderboardOpen = !_leaderboardOpen);
+                  },
+                ),
+              ],
             ),
           ),
           const Positioned(top: 12, right: 12, child: CoinChip()),
-          Positioned(
-            left: 12,
-            bottom: 12,
-            width: sideWidth - 20,
-            child: _BernieTalks(
-              face: face,
-              line: line,
-              faceSize: math.min(h * 0.3, sideWidth - 20),
+          if (_leaderboardOpen)
+            Positioned(
+              left: 12,
+              top: 54,
+              bottom: 12,
+              width: math.max(sideWidth, 230),
+              child: _LeaderboardPanel(
+                // Reloaded after each hand, as coins change.
+                key: ValueKey('board-${_state?.coins}'),
+                onClose: () => setState(() => _leaderboardOpen = false),
+              ),
             ),
-          ),
           Positioned(
             right: 12,
             bottom: 12,
@@ -701,70 +847,282 @@ class _ResultBanner extends StatelessWidget {
   }
 }
 
-/// Bernie's face (from his expression sheet) over what he's saying.
-class _BernieTalks extends StatelessWidget {
-  const _BernieTalks({
-    required this.face,
-    required this.line,
-    required this.faceSize,
-  });
+/// Bernie's speech bubble, beside his head with its tail pointing at him.
+/// Each new line types itself out, as if he's saying it.
+class _SpeechBubble extends StatelessWidget {
+  const _SpeechBubble({required this.line});
 
-  final _Face face;
   final String line;
-  final double faceSize;
 
   @override
   Widget build(BuildContext context) {
-    final col = face.cell % 4;
-    final row = face.cell ~/ 4;
-    return Column(
+    final style = GoogleFonts.lora(
+      fontSize: 13,
+      height: 1.3,
+      fontWeight: FontWeight.w600,
+      color: const Color(0xFF1B1712),
+    );
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: faceSize,
-          height: faceSize,
-          decoration: BoxDecoration(
-            color: const Color(0xE62A1A12),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFD4A86A), width: 2),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
-              child: SheetCell(
-                key: ValueKey(face),
-                asset: AppImages.bernieExpressions,
-                cols: 4,
-                rows: 2,
-                col: col,
-                row: row,
-                width: faceSize - 4,
-                height: faceSize - 4,
-              ),
-            ),
-          ),
+        Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: CustomPaint(size: const Size(10, 14), painter: _TailPainter()),
         ),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
-          decoration: BoxDecoration(
-            color: const Color(0xF2F5EFE0),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFF1B1712), width: 1.2),
-          ),
-          child: Text(
-            line,
-            style: GoogleFonts.lora(
-              fontSize: 12.5,
-              height: 1.3,
-              fontStyle: FontStyle.italic,
-              color: const Color(0xFF1B1712),
+        Flexible(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(11, 7, 11, 9),
+            decoration: BoxDecoration(
+              color: const Color(0xF7F5EFE0),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF1B1712), width: 1.4),
+              boxShadow: const [
+                BoxShadow(color: Color(0x66000000), blurRadius: 6),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  AppStrings.bernieName,
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                    color: const Color(0xFF8A5A12),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                TweenAnimationBuilder<int>(
+                  key: ValueKey(line),
+                  tween: IntTween(begin: 0, end: line.length),
+                  duration: Duration(milliseconds: 22 * line.length),
+                  builder: (context, shown, _) => Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: line.substring(0, shown)),
+                        // The rest takes its space already, so the bubble
+                        // doesn't grow while he talks.
+                        TextSpan(
+                          text: line.substring(shown),
+                          style: const TextStyle(color: Color(0x00000000)),
+                        ),
+                      ],
+                    ),
+                    style: style,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _TailPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(size.width + 1, 0)
+      ..lineTo(0, size.height / 2)
+      ..lineTo(size.width + 1, size.height)
+      ..close();
+    canvas
+      ..drawPath(path, Paint()..color = const Color(0xF7F5EFE0))
+      ..drawLine(
+        Offset(size.width, 0),
+        Offset(0, size.height / 2),
+        Paint()
+          ..color = const Color(0xFF1B1712)
+          ..strokeWidth = 1.4,
+      )
+      ..drawLine(
+        Offset(0, size.height / 2),
+        Offset(size.width, size.height),
+        Paint()
+          ..color = const Color(0xFF1B1712)
+          ..strokeWidth = 1.4,
+      );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// The richest players, by coins.
+class _LeaderboardPanel extends StatefulWidget {
+  const _LeaderboardPanel({super.key, required this.onClose});
+
+  final VoidCallback onClose;
+
+  @override
+  State<_LeaderboardPanel> createState() => _LeaderboardPanelState();
+}
+
+class _LeaderboardPanelState extends State<_LeaderboardPanel> {
+  late final Future<List<LeaderboardEntry>> _entries = LeaderboardService.top();
+
+  @override
+  Widget build(BuildContext context) {
+    final myId = LeaderboardService.myId;
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xF21B1712),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFD4A86A), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 4, 2),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.emoji_events,
+                  size: 18,
+                  color: Color(0xFFFFC966),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    AppStrings.leaderboardTitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFFFFE3A3),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: AppStrings.closeButton,
+                  onPressed: widget.onClose,
+                  icon: const Icon(Icons.close, size: 18),
+                  color: const Color(0xFFF5EFE0),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: FutureBuilder<List<LeaderboardEntry>>(
+              future: _entries,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Center(
+                    child: SizedBox.square(
+                      dimension: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Color(0xFFD4A86A),
+                      ),
+                    ),
+                  );
+                }
+                final entries = snapshot.data;
+                if (entries == null || entries.isEmpty) {
+                  return Center(
+                    child: Text(
+                      snapshot.hasError
+                          ? AppStrings.leaderboardError
+                          : AppStrings.leaderboardEmpty,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: const Color(0xCCF5EFE0),
+                      ),
+                    ),
+                  );
+                }
+                return ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                  itemCount: entries.length,
+                  itemBuilder: (context, i) => _LeaderboardRow(
+                    rank: i + 1,
+                    entry: entries[i],
+                    isMe: entries[i].id == myId || entries[i].id == 'me',
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LeaderboardRow extends StatelessWidget {
+  const _LeaderboardRow({
+    required this.rank,
+    required this.entry,
+    required this.isMe,
+  });
+
+  final int rank;
+  final LeaderboardEntry entry;
+  final bool isMe;
+
+  static const List<Color> _medals = [
+    Color(0xFFFFC94D), // gold
+    Color(0xFFD9DEE6), // silver
+    Color(0xFFD9915A), // bronze
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: isMe ? const Color(0x33FFC966) : const Color(0x14FFFFFF),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 22,
+            child: rank <= 3
+                ? Icon(Icons.emoji_events, size: 16, color: _medals[rank - 1])
+                : Text(
+                    '$rank',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xCCF5EFE0),
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 6),
+          PlayerAvatar(photoUrl: entry.avatarUrl, radius: 12),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isMe ? '${entry.name} ${AppStrings.leaderboardYou}' : entry.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                fontWeight: isMe ? FontWeight.w800 : FontWeight.w600,
+                color: const Color(0xFFF5EFE0),
+              ),
+            ),
+          ),
+          const CoinIcon(size: 14),
+          const SizedBox(width: 5),
+          Text(
+            '${entry.coins}',
+            style: const TextStyle(
+              fontFamily: 'PressStart2P',
+              fontSize: 9,
+              height: 1,
+              color: Color(0xFFFFE3A3),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

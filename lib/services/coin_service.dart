@@ -12,7 +12,7 @@ class CoinService {
   /// Null until loaded (or when they can't be loaded).
   static final ValueNotifier<int?> coins = ValueNotifier(null);
 
-  static const int dailyBonus = 200;
+  static const int dailyBonus = 50;
 
   static LocalBlackjackTable? _offline;
 

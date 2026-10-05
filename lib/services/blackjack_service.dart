@@ -50,7 +50,7 @@ class SupabaseBlackjackTable implements BlackjackTable {
 /// The same rules played on the device, for signed-out (offline) runs and
 /// tests. Coins aren't saved.
 class LocalBlackjackTable implements BlackjackTable {
-  LocalBlackjackTable({this.coins = 500, Random? random, List<int>? deck})
+  LocalBlackjackTable({this.coins = 300, Random? random, List<int>? deck})
     : _random = random ?? Random(),
       _fixedDeck = deck;
 

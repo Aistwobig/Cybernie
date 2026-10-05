@@ -184,21 +184,69 @@ class AppStrings {
       : net < 0
       ? '$net coins'
       : 'Bet returned';
-  static const String bernieWelcome =
-      'Fancy a round of blackjack? Place your bet, friend.';
-  static const String bernieYourTurn = 'Hit or stand?';
-  static const String bernieRevealing = "Let's see what I've got...";
-  static const String bernieWin = 'Well played, friend. Take your winnings.';
-  static const String bernieBlackjack = 'Blackjack!? Lucky paws!';
-  static const String bernieDealerBust = 'Bah! I went over. Your round.';
-  static const String bernieLose = 'The house wins this one.';
-  static const String bernieDealerBlackjack = 'Blackjack for the house!';
-  static const String bernieBust = 'Bust! Too many cards, friend.';
-  static const String berniePush = "A tie. Your coins stay with you.";
+  // What Bernie says at the table. Each moment has a few lines; one is
+  // picked per round so he doesn't repeat himself.
+  static const List<String> bernieWelcome = [
+    'Pull up a stool, friend. Fancy a round of blackjack?',
+    "Place your bet. I won't go easy on you!",
+    'Back for more? The cards missed you.',
+  ];
+  static const List<String> bernieShuffle = [
+    'Let me shuffle these...',
+    'Fresh deck, fresh luck. Watch my paws!',
+    'No peeking while I shuffle!',
+  ];
+  static const List<String> bernieYourTurn = [
+    'Hit or stand? Take your time, friend.',
+    'Hmm... what will it be?',
+    'Feeling lucky? Another card, maybe?',
+  ];
+  static const List<String> bernieHighHand = [
+    "That's a strong hand. Careful now...",
+    'I would think twice before hitting that.',
+  ];
+  static const List<String> bernieRevealing = [
+    "My turn. Let's see what I've got...",
+    'Now then... my cards.',
+  ];
+  static const List<String> bernieWin = [
+    'Well played, friend. Take your winnings.',
+    'Hmph. The coins are yours this time.',
+  ];
+  static const List<String> bernieBlackjack = [
+    'Blackjack!? Lucky paws!',
+    "A natural 21! I didn't see that coming!",
+  ];
+  static const List<String> bernieDealerBust = [
+    'Bah! I went over. Your round!',
+    'Too many cards for this old cat...',
+  ];
+  static const List<String> bernieLose = [
+    'The house wins this one. Hehe.',
+    'Close, but the house takes it!',
+  ];
+  static const List<String> bernieDealerBlackjack = [
+    'Blackjack for the house! Hahaha!',
+    'Twenty-one, right off the deck. Sorry, friend!',
+  ];
+  static const List<String> bernieBust = [
+    'Bust! One card too many, friend.',
+    "Over 21... that's a bust.",
+  ];
+  static const List<String> berniePush = [
+    'A tie! Your coins stay with you.',
+    'Even. Call it a draw, friend.',
+  ];
   static const String bernieBroke =
       "Out of coins? Come back tomorrow, I'll have more for you.";
   static const String bernieTableError =
       'Hmm, the cards slipped. Try that again.';
+
+  static const String leaderboardButton = 'Richest';
+  static const String leaderboardTitle = 'Richest in the tavern';
+  static const String leaderboardEmpty = 'No one has any coins yet.';
+  static const String leaderboardError = "Couldn't load the leaderboard.";
+  static const String leaderboardYou = '(you)';
   static const String blackjackSignInHint =
       'Playing offline: coins won here are not saved.';
   static const String standUpButton = 'Stand up (E)';

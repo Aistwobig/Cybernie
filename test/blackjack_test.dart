@@ -99,8 +99,13 @@ void main() {
       expect(find.text('DEAL'), findsOneWidget);
       expect(find.byType(PlayingCardView), findsNothing);
 
+      // Bernie shuffles first (about a second), then deals.
       await tester.tap(find.text('DEAL'));
-      await tester.pump(const Duration(milliseconds: 600));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.byType(PlayingCardView), findsNothing);
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 300));
+      }
       expect(find.byType(PlayingCardView), findsNWidgets(4));
       expect(find.text('HIT'), findsOneWidget);
       expect(tester.takeException(), isNull);
