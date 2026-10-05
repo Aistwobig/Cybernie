@@ -29,6 +29,13 @@ class AppImages {
 
   /// Bernie the bartender (an NPC): 8-frame idle, 300 x 384 cells.
   static const String bernieIdle = 'assets/images/bernie_idle.png';
+
+  /// Bernie's blackjack table: the scene, his 8 faces (4 x 2 cells of
+  /// 266 px) and the 52 cards (13 ranks x 4 suits, 150 x 166 cells).
+  static const String catBlackjack = 'assets/images/cat_blackjack.jpg';
+  static const String bernieExpressions =
+      'assets/images/bernie_expressions.png';
+  static const String catCards = 'assets/images/cat_cards.jpg';
   static const String profileLuna = 'assets/images/3.png';
   static const String profileRogue = 'assets/images/4.png';
   static const String profileMage = 'assets/images/5.png';

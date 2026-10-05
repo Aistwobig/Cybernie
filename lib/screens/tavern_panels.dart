@@ -914,7 +914,11 @@ class BarMenuPanel extends StatelessWidget {
     required this.canOrder,
     required this.onOrder,
     required this.onClose,
+    this.onPlayBlackjack,
   });
+
+  /// Sits down at Bernie's blackjack table (only from the bar).
+  final VoidCallback? onPlayBlackjack;
 
   /// Standing or sitting at the bar.
   final bool atBar;
@@ -941,6 +945,31 @@ class BarMenuPanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
+          if (onPlayBlackjack != null) ...[
+            SizedBox(
+              height: 40,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF2E6B3F),
+                  foregroundColor: const Color(0xFFFFF4D6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                onPressed: atBar ? onPlayBlackjack : null,
+                icon: const Text('♠', style: TextStyle(fontSize: 18)),
+                label: Text(
+                  AppStrings.playBlackjackButton,
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
           for (final drink in drinks)
             _DrinkTile(
               drink: drink,

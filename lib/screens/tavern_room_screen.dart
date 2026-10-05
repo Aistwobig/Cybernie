@@ -14,11 +14,14 @@ import '../game/tavern_game.dart';
 import '../models/profile.dart';
 import '../services/auth_service.dart';
 import '../services/chat_service.dart';
+import '../services/coin_service.dart';
 import '../services/profile_service.dart';
 import '../services/room_service.dart';
 import '../services/sfx_service.dart';
 import '../game/tavern_map.dart';
 import '../theme/app_theme.dart';
+import '../widgets/coin_chip.dart';
+import 'blackjack_overlay.dart';
 import 'tavern_panels.dart';
 
 /// Bernie's Tavern. Always landscape and full screen: phones are asked to
@@ -124,6 +127,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _game.onSeatTooFar = () => _showSnack(AppStrings.walkCloserToSit);
     _messageController.addListener(_onDraftChanged);
     _loadHints();
+    _loadCoins();
     _enterRoom();
     _connectChat();
   }
@@ -428,6 +432,38 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _closePanel();
   }
 
+  /// Bernie's blackjack table, over the whole room while it's open.
+  bool _blackjackOpen = false;
+
+  void _openBlackjack() {
+    SfxService.play(Sfx.sparkle);
+    _closePanel();
+    setState(() {
+      _blackjackOpen = true;
+      _emotesOpen = false;
+    });
+  }
+
+  void _closeBlackjack() {
+    setState(() => _blackjackOpen = false);
+    // WASD walks again.
+    _gameFocus.requestFocus();
+  }
+
+  /// Loads our coins (adding the once-a-day bonus) for the top-right corner.
+  Future<void> _loadCoins() async {
+    try {
+      final bonus = await CoinService.enterTavern();
+      if (bonus > 0) {
+        SfxService.play(Sfx.coin);
+        _showSnack(AppStrings.dailyCoinsBonus(bonus));
+      }
+    } catch (error) {
+      // Coins are optional (e.g. the coins migration hasn't been run yet).
+      debugPrint('Coins: $error');
+    }
+  }
+
   void _sendEmote(String emoji) {
     SfxService.play(Sfx.pop);
     _game.emote(emoji);
@@ -484,6 +520,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           canOrder: !_justOrdered,
           onOrder: _orderDrink,
           onClose: _closePanel,
+          onPlayBlackjack: _openBlackjack,
         );
       case _Panel.directChat:
         final friend = _chatFriend;
@@ -569,6 +606,14 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
               ),
             ),
           ..._buildHud(constraints, panel),
+          if (_blackjackOpen)
+            Positioned.fill(
+              child: BlackjackOverlay(
+                table: CoinService.table,
+                offline: !AuthService.isSignedIn,
+                onClose: _closeBlackjack,
+              ),
+            ),
         ],
       ),
     );
@@ -580,11 +625,14 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         : 340.0;
 
     return [
+      // Our coins, top right (an open panel takes that side).
+      if (panel == null)
+        const Positioned(top: 12, right: 12, child: CoinChip()),
       // Leaving is the back arrow in the room title. In debug builds only,
-      // the top-right corner holds the hitbox toggle.
+      // the hitbox toggle sits under the coins.
       if (kDebugMode && _panel == _Panel.none)
         Positioned(
-          top: 12,
+          top: 54,
           right: 12,
           child: _HudButton(
             label: AppStrings.hitboxesButton,

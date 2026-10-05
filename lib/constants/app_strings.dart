@@ -163,6 +163,44 @@ class AppStrings {
   static const String bernieComeCloser =
       "Come up to the bar and I'll pour you something!";
   static const String orderButton = 'ORDER';
+
+  // Coins and Bernie's blackjack table
+  static String coinsLabel(int coins) => '$coins coins';
+  static String dailyCoinsBonus(int coins) =>
+      'Daily bonus: +$coins coins! Spend them at Bernie\'s table.';
+  static const String playBlackjackButton = 'PLAY BLACKJACK';
+  static const String blackjackTitle = "Bernie's Blackjack";
+  static const String leaveTableButton = 'Leave table';
+  static const String betLabel = 'BET';
+  static const String clearBetButton = 'CLEAR';
+  static const String dealButton = 'DEAL';
+  static const String hitButton = 'HIT';
+  static const String standButton = 'STAND';
+  static const String doubleButton = 'DOUBLE';
+  static const String handYou = 'You';
+  static const String handBernie = 'Bernie';
+  static String blackjackNet(int net) => net > 0
+      ? '+$net coins'
+      : net < 0
+      ? '$net coins'
+      : 'Bet returned';
+  static const String bernieWelcome =
+      'Fancy a round of blackjack? Place your bet, friend.';
+  static const String bernieYourTurn = 'Hit or stand?';
+  static const String bernieRevealing = "Let's see what I've got...";
+  static const String bernieWin = 'Well played, friend. Take your winnings.';
+  static const String bernieBlackjack = 'Blackjack!? Lucky paws!';
+  static const String bernieDealerBust = 'Bah! I went over. Your round.';
+  static const String bernieLose = 'The house wins this one.';
+  static const String bernieDealerBlackjack = 'Blackjack for the house!';
+  static const String bernieBust = 'Bust! Too many cards, friend.';
+  static const String berniePush = "A tie. Your coins stay with you.";
+  static const String bernieBroke =
+      "Out of coins? Come back tomorrow, I'll have more for you.";
+  static const String bernieTableError =
+      'Hmm, the cards slipped. Try that again.';
+  static const String blackjackSignInHint =
+      'Playing offline: coins won here are not saved.';
   static const String standUpButton = 'Stand up (E)';
   static const String walkCloserToSit = 'Walk closer to that seat to sit down.';
   static const String noticeBoardHint = 'Pin a note for everyone...';
