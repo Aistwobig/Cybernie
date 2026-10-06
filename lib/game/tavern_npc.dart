@@ -45,9 +45,9 @@ class TavernNpc extends SpriteAnimationComponent with HasGameReference {
       // His own full-body sheet (seated, boots on the floor): 8 frames
       // lined up on the boots, anchored at them.
       : TavernNpc(
-          asset: 'assets/images/npc_boy.png',
+          asset: 'assets/images/npc_boy_sitting.png',
           frames: 8,
-          cell: Vector2(300, 440),
+          cell: Vector2(400, 440),
           baseline: 430,
           scaleBy: 0.21,
           stepTime: 0.25,

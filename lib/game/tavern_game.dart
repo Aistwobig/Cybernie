@@ -47,7 +47,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     AppImages.joystickBase,
     AppImages.joystickKnob,
     'assets/images/npc_bard.png',
-    'assets/images/npc_boy.png',
+    'assets/images/npc_boy_sitting.png',
     'assets/images/npc_girl.png',
     for (final c in gameCharacters) ...[
       c.sheet,
