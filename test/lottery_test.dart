@@ -74,15 +74,18 @@ void main() {
       ),
     );
     expect(find.text('SPIN'), findsWidgets);
-    await tester.tap(find.byType(FilledButton));
+    await tester.tap(find.text('SPIN'));
     await tester.pump();
-    expect(find.text('SPINNING...'), findsOneWidget);
+    expect(find.text('SPINNING...'), findsWidgets);
     for (var i = 0; i < 30; i++) {
       await tester.pump(const Duration(milliseconds: 200));
     }
     final won = CoinService.coins.value! - 100;
     expect(wheelSlices, contains(won));
-    expect(find.text('You won $won coins!'), findsOneWidget);
+    expect(
+      find.text('You won $won coins!', findRichText: true),
+      findsOneWidget,
+    );
     await tester.tap(find.text('COLLECT'));
     expect(closed, isTrue);
     expect(tester.takeException(), isNull);

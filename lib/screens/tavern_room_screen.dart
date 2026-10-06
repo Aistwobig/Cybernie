@@ -1837,7 +1837,8 @@ class _HudChatTab extends StatelessWidget {
   }
 }
 
-/// The message box with its send button, from the HUD kit.
+/// The message box (a see-through riveted plate, so the room shows through)
+/// with its own send button beside it.
 class _HudChatInput extends StatelessWidget {
   const _HudChatInput({
     required this.controller,
@@ -1849,77 +1850,58 @@ class _HudChatInput extends StatelessWidget {
   final bool isSending;
   final VoidCallback onSend;
 
-  static const double height = 46;
-
-  /// The send button's share of the picture's width (its right end).
-  static const double _sendWidth = 174 / 147 * height;
+  static const double height = 44;
 
   @override
   Widget build(BuildContext context) {
-    return KitPlate(
-      kit: Kit.hudInput,
-      scale: 147 / height,
-      height: height,
-      padding: EdgeInsets.zero,
-      child: Row(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 18, right: 6),
-              child: TextField(
-                controller: controller,
-                maxLength: 200,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => onSend(),
-                cursorColor: const Color(0xFFFFD27A),
-                style: GoogleFonts.inter(
+    return Row(
+      children: [
+        Expanded(
+          child: KitPlate(
+            kit: Kit.hudPlate,
+            scale: 140 / height,
+            height: height,
+            opacity: 0.7,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: controller,
+              maxLength: 200,
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => onSend(),
+              cursorColor: const Color(0xFFFFD27A),
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFFF5E6C8),
+                shadows: const [
+                  Shadow(blurRadius: 3, color: Color(0xE6000000)),
+                ],
+              ),
+              decoration: InputDecoration(
+                hintText: AppStrings.chatHint,
+                hintStyle: GoogleFonts.inter(
                   fontSize: 13,
-                  color: const Color(0xFFF5E6C8),
+                  color: const Color(0xFFB9AE9C),
                 ),
-                decoration: InputDecoration(
-                  hintText: AppStrings.chatHint,
-                  hintStyle: GoogleFonts.inter(
-                    fontSize: 13,
-                    color: const Color(0xFF8A8F9C),
-                  ),
-                  counterText: '',
-                  isDense: true,
-                  filled: false,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                ),
+                counterText: '',
+                isDense: true,
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
           ),
-          // The paper-plane button is part of the picture; this makes it
-          // tappable.
-          Semantics(
-            button: true,
-            label: AppStrings.sendButton,
-            child: GestureDetector(
-              onTap: isSending ? null : onSend,
-              behavior: HitTestBehavior.opaque,
-              child: SizedBox(
-                width: _sendWidth,
-                height: height,
-                child: isSending
-                    ? const Center(
-                        child: SizedBox.square(
-                          dimension: 14,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Color(0xFFFFD27A),
-                          ),
-                        ),
-                      )
-                    : null,
-              ),
-            ),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 4),
+        _ArtButton(
+          asset: 'assets/images/th_send.png',
+          aspect: 134 / 145,
+          height: height,
+          label: AppStrings.sendButton,
+          onTap: isSending ? null : onSend,
+        ),
+      ],
     );
   }
 }
