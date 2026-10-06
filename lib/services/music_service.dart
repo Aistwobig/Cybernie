@@ -3,9 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Background music: one song (assets/audio/home_theme.mp3) looping across
-/// every screen, at a volume chosen in the Home menu and remembered on this
-/// device.
+/// Background music: assets/audio/home_theme2.mp3 (three songs, about 14
+/// minutes, no silence between them) looping across every screen, at a
+/// volume chosen in the Home menu and remembered on this device.
+///
+/// Keep the file small (around 10 MB at most): browsers stream it, and a
+/// huge file can stall mid-way, which they treat as the end of the song,
+/// so the loop jumps back to the start.
 ///
 /// Browsers don't let a page play sound until the player has clicked or
 /// tapped something, so if the music can't start right away it starts on
@@ -14,7 +18,7 @@ class MusicService {
   MusicService._();
 
   /// Relative to assets/ (audioplayers adds that prefix).
-  static const String _song = 'audio/home_theme.mp3';
+  static const String _song = 'audio/home_theme2.mp3';
   static const String _volumeKey = 'music_volume';
   static const double defaultVolume = 0.5;
 
