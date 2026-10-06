@@ -180,6 +180,9 @@ class AppStrings {
   static const String voiceMute = 'Mute your mic';
   static const String voiceUnmute = 'Unmute your mic';
   static const String voiceLeave = 'Leave voice chat';
+  static const String cameraOn = 'Turn your camera on';
+  static const String cameraOff = 'Turn your camera off';
+  static const String cameraYou = 'You';
   static const String voiceSignInRequired = 'Sign in to use voice chat.';
   static const String voiceVolumeLabel = 'Voice chat';
   static const String microphoneLabel = 'Microphone';

@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 import 'voice_engine.dart';
 
 /// Voice chat is web-only for now (the app is built for the web); other
@@ -40,4 +42,14 @@ class _NoVoice implements VoiceEngine {
 
   @override
   Set<String> speakers({required String me}) => const {};
+
+  @override
+  Future<void> setCamera(bool on) async =>
+      throw UnsupportedError('The camera works in the web version.');
+
+  @override
+  bool hasVideo(String? peerId) => false;
+
+  @override
+  Widget? videoView(String? peerId) => null;
 }

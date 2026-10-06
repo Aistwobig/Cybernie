@@ -688,7 +688,19 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         for (final p in _others)
           if (p.voice) p.id,
       },
+      cameraPlayers: {
+        for (final p in _others)
+          if (p.camera) p.id,
+      },
     );
+  }
+
+  Future<void> _toggleCamera() async {
+    try {
+      await _voice.setCamera(!_voice.cameraOn.value);
+    } catch (problem) {
+      _showSnack('$problem');
+    }
   }
 
   /// The fireplace crackling: louder the closer we stand to it.
@@ -912,6 +924,11 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: _EffectChip(drink: drink, seconds: seconds),
                   ),
+                _CameraTiles(
+                  voice: _voice,
+                  nameOf: _nameInRoom,
+                  small: constraints.maxWidth < 700,
+                ),
               ],
             ),
           ),
@@ -1099,6 +1116,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                     voice: _voice,
                     onJoin: _joinVoice,
                     onLeave: _leaveVoice,
+                    onCamera: _toggleCamera,
                   ),
                   const SizedBox(width: 6),
                   _ArtButton(
@@ -1126,17 +1144,20 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 }
 
 /// Voice chat controls under the chat box: the mic (tap to join voice; once
-/// in, tap to mute / unmute) and, while in, the red hang-up button.
+/// in, tap to mute / unmute) and, while in, the camera and the red hang-up
+/// button.
 class _VoiceButtons extends StatelessWidget {
   const _VoiceButtons({
     required this.voice,
     required this.onJoin,
     required this.onLeave,
+    required this.onCamera,
   });
 
   final VoiceService voice;
   final VoidCallback onJoin;
   final VoidCallback onLeave;
+  final VoidCallback onCamera;
 
   static const double height = 40;
 
@@ -1148,6 +1169,26 @@ class _VoiceButtons extends StatelessWidget {
         valueListenable: voice.micOn,
         builder: (context, micOn, _) {
           final inVoice = state == VoiceState.on;
+          // Off: a red slash across it. On: a green glow, like the mic.
+          final camera = ValueListenableBuilder<bool>(
+            valueListenable: voice.cameraOn,
+            builder: (context, cameraOn, _) => _ArtButton(
+              asset: 'assets/images/th_cam.png',
+              aspect: 222 / 164,
+              height: height,
+              label: cameraOn ? AppStrings.cameraOff : AppStrings.cameraOn,
+              onTap: onCamera,
+              overlay: cameraOn
+                  ? const DecoratedBox(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(color: Color(0x557CFF8A), blurRadius: 10),
+                        ],
+                      ),
+                    )
+                  : CustomPaint(painter: _SlashPainter()),
+            ),
+          );
           final mic = _ArtButton(
             asset: 'assets/images/th_mic.png',
             aspect: 222 / 164,
@@ -1201,6 +1242,8 @@ class _VoiceButtons extends StatelessWidget {
               mic,
               if (inVoice) ...[
                 const SizedBox(width: 6),
+                camera,
+                const SizedBox(width: 6),
                 _ArtButton(
                   asset: 'assets/images/th_hangup.png',
                   aspect: 232 / 164,
@@ -1212,6 +1255,119 @@ class _VoiceButtons extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// The cameras that are on: ours ("You") and those of the nearby players
+/// we're in a voice call with, two to a row, lit green while they talk.
+class _CameraTiles extends StatelessWidget {
+  const _CameraTiles({
+    required this.voice,
+    required this.nameOf,
+    required this.small,
+  });
+
+  final VoiceService voice;
+  final String Function(String playerId) nameOf;
+
+  /// Smaller tiles on phones.
+  final bool small;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        voice.cameraOn,
+        voice.watching,
+        voice.speaking,
+      ]),
+      builder: (context, _) {
+        final width = small ? 96.0 : 132.0;
+        final talking = voice.speaking.value;
+        final tiles = [
+          if (voice.cameraOn.value)
+            (null, AppStrings.cameraYou, talking.contains(voice.myId)),
+          for (final id in voice.watching.value)
+            (id, nameOf(id), talking.contains(id)),
+        ];
+        if (tiles.isEmpty) return const SizedBox.shrink();
+        return SizedBox(
+          width: width * 2 + 6,
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final (id, name, speaking) in tiles)
+                _CameraTile(
+                  view: voice.videoView(id),
+                  name: name,
+                  speaking: speaking,
+                  width: width,
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CameraTile extends StatelessWidget {
+  const _CameraTile({
+    required this.view,
+    required this.name,
+    required this.speaking,
+    required this.width,
+  });
+
+  final Widget? view;
+  final String name;
+  final bool speaking;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: width * 3 / 4,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A0F08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: speaking ? const Color(0xFF7CFF8A) : const Color(0xFFB8742E),
+          width: 2,
+        ),
+        boxShadow: const [BoxShadow(color: Color(0x88000000), blurRadius: 6)],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            IgnorePointer(child: view ?? const SizedBox.shrink()),
+            // Their name along the bottom.
+            Align(
+              alignment: Alignment.bottomLeft,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(6, 2, 6, 3),
+                color: const Color(0xAA000000),
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFFF5E6C8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

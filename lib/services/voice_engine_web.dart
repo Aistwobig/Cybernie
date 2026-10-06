@@ -1,7 +1,9 @@
 import 'dart:js_interop';
 import 'dart:math' as math;
+import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:web/web.dart' as web;
 
 import 'voice_engine.dart';
@@ -25,14 +27,21 @@ final List<String> _stunServers = [
   'stun:stun1.l.google.com:19302',
 ];
 
-/// One call: the connection, the <audio> element their voice plays in, and
-/// a level meter for the talking indicator.
+/// One call: the connection, the <audio> element their voice plays in, a
+/// level meter for the talking indicator, and their camera picture.
 class _Call {
   _Call(this.pc);
 
   final web.RTCPeerConnection pc;
   web.HTMLAudioElement? audio;
   web.AnalyserNode? meter;
+
+  /// Where our camera goes out in this call (nothing is sent while it's off).
+  web.RTCRtpSender? videoSender;
+
+  /// Their camera picture, and the name Flutter shows it by.
+  web.HTMLVideoElement? video;
+  String? viewType;
 
   /// Network candidates that arrived before the offer/answer was set.
   final List<web.RTCIceCandidateInit> early = [];
@@ -45,6 +54,10 @@ class _WebVoice implements VoiceEngine {
 
   final SignalSender _send;
   web.MediaStream? _mic;
+  web.MediaStream? _camera;
+  web.HTMLVideoElement? _myVideo;
+  String? _myViewType;
+  static int _views = 0;
   web.AudioContext? _audio;
   web.AnalyserNode? _myMeter;
   bool _micOn = true;
@@ -104,7 +117,91 @@ class _WebVoice implements VoiceEngine {
   }
 
   @override
+  Future<void> setCamera(bool on) async {
+    if (on) {
+      if (_camera != null) return;
+      // Small and at 15 frames a second: everyone sends to everyone nearby
+      // directly, so this keeps it light.
+      final constraints = {
+        'width': {'ideal': 320},
+        'height': {'ideal': 240},
+        'frameRate': {'ideal': 15, 'max': 20},
+        'facingMode': 'user',
+      }.jsify()!;
+      final camera = await web.window.navigator.mediaDevices
+          .getUserMedia(web.MediaStreamConstraints(video: constraints))
+          .toDart;
+      _camera = camera;
+      _myVideo = _videoElement(camera, mirror: true);
+      _myViewType = _register(_myVideo!);
+    } else {
+      final camera = _camera;
+      _camera = null;
+      _myVideo
+        ?..pause()
+        ..srcObject = null;
+      _myVideo = null;
+      _myViewType = null;
+      if (camera != null) {
+        for (final track in camera.getTracks().toDart) {
+          track.stop();
+        }
+      }
+    }
+    for (final call in _calls.values) {
+      await _sendCamera(call);
+    }
+  }
+
+  /// Puts our camera (or nothing, while it's off) into [call]'s video.
+  Future<void> _sendCamera(_Call call) async {
+    final sender = call.videoSender;
+    if (sender == null) return;
+    final tracks = _camera?.getVideoTracks().toDart ?? const [];
+    await sender.replaceTrack(tracks.isEmpty ? null : tracks.first).toDart;
+  }
+
+  /// A silent <video> filling its box, playing [stream].
+  web.HTMLVideoElement _videoElement(
+    web.MediaStream stream, {
+    bool mirror = false,
+  }) {
+    final video = web.HTMLVideoElement()
+      ..autoplay = true
+      ..muted = true
+      ..playsInline = true
+      ..srcObject = stream;
+    video.style
+      ..width = '100%'
+      ..height = '100%'
+      ..setProperty('object-fit', 'cover')
+      ..setProperty('pointer-events', 'none');
+    if (mirror) video.style.setProperty('transform', 'scaleX(-1)');
+    video.play().toDart.catchError((Object _) => null);
+    return video;
+  }
+
+  /// Lets Flutter show [video] (HtmlElementView), under a new name.
+  static String _register(web.HTMLVideoElement video) {
+    final type = 'cybernie-camera-${_views++}';
+    ui_web.platformViewRegistry.registerViewFactory(type, (int _) => video);
+    return type;
+  }
+
+  @override
+  bool hasVideo(String? peerId) =>
+      (peerId == null ? _myViewType : _calls[peerId]?.viewType) != null;
+
+  @override
+  Widget? videoView(String? peerId) {
+    final type = peerId == null ? _myViewType : _calls[peerId]?.viewType;
+    if (type == null) return null;
+    return HtmlElementView(key: ValueKey(type), viewType: type);
+  }
+
+  @override
   Future<void> stop() async {
+    await setCamera(false);
     for (final id in _calls.keys.toList()) {
       disconnect(id);
     }
@@ -161,6 +258,17 @@ class _WebVoice implements VoiceEngine {
       });
     }).toJS;
     pc.ontrack = ((web.RTCTrackEvent event) {
+      // Their camera: a silent picture (it shows only while their camera
+      // is on; see VoiceService.watching).
+      if (event.track.kind == 'video') {
+        call.video
+          ?..pause()
+          ..srcObject = null;
+        final video = _videoElement(web.MediaStream()..addTrack(event.track));
+        call.video = video;
+        call.viewType = _register(video);
+        return;
+      }
       final streams = event.streams.toDart;
       final stream = streams.isNotEmpty
           ? streams.first
@@ -192,6 +300,16 @@ class _WebVoice implements VoiceEngine {
       _send(peerId, {'kind': 'ready'});
       return;
     }
+    // A video line both ways from the start, so cameras can be switched on
+    // and off later without calling again.
+    final call = _calls[peerId]!;
+    call.videoSender = pc
+        .addTransceiver(
+          'video'.toJS,
+          web.RTCRtpTransceiverInit(direction: 'sendrecv'),
+        )
+        .sender;
+    await _sendCamera(call);
     // With no description given, the browser creates the offer itself.
     await pc.setLocalDescription().toDart;
     final offer = pc.localDescription;
@@ -205,6 +323,9 @@ class _WebVoice implements VoiceEngine {
     if (call == null) return;
     call.pc.close();
     call.audio
+      ?..pause()
+      ..srcObject = null;
+    call.video
       ?..pause()
       ..srcObject = null;
   }
@@ -229,6 +350,15 @@ class _WebVoice implements VoiceEngine {
             )
             .toDart;
         await _flushEarly(fromId);
+        // Send our camera back on their video line.
+        final call = _calls[fromId]!;
+        for (final t in pc.getTransceivers().toDart) {
+          if (t.receiver.track.kind == 'video') {
+            t.direction = 'sendrecv';
+            call.videoSender = t.sender;
+          }
+        }
+        await _sendCamera(call);
         // After an offer, the browser creates the answer itself.
         await pc.setLocalDescription().toDart;
         final answer = pc.localDescription;

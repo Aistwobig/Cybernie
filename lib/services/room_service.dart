@@ -15,10 +15,14 @@ class RoomPlayer {
     this.avatarUrl,
     this.character = 1,
     this.voice = false,
+    this.camera = false,
   });
 
   /// In voice chat right now (their mic may still be muted).
   final bool voice;
+
+  /// Their camera is on (in voice chat).
+  final bool camera;
 
   final String id;
   final String name;
@@ -251,7 +255,13 @@ class RoomService {
 
   /// Tells the room we joined (or left) voice chat.
   Future<void> setVoice(bool on) async {
-    _presence = {..._presence, 'voice': on};
+    _presence = {..._presence, 'voice': on, if (!on) 'cam': false};
+    await _channel?.track(_presence);
+  }
+
+  /// Tells the room our camera is on (or off).
+  Future<void> setCamera(bool on) async {
+    _presence = {..._presence, 'cam': on};
     await _channel?.track(_presence);
   }
 
@@ -285,6 +295,7 @@ class RoomService {
         avatarUrl: data['avatar'] as String?,
         character: (data['char'] as num?)?.toInt() ?? 1,
         voice: data['voice'] == true,
+        camera: data['cam'] == true,
         x: (data['x'] as num?)?.toDouble() ?? 0,
         y: (data['y'] as num?)?.toDouble() ?? 0,
       );

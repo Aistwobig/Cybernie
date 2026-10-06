@@ -2,6 +2,8 @@
 /// (WebRTC) call per nearby player. VoiceService decides who to call.
 library;
 
+import 'package:flutter/widgets.dart';
+
 import 'voice_engine_stub.dart'
     if (dart.library.js_interop) 'voice_engine_web.dart'
     as impl;
@@ -56,4 +58,14 @@ abstract class VoiceEngine {
 
   /// Who is making sound right now: player ids, plus [me] for us.
   Set<String> speakers({required String me});
+
+  /// Turns our camera on or off in every call (the browser asks
+  /// permission the first time).
+  Future<void> setCamera(bool on);
+
+  /// Whether a video picture exists for [peerId] (null: our own camera).
+  bool hasVideo(String? peerId);
+
+  /// [peerId]'s camera picture (null: our own, mirrored), or null if none.
+  Widget? videoView(String? peerId);
 }

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flame/components.dart' show Vector2;
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'music_service.dart';
@@ -25,6 +26,13 @@ class VoiceService {
 
   /// Who is talking right now (player ids; [myId] for us).
   final ValueNotifier<Set<String>> speaking = ValueNotifier(const {});
+
+  /// Our camera is on.
+  final ValueNotifier<bool> cameraOn = ValueNotifier(false);
+  bool _cameraBusy = false;
+
+  /// Players in our call whose camera picture we can show right now.
+  final ValueNotifier<Set<String>> watching = ValueNotifier(const {});
 
   /// Full volume within [_near] map pixels, silent from [_far].
   static const double _near = 110;
@@ -124,7 +132,9 @@ class VoiceService {
     if (identical(_active, this)) _active = null;
     state.value = VoiceState.off;
     micOn.value = false;
+    cameraOn.value = false;
     speaking.value = const {};
+    watching.value = const {};
     MusicService.duck(1);
     if (engine != null) {
       for (final peer in engine.peers) {
@@ -139,6 +149,27 @@ class VoiceService {
     _engine?.setMic(on);
     micOn.value = on;
   }
+
+  /// Turns our camera on or off (while in voice chat). Throws a readable
+  /// message if it can't.
+  Future<void> setCamera(bool on) async {
+    final engine = _engine;
+    if (engine == null || _cameraBusy || on == cameraOn.value) return;
+    _cameraBusy = true;
+    try {
+      await engine.setCamera(on);
+      cameraOn.value = on;
+      await _room?.setCamera(on);
+    } catch (error) {
+      debugPrint('Camera: $error');
+      throw _explain(error, camera: true);
+    } finally {
+      _cameraBusy = false;
+    }
+  }
+
+  /// [playerId]'s camera picture (null: ours), if there is one.
+  Widget? videoView(String? playerId) => _engine?.videoView(playerId);
 
   /// A call setup message from another player.
   void handleSignal(String fromId, Map<String, dynamic> signal) {
@@ -157,6 +188,7 @@ class VoiceService {
     required Vector2 me,
     required Map<String, Vector2> positions,
     required Set<String> voicePlayers,
+    Set<String> cameraPlayers = const {},
   }) {
     final engine = _engine;
     final self = myId;
@@ -188,6 +220,11 @@ class VoiceService {
     }
     final talking = engine.speakers(me: self);
     if (!setEquals(talking, speaking.value)) speaking.value = talking;
+    final seen = {
+      for (final id in engine.peers)
+        if (cameraPlayers.contains(id) && engine.hasVideo(id)) id,
+    };
+    if (!setEquals(seen, watching.value)) watching.value = seen;
     // Turn the music down while we're in a call with anyone nearby, so it
     // doesn't drown out their voices.
     MusicService.duck(engine.peers.isEmpty ? 1 : musicDuring);
@@ -203,17 +240,28 @@ class VoiceService {
     return math.pow(1 - t, 2).toDouble();
   }
 
-  static String _explain(Object error) {
+  static String _explain(Object error, {bool camera = false}) {
     final text = '$error';
     if (text.contains('NotAllowedError') || text.contains('Permission')) {
-      return 'Allow the microphone to use voice chat.';
+      return camera
+          ? 'Allow the camera to turn it on.'
+          : 'Allow the microphone to use voice chat.';
     }
     if (text.contains('NotFoundError')) {
-      return 'No microphone found.';
+      return camera ? 'No camera found.' : 'No microphone found.';
+    }
+    if (text.contains('NotReadableError')) {
+      return camera
+          ? 'Your camera is being used by another app.'
+          : 'Your microphone is being used by another app.';
     }
     if (text.contains('web version')) {
-      return 'Voice chat works in the web version.';
+      return camera
+          ? 'The camera works in the web version.'
+          : 'Voice chat works in the web version.';
     }
-    return "Couldn't start voice chat. Try again.";
+    return camera
+        ? "Couldn't turn on the camera. Try again."
+        : "Couldn't start voice chat. Try again.";
   }
 }
