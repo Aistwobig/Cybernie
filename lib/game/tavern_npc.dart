@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
 
-/// A townsfolk NPC who just idles in place (the bard by the door, the
-/// couple having a drink at a table): one strip of equal frames, played on
+/// A townsfolk NPC who just idles in place (the bard by the door, two
+/// friends having a drink at a table): one strip of equal frames, played on
 /// a loop, layered by its bottom edge like everyone else.
 class TavernNpc extends SpriteAnimationComponent with HasGameReference {
   TavernNpc({
@@ -24,22 +24,26 @@ class TavernNpc extends SpriteAnimationComponent with HasGameReference {
     frames: 8,
     cell: Vector2(270, 300),
     baseline: 290,
-    scaleBy: 0.31,
+    scaleBy: 0.37,
     stepTime: 0.2,
     feet: feet,
   );
 
-  /// Two adventurers at their table, chatting and clinking mugs. Their table
-  /// replaces the one painted there (removed from the map picture).
-  factory TavernNpc.couple(Vector2 bottom) => TavernNpc(
-    asset: 'assets/images/npc_couple.png',
-    frames: 8,
-    cell: Vector2(230, 230),
-    baseline: 224,
-    scaleBy: 0.85,
-    stepTime: 0.28,
-    feet: bottom,
-  );
+  /// The two adventurers drinking at the table by the stairs, seated on
+  /// its painted chairs facing each other (cut from one picture, so they
+  /// move in step: 7 frames, anchored at the hips).
+  factory TavernNpc.drinker({required bool girl, required Vector2 hips}) =>
+      TavernNpc(
+        asset: girl
+            ? 'assets/images/npc_girl.png'
+            : 'assets/images/npc_boy.png',
+        frames: 7,
+        cell: Vector2(140, 200),
+        baseline: 170,
+        scaleBy: 0.6,
+        stepTime: 0.3,
+        feet: hips,
+      );
 
   final String asset;
   final int frames;

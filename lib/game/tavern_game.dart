@@ -47,7 +47,8 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     AppImages.joystickBase,
     AppImages.joystickKnob,
     'assets/images/npc_bard.png',
-    'assets/images/npc_couple.png',
+    'assets/images/npc_boy.png',
+    'assets/images/npc_girl.png',
     for (final c in gameCharacters) ...[
       c.sheet,
       ?c.idleSheet,
@@ -554,8 +555,13 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       map,
       fire,
       TavernNpc.bard(Vector2(TavernMap.bardSpot.dx, TavernMap.bardSpot.dy)),
-      TavernNpc.couple(
-        Vector2(TavernMap.coupleSpot.dx, TavernMap.coupleSpot.dy),
+      TavernNpc.drinker(
+        girl: false,
+        hips: Vector2(TavernMap.boySpot.dx, TavernMap.boySpot.dy),
+      ),
+      TavernNpc.drinker(
+        girl: true,
+        hips: Vector2(TavernMap.girlSpot.dx, TavernMap.girlSpot.dy),
       ),
       _noticeBoard,
       bernie,

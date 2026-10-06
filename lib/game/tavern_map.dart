@@ -25,10 +25,11 @@ class TavernMap {
   static const double noticeBoardReach = 95;
 
   /// Where the townsfolk NPCs idle: the bard's feet (below the door), and
-  /// the bottom-centre of the couple's table (their own; the painted table that
-  /// stood there was removed from the map picture).
+  /// the hips of the two drinkers on the side chairs of the table by the
+  /// stairs.
   static const Offset bardSpot = Offset(966, 338);
-  static const Offset coupleSpot = Offset(1067, 548);
+  static const Offset boySpot = Offset(985, 508);
+  static const Offset girlSpot = Offset(1146, 508);
 
   /// The inside of the fireplace, where the burning fire is drawn.
   static const Rect fireplaceFire = Rect.fromLTWH(82, 268, 72, 64);
@@ -121,7 +122,7 @@ class TavernMap {
     Rect.fromLTRB(422, 928, 492, 1030), // plant left of the door
     Rect.fromLTRB(785, 928, 858, 1030), // plant right of the door
     // --- Right side ----------------------------------------------------------
-    Rect.fromLTRB(990, 465, 1144, 568), // the couple's table (NPCs) + stool
+    Rect.fromLTRB(968, 425, 1162, 568), // table (top-right) + chairs
     Rect.fromLTRB(1052, 582, 1268, 742), // table (middle-right) + chairs
     Rect.fromLTRB(878, 740, 1185, 948), // big table (bottom-right) + chairs
     Rect.fromLTRB(1222, 788, 1297, 888), // plant (bottom-right)
