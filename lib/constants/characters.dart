@@ -72,7 +72,7 @@ const List<GameCharacter> gameCharacters = [
     sheet: AppImages.lunaSheet,
     idleSheet: AppImages.lunaIdleSheet,
     sitBackSheet: AppImages.lunaSitBackSheet,
-    // Hugging her knees on the side chairs, either way round.
+    // Sitting on the side chairs, hands on her knees, either way round.
     sitSideSheet: AppImages.lunaSitSideSheet,
     sitsOverSeat: true,
     feetFraction: 374 / 384,

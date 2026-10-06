@@ -85,14 +85,14 @@ class TavernMap {
     // line goes, near the seat's front edge. Numbers: x, y, then the seat's
     // left and right edge.
     // Facing left (chairs on the right of their table).
-    Seat.sideChair(1231, 674, 1225, 1252, Facing.west), // middle-right
-    Seat.sideChair(1147, 861, 1141, 1171, Facing.west), // big table
-    Seat.sideChair(386, 805, 380, 408, Facing.west), // long table (left)
+    Seat.sideChair(1231, 684, 1225, 1252, Facing.west), // middle-right
+    Seat.sideChair(1147, 871, 1141, 1171, Facing.west), // big table
+    Seat.sideChair(386, 815, 380, 408, Facing.west), // long table (left)
     // Facing right (chairs on the left of their table).
-    Seat.sideChair(1085, 674, 1062, 1091, Facing.east), // middle-right
-    Seat.sideChair(914, 861, 891, 920, Facing.east), // big table
-    Seat.sideChair(239, 586, 216, 245, Facing.east), // round table, back
-    Seat.sideChair(239, 620, 216, 245, Facing.east), // round table, front
+    Seat.sideChair(1085, 684, 1062, 1091, Facing.east), // middle-right
+    Seat.sideChair(914, 871, 891, 920, Facing.east), // big table
+    Seat.sideChair(239, 596, 216, 245, Facing.east), // round table, back
+    Seat.sideChair(239, 630, 216, 245, Facing.east), // round table, front
   ];
   static const double seatReach = 62;
 
