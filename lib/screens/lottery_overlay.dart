@@ -19,7 +19,7 @@ class LotteryOverlay extends StatefulWidget {
   State<LotteryOverlay> createState() => _LotteryOverlayState();
 }
 
-/// The slices around the wheel art (assets/images/lw_disc.png), clockwise,
+/// The slices around the wheel art (assets/images/lw_disc2.png), clockwise,
 /// slice 0 centred at the top. Every slice is the same size; the chances
 /// come from the database, not the slice size.
 const List<int> wheelSlices = [50, 200, 80, 500, 100, 150, 1000];
@@ -162,18 +162,18 @@ class _LotteryOverlayState extends State<LotteryOverlay>
   /// The wheel: its slices turn inside the still frame (pointer at the
   /// top), with the SPIN coin in the middle.
   Widget _wheel(double height) {
-    // assets/images/lw_frame.png is 742 x 792; the slice disc (566 px across)
-    // turns about (380, 392) in it.
+    // assets/images/lw_frame2.png is 742 x 792; the slice disc (570 px
+    // across) turns about the hub's centre, (382, 413) in it.
     final k = height / 792;
-    final disc = 566 * k;
+    final disc = 570 * k;
     return SizedBox(
       width: 742 * k,
       height: height,
       child: Stack(
         children: [
           Positioned(
-            left: (380 - 283) * k,
-            top: (392 - 283) * k,
+            left: (382 - 285) * k,
+            top: (413 - 285) * k,
             width: disc,
             height: disc,
             child: AnimatedBuilder(
@@ -182,7 +182,7 @@ class _LotteryOverlayState extends State<LotteryOverlay>
               builder: (context, child) =>
                   Transform.rotate(angle: -_angle.value, child: child),
               child: Image.asset(
-                'assets/images/lw_disc.png',
+                'assets/images/lw_disc2.png',
                 filterQuality: FilterQuality.medium,
               ),
             ),
@@ -190,7 +190,7 @@ class _LotteryOverlayState extends State<LotteryOverlay>
           Positioned.fill(
             child: IgnorePointer(
               child: Image.asset(
-                'assets/images/lw_frame.png',
+                'assets/images/lw_frame2.png',
                 fit: BoxFit.fill,
                 filterQuality: FilterQuality.medium,
               ),
@@ -198,10 +198,10 @@ class _LotteryOverlayState extends State<LotteryOverlay>
           ),
           // The SPIN coin, over the hub; pressing it spins.
           Positioned(
-            left: (380 - 104) * k,
-            top: (392 - 104) * k,
-            width: 208 * k,
-            height: 208 * k,
+            left: (382 - 105) * k,
+            top: (413 - 105) * k,
+            width: 210 * k,
+            height: 210 * k,
             child: Semantics(
               button: true,
               label: AppStrings.lotterySpin,
