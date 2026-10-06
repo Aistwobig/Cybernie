@@ -1894,12 +1894,18 @@ class _HudChatInput extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 4),
-        _ArtButton(
-          asset: 'assets/images/th_send.png',
-          aspect: 134 / 145,
+        // Just the paper plane, no box around it.
+        SizedBox(
           height: height,
-          label: AppStrings.sendButton,
-          onTap: isSending ? null : onSend,
+          child: Center(
+            child: _ArtButton(
+              asset: 'assets/images/th_send2.png',
+              aspect: 77 / 68,
+              height: height * 0.72,
+              label: AppStrings.sendButton,
+              onTap: isSending ? null : onSend,
+            ),
+          ),
         ),
       ],
     );
