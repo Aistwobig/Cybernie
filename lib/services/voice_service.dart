@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flame/components.dart' show Vector2;
+import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'music_service.dart';
@@ -168,8 +169,10 @@ class VoiceService {
     }
   }
 
-  /// [playerId]'s camera picture (null: ours), if there is one.
-  Widget? videoView(String? playerId) => _engine?.videoView(playerId);
+  /// The latest frame of [playerId]'s camera (null: ours), if there is one.
+  /// The caller disposes it.
+  Future<ui.Image?> grabFrame(String? playerId) async =>
+      _engine?.grabFrame(playerId);
 
   /// A call setup message from another player.
   void handleSignal(String fromId, Map<String, dynamic> signal) {

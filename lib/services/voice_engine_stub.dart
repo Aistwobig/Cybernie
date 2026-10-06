@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'dart:ui' as ui;
 
 import 'voice_engine.dart';
 
@@ -51,5 +51,5 @@ class _NoVoice implements VoiceEngine {
   bool hasVideo(String? peerId) => false;
 
   @override
-  Widget? videoView(String? peerId) => null;
+  Future<ui.Image?> grabFrame(String? peerId) async => null;
 }

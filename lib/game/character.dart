@@ -78,22 +78,40 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   late final NamePlate _nameTag = NamePlate(_name)
     ..anchor = Anchor.bottomCenter;
 
-  /// The top centre of the name tag, on the map (a camera picture is shown
-  /// just above it).
-  Vector2 get nameTagTop => _nameTag.absolutePositionOfAnchor(Anchor.topCenter);
+  /// This player's camera, drawn just above the name tag while it's on.
+  CameraPicture? _camera;
 
-  /// Extra room kept above the name tag (map pixels) while a camera picture
-  /// is shown there: speech and "..." bubbles go above it.
-  double get headroom => _headroom;
-  double _headroom = 0;
-  set headroom(double value) {
-    if (value == _headroom) return;
-    _headroom = value;
+  /// Shows (or hides) this player's camera above the name tag. [mirror]:
+  /// flipped like a mirror (our own camera, as people expect to see
+  /// themselves).
+  void showCamera(bool on, {bool mirror = false}) {
+    if (on == (_camera != null)) return;
+    if (on) {
+      final picture = CameraPicture(mirror: mirror);
+      _camera = picture;
+      add(picture);
+    } else {
+      _camera?.removeFromParent();
+      _camera = null;
+    }
     _bubble?.y = _bubbleY;
     _typing?.y = _bubbleY;
   }
 
-  double get _bubbleY => -16 - _headroom;
+  /// The camera's newest frame (disposed here once it's replaced or unused).
+  set cameraFrame(ui.Image image) {
+    final camera = _camera;
+    if (camera == null) {
+      image.dispose();
+    } else {
+      camera.frame = image;
+    }
+  }
+
+  /// Speech and "..." bubbles sit above the name tag, or above the camera
+  /// picture while it's shown.
+  double get _bubbleY =>
+      _camera == null ? -16 : -16 - CameraPicture.pictureSize.y - 6;
 
   /// Counts sheet loads. A load that finishes after a newer one has started
   /// is thrown away, so a quick switch (e.g. the profile arriving while the
@@ -512,6 +530,89 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     ]);
     _emote = emote;
     add(emote);
+  }
+}
+
+/// A player's camera, in a copper frame just above their name tag (green
+/// while they talk). Part of the character, so it moves exactly with them.
+class CameraPicture extends PositionComponent with ParentIsA<Character> {
+  CameraPicture({required this.mirror})
+    : super(size: pictureSize.clone(), anchor: Anchor.bottomCenter);
+
+  /// In map pixels (4:3).
+  static final Vector2 pictureSize = Vector2(92, 69);
+
+  final bool mirror;
+  ui.Image? _frame;
+
+  set frame(ui.Image image) {
+    _frame?.dispose();
+    _frame = image;
+  }
+
+  static const double _border = 2;
+  static const Radius _corner = Radius.circular(6);
+
+  @override
+  void update(double dt) {
+    super.update(dt);
+    // Just above the name tag (whose bottom edge sits at its position).
+    final tag = parent._nameTag;
+    position.setValues(parent.size.x / 2, tag.position.y - tag.size.y - 3);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final box = size.toRect();
+    final outer = RRect.fromRectAndRadius(box, _corner);
+    canvas.drawRRect(
+      outer.shift(const Offset(0, 1.5)),
+      Paint()..color = const Color(0x66000000),
+    );
+    canvas.drawRRect(
+      outer,
+      Paint()
+        ..color = parent.speaking
+            ? const Color(0xFF7CFF8A)
+            : const Color(0xFFB8742E),
+    );
+    final inner = RRect.fromRectAndRadius(
+      box.deflate(_border),
+      _corner - const Radius.circular(_border),
+    );
+    canvas.drawRRect(inner, Paint()..color = const Color(0xFF1A0F08));
+    final frame = _frame;
+    if (frame == null) return;
+    // Fill the box, cropping the frame's longer side (like object-fit:
+    // cover).
+    final target = inner.outerRect;
+    final fw = frame.width.toDouble(), fh = frame.height.toDouble();
+    final scale = math.max(target.width / fw, target.height / fh);
+    final sw = target.width / scale, sh = target.height / scale;
+    final source = Rect.fromLTWH((fw - sw) / 2, (fh - sh) / 2, sw, sh);
+    canvas
+      ..save()
+      ..clipRRect(inner);
+    if (mirror) {
+      canvas
+        ..translate(target.center.dx * 2, 0)
+        ..scale(-1, 1);
+    }
+    canvas
+      ..drawImageRect(
+        frame,
+        source,
+        target,
+        Paint()..filterQuality = FilterQuality.medium,
+      )
+      ..restore();
+  }
+
+  @override
+  void onRemove() {
+    _frame?.dispose();
+    _frame = null;
+    super.onRemove();
   }
 }
 

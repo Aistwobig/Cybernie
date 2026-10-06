@@ -1,9 +1,9 @@
 import 'dart:js_interop';
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:web/web.dart' as web;
 
 import 'voice_engine.dart';
@@ -39,9 +39,8 @@ class _Call {
   /// Where our camera goes out in this call (nothing is sent while it's off).
   web.RTCRtpSender? videoSender;
 
-  /// Their camera picture, and the name Flutter shows it by.
+  /// Their camera, playing in a hidden <video> (the game draws its frames).
   web.HTMLVideoElement? video;
-  String? viewType;
 
   /// Network candidates that arrived before the offer/answer was set.
   final List<web.RTCIceCandidateInit> early = [];
@@ -56,8 +55,6 @@ class _WebVoice implements VoiceEngine {
   web.MediaStream? _mic;
   web.MediaStream? _camera;
   web.HTMLVideoElement? _myVideo;
-  String? _myViewType;
-  static int _views = 0;
   web.AudioContext? _audio;
   web.AnalyserNode? _myMeter;
   bool _micOn = true;
@@ -132,16 +129,12 @@ class _WebVoice implements VoiceEngine {
           .getUserMedia(web.MediaStreamConstraints(video: constraints))
           .toDart;
       _camera = camera;
-      _myVideo = _videoElement(camera, mirror: true);
-      _myViewType = _register(_myVideo!);
+      _myVideo = _videoElement(camera);
     } else {
       final camera = _camera;
       _camera = null;
-      _myVideo
-        ?..pause()
-        ..srcObject = null;
+      _dropVideo(_myVideo);
       _myVideo = null;
-      _myViewType = null;
       if (camera != null) {
         for (final track in camera.getTracks().toDart) {
           track.stop();
@@ -161,42 +154,55 @@ class _WebVoice implements VoiceEngine {
     await sender.replaceTrack(tracks.isEmpty ? null : tracks.first).toDart;
   }
 
-  /// A silent <video> filling its box, playing [stream].
-  web.HTMLVideoElement _videoElement(
-    web.MediaStream stream, {
-    bool mirror = false,
-  }) {
+  /// A silent <video> playing [stream], kept on the page but invisible: the
+  /// game copies its frames into the map itself. (Browsers may pause a
+  /// video that isn't on the page, or an "autoplay" one that's off screen,
+  /// so it's a 1-pixel speck in the corner, started by hand.)
+  web.HTMLVideoElement _videoElement(web.MediaStream stream) {
     final video = web.HTMLVideoElement()
-      ..autoplay = true
       ..muted = true
       ..playsInline = true
       ..srcObject = stream;
     video.style
-      ..width = '100%'
-      ..height = '100%'
-      ..setProperty('object-fit', 'cover')
+      ..position = 'fixed'
+      ..left = '0'
+      ..bottom = '0'
+      ..width = '1px'
+      ..height = '1px'
+      ..opacity = '0.01'
       ..setProperty('pointer-events', 'none');
-    if (mirror) video.style.setProperty('transform', 'scaleX(-1)');
+    web.document.body?.append(video);
     video.play().toDart.catchError((Object _) => null);
     return video;
   }
 
-  /// Lets Flutter show [video] (HtmlElementView), under a new name.
-  static String _register(web.HTMLVideoElement video) {
-    final type = 'cybernie-camera-${_views++}';
-    ui_web.platformViewRegistry.registerViewFactory(type, (int _) => video);
-    return type;
+  static void _dropVideo(web.HTMLVideoElement? video) {
+    if (video == null) return;
+    video
+      ..pause()
+      ..srcObject = null
+      ..remove();
   }
 
-  @override
-  bool hasVideo(String? peerId) =>
-      (peerId == null ? _myViewType : _calls[peerId]?.viewType) != null;
+  web.HTMLVideoElement? _videoOf(String? peerId) =>
+      peerId == null ? _myVideo : _calls[peerId]?.video;
 
   @override
-  Widget? videoView(String? peerId) {
-    final type = peerId == null ? _myViewType : _calls[peerId]?.viewType;
-    if (type == null) return null;
-    return HtmlElementView(key: ValueKey(type), viewType: type);
+  bool hasVideo(String? peerId) => _videoOf(peerId) != null;
+
+  @override
+  Future<ui.Image?> grabFrame(String? peerId) async {
+    final video = _videoOf(peerId);
+    // 2 = HAVE_CURRENT_DATA: a frame is ready.
+    if (video == null || video.readyState < 2 || video.videoWidth == 0) {
+      return null;
+    }
+    if (video.paused) video.play().toDart.catchError((Object _) => null);
+    return ui_web.createImageFromTextureSource(
+      video,
+      width: video.videoWidth,
+      height: video.videoHeight,
+    );
   }
 
   @override
@@ -261,12 +267,8 @@ class _WebVoice implements VoiceEngine {
       // Their camera: a silent picture (it shows only while their camera
       // is on; see VoiceService.watching).
       if (event.track.kind == 'video') {
-        call.video
-          ?..pause()
-          ..srcObject = null;
-        final video = _videoElement(web.MediaStream()..addTrack(event.track));
-        call.video = video;
-        call.viewType = _register(video);
+        _dropVideo(call.video);
+        call.video = _videoElement(web.MediaStream()..addTrack(event.track));
         return;
       }
       final streams = event.streams.toDart;
@@ -325,9 +327,7 @@ class _WebVoice implements VoiceEngine {
     call.audio
       ?..pause()
       ..srcObject = null;
-    call.video
-      ?..pause()
-      ..srcObject = null;
+    _dropVideo(call.video);
   }
 
   @override

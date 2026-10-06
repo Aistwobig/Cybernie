@@ -4,7 +4,6 @@ import 'dart:ui' show ImageFilter;
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -172,6 +171,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _fireSound?.cancel();
     _lotteryCheck?.cancel();
     _voiceTick?.cancel();
+    _cameraPump?.cancel();
     _voice.leave();
     _fireLoop.dispose();
     _effectTicker?.cancel();
@@ -650,8 +650,59 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     // Like Discord: a soft chime as others come into (or drop out of) our
     // voice chat.
     ..onPeerJoined = ((_) => SfxService.play(Sfx.voiceJoin, gain: 0.5))
-    ..onPeerLeft = ((_) => SfxService.play(Sfx.voiceLeave, gain: 0.5));
+    ..onPeerLeft = ((_) => SfxService.play(Sfx.voiceLeave, gain: 0.5))
+    ..cameraOn.addListener(_camerasChanged)
+    ..watching.addListener(_camerasChanged);
   Timer? _voiceTick;
+
+  /// Copies the cameras' newest frames into the game (drawn above each
+  /// player's head) about 15 times a second, while any camera is shown.
+  Timer? _cameraPump;
+  final Set<String?> _grabbing = {};
+
+  /// Whose cameras to show (null: ours).
+  Set<String?> get _cameraIds => {
+    if (_voice.cameraOn.value) null,
+    ..._voice.watching.value,
+  };
+
+  void _camerasChanged() {
+    final ids = _cameraIds;
+    _game.showCameras(ids);
+    if (ids.isEmpty) {
+      _cameraPump?.cancel();
+      _cameraPump = null;
+    } else {
+      _cameraPump ??= Timer.periodic(
+        const Duration(milliseconds: 66),
+        (_) => _pumpCameras(),
+      );
+    }
+  }
+
+  void _pumpCameras() {
+    final ids = _cameraIds;
+    // Again every time, in case a player's character was rebuilt.
+    _game.showCameras(ids);
+    for (final id in ids) {
+      // One grab at a time per camera.
+      if (!_grabbing.add(id)) continue;
+      _voice.grabFrame(id).then(
+        (image) {
+          _grabbing.remove(id);
+          if (image == null) return;
+          if (mounted) {
+            _game.setCameraFrame(id, image);
+          } else {
+            image.dispose();
+          }
+        },
+        onError: (Object _) {
+          _grabbing.remove(id);
+        },
+      );
+    }
+  }
 
   Future<void> _joinVoice() async {
     final room = _room;
@@ -870,10 +921,6 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         children: [
           Positioned.fill(
             child: GameWidget(game: _game, focusNode: _gameFocus),
-          ),
-          // Cameras that are on, each over its player's head.
-          Positioned.fill(
-            child: _CameraBubbles(voice: _voice, game: _game),
           ),
           Positioned(
             top: 12,
@@ -1255,137 +1302,6 @@ class _VoiceButtons extends StatelessWidget {
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-/// The cameras that are on (ours, and those of the nearby players we're in
-/// a voice call with), each floating just above its player's name tag and
-/// following them around, lit green while they talk.
-class _CameraBubbles extends StatelessWidget {
-  const _CameraBubbles({required this.voice, required this.game});
-
-  final VoiceService voice;
-  final TavernGame game;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: Listenable.merge([voice.cameraOn, voice.watching]),
-      builder: (context, _) {
-        final ids = <String?>{
-          if (voice.cameraOn.value) null,
-          ...voice.watching.value,
-        };
-        if (ids.isEmpty) {
-          game.setCameraHeadroom(const {}, 0);
-          return const SizedBox.shrink();
-        }
-        return _FollowingCameras(voice: voice, game: game, ids: ids);
-      },
-    );
-  }
-}
-
-/// Moves the camera pictures along with their players every frame.
-class _FollowingCameras extends StatefulWidget {
-  const _FollowingCameras({
-    required this.voice,
-    required this.game,
-    required this.ids,
-  });
-
-  final VoiceService voice;
-  final TavernGame game;
-
-  /// Whose cameras (null: ours).
-  final Set<String?> ids;
-
-  @override
-  State<_FollowingCameras> createState() => _FollowingCamerasState();
-}
-
-class _FollowingCamerasState extends State<_FollowingCameras>
-    with SingleTickerProviderStateMixin {
-  late final Ticker _ticker = createTicker((_) => setState(() {}))..start();
-
-  /// A picture is this many map pixels wide (4:3), whatever the zoom...
-  static const double _mapWidth = 92;
-
-  /// ...but never smaller or bigger than this on screen.
-  static const double _minWidth = 76;
-  static const double _maxWidth = 170;
-
-  /// Gap between the picture and the name tag, in screen pixels.
-  static const double _gap = 4;
-
-  @override
-  void dispose() {
-    _ticker.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final game = widget.game;
-    final zoom = game.zoom;
-    final width = (_mapWidth * zoom).clamp(_minWidth, _maxWidth);
-    final height = width * 3 / 4;
-    // Speech bubbles go above the pictures.
-    game.setCameraHeadroom(widget.ids, (height + _gap * 2) / zoom);
-    final talking = widget.voice.speaking.value;
-    final myId = widget.voice.myId;
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        for (final id in widget.ids)
-          if (game.nameTagOnScreen(id) case final at?)
-            Positioned(
-              // Keyed so each picture keeps its <video> as players move.
-              key: ValueKey(id ?? 'me'),
-              left: at.dx - width / 2,
-              top: at.dy - _gap - height,
-              width: width,
-              height: height,
-              child: _CameraTile(
-                view: widget.voice.videoView(id),
-                speaking: talking.contains(id ?? myId),
-              ),
-            ),
-      ],
-    );
-  }
-}
-
-class _CameraTile extends StatelessWidget {
-  const _CameraTile({required this.view, required this.speaking});
-
-  final Widget? view;
-  final bool speaking;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A0F08),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: speaking ? const Color(0xFF7CFF8A) : const Color(0xFFB8742E),
-            width: 2,
-          ),
-          boxShadow: const [
-            BoxShadow(color: Color(0x88000000), blurRadius: 6),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(2),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: view ?? const SizedBox.expand(),
-          ),
-        ),
       ),
     );
   }
