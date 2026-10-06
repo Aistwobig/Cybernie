@@ -17,6 +17,7 @@ import 'night_lighting.dart';
 import 'player.dart';
 import 'remote_player.dart';
 import 'tavern_map.dart';
+import 'tavern_npc.dart';
 
 /// Bernie's Tavern: the map, the local player, an on-screen joystick and
 /// WASD / arrow-key movement. Chat and the rest of the UI are Flutter
@@ -45,6 +46,8 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     AppImages.fireplaceFire,
     AppImages.joystickBase,
     AppImages.joystickKnob,
+    'assets/images/npc_bard.png',
+    'assets/images/npc_couple.png',
     for (final c in gameCharacters) ...[
       c.sheet,
       ?c.idleSheet,
@@ -550,6 +553,10 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     world.addAll([
       map,
       fire,
+      TavernNpc.bard(Vector2(TavernMap.bardSpot.dx, TavernMap.bardSpot.dy)),
+      TavernNpc.couple(
+        Vector2(TavernMap.coupleSpot.dx, TavernMap.coupleSpot.dy),
+      ),
       _noticeBoard,
       bernie,
       counterFront,
