@@ -4,6 +4,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -870,6 +871,10 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           Positioned.fill(
             child: GameWidget(game: _game, focusNode: _gameFocus),
           ),
+          // Cameras that are on, each over its player's head.
+          Positioned.fill(
+            child: _CameraBubbles(voice: _voice, game: _game),
+          ),
           Positioned(
             top: 12,
             left: 12,
@@ -924,11 +929,6 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                     padding: const EdgeInsets.only(bottom: 4),
                     child: _EffectChip(drink: drink, seconds: seconds),
                   ),
-                _CameraTiles(
-                  voice: _voice,
-                  nameOf: _nameInRoom,
-                  small: constraints.maxWidth < 700,
-                ),
               ],
             ),
           ),
@@ -1260,113 +1260,131 @@ class _VoiceButtons extends StatelessWidget {
   }
 }
 
-/// The cameras that are on: ours ("You") and those of the nearby players
-/// we're in a voice call with, two to a row, lit green while they talk.
-class _CameraTiles extends StatelessWidget {
-  const _CameraTiles({
-    required this.voice,
-    required this.nameOf,
-    required this.small,
-  });
+/// The cameras that are on (ours, and those of the nearby players we're in
+/// a voice call with), each floating just above its player's name tag and
+/// following them around, lit green while they talk.
+class _CameraBubbles extends StatelessWidget {
+  const _CameraBubbles({required this.voice, required this.game});
 
   final VoiceService voice;
-  final String Function(String playerId) nameOf;
-
-  /// Smaller tiles on phones.
-  final bool small;
+  final TavernGame game;
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: Listenable.merge([
-        voice.cameraOn,
-        voice.watching,
-        voice.speaking,
-      ]),
+      listenable: Listenable.merge([voice.cameraOn, voice.watching]),
       builder: (context, _) {
-        final width = small ? 96.0 : 132.0;
-        final talking = voice.speaking.value;
-        final tiles = [
-          if (voice.cameraOn.value)
-            (null, AppStrings.cameraYou, talking.contains(voice.myId)),
-          for (final id in voice.watching.value)
-            (id, nameOf(id), talking.contains(id)),
-        ];
-        if (tiles.isEmpty) return const SizedBox.shrink();
-        return SizedBox(
-          width: width * 2 + 6,
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final (id, name, speaking) in tiles)
-                _CameraTile(
-                  view: voice.videoView(id),
-                  name: name,
-                  speaking: speaking,
-                  width: width,
-                ),
-            ],
-          ),
-        );
+        final ids = <String?>{
+          if (voice.cameraOn.value) null,
+          ...voice.watching.value,
+        };
+        if (ids.isEmpty) {
+          game.setCameraHeadroom(const {}, 0);
+          return const SizedBox.shrink();
+        }
+        return _FollowingCameras(voice: voice, game: game, ids: ids);
       },
     );
   }
 }
 
-class _CameraTile extends StatelessWidget {
-  const _CameraTile({
-    required this.view,
-    required this.name,
-    required this.speaking,
-    required this.width,
+/// Moves the camera pictures along with their players every frame.
+class _FollowingCameras extends StatefulWidget {
+  const _FollowingCameras({
+    required this.voice,
+    required this.game,
+    required this.ids,
   });
 
-  final Widget? view;
-  final String name;
-  final bool speaking;
-  final double width;
+  final VoiceService voice;
+  final TavernGame game;
+
+  /// Whose cameras (null: ours).
+  final Set<String?> ids;
+
+  @override
+  State<_FollowingCameras> createState() => _FollowingCamerasState();
+}
+
+class _FollowingCamerasState extends State<_FollowingCameras>
+    with SingleTickerProviderStateMixin {
+  late final Ticker _ticker = createTicker((_) => setState(() {}))..start();
+
+  /// A picture is this many map pixels wide (4:3), whatever the zoom...
+  static const double _mapWidth = 92;
+
+  /// ...but never smaller or bigger than this on screen.
+  static const double _minWidth = 76;
+  static const double _maxWidth = 170;
+
+  /// Gap between the picture and the name tag, in screen pixels.
+  static const double _gap = 4;
+
+  @override
+  void dispose() {
+    _ticker.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: width * 3 / 4,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A0F08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: speaking ? const Color(0xFF7CFF8A) : const Color(0xFFB8742E),
-          width: 2,
-        ),
-        boxShadow: const [BoxShadow(color: Color(0x88000000), blurRadius: 6)],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            IgnorePointer(child: view ?? const SizedBox.shrink()),
-            // Their name along the bottom.
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(6, 2, 6, 3),
-                color: const Color(0xAA000000),
-                child: Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFFF5E6C8),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+    final game = widget.game;
+    final zoom = game.zoom;
+    final width = (_mapWidth * zoom).clamp(_minWidth, _maxWidth);
+    final height = width * 3 / 4;
+    // Speech bubbles go above the pictures.
+    game.setCameraHeadroom(widget.ids, (height + _gap * 2) / zoom);
+    final talking = widget.voice.speaking.value;
+    final myId = widget.voice.myId;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        for (final id in widget.ids)
+          if (game.nameTagOnScreen(id) case final at?)
+            Positioned(
+              // Keyed so each picture keeps its <video> as players move.
+              key: ValueKey(id ?? 'me'),
+              left: at.dx - width / 2,
+              top: at.dy - _gap - height,
+              width: width,
+              height: height,
+              child: _CameraTile(
+                view: widget.voice.videoView(id),
+                speaking: talking.contains(id ?? myId),
               ),
             ),
+      ],
+    );
+  }
+}
+
+class _CameraTile extends StatelessWidget {
+  const _CameraTile({required this.view, required this.speaking});
+
+  final Widget? view;
+  final bool speaking;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A0F08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: speaking ? const Color(0xFF7CFF8A) : const Color(0xFFB8742E),
+            width: 2,
+          ),
+          boxShadow: const [
+            BoxShadow(color: Color(0x88000000), blurRadius: 6),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(2),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: view ?? const SizedBox.expand(),
+          ),
         ),
       ),
     );

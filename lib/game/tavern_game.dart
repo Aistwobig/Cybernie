@@ -12,6 +12,7 @@ import '../constants/drinks.dart';
 import '../constants/emotes.dart';
 import '../theme/app_theme.dart';
 import 'bernie.dart';
+import 'character.dart' show Character;
 import 'highlight.dart';
 import 'night_lighting.dart';
 import 'player.dart';
@@ -296,6 +297,29 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   Map<String, Vector2> get otherPlayerPositions => {
     for (final entry in _others.entries) entry.key: entry.value.position,
   };
+
+  /// Where the top of [playerId]'s name tag is on screen, in the game
+  /// widget's pixels (null id: ours), or null if they aren't shown.
+  Offset? nameTagOnScreen(String? playerId) {
+    if (!isLoaded) return null;
+    final Character? who = playerId == null ? player : _others[playerId];
+    if (who == null || !who.isLoaded) return null;
+    final at = camera.localToGlobal(who.nameTagTop);
+    return Offset(at.x, at.y);
+  }
+
+  /// Screen pixels per map pixel.
+  double get zoom => camera.viewfinder.zoom;
+
+  /// Keeps [headroom] map pixels free above the name tags of everyone in
+  /// [ids] (null: us) for their camera pictures, and none above anyone else.
+  void setCameraHeadroom(Set<String?> ids, double headroom) {
+    if (!isLoaded) return;
+    if (player.isLoaded) player.headroom = ids.contains(null) ? headroom : 0;
+    for (final entry in _others.entries) {
+      entry.value.headroom = ids.contains(entry.key) ? headroom : 0;
+    }
+  }
 
   /// Shows the talking waves over everyone in [ids] ([myId] is us).
   void setSpeaking(Set<String> ids, String? myId) {

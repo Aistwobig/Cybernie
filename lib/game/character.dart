@@ -78,6 +78,23 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   late final NamePlate _nameTag = NamePlate(_name)
     ..anchor = Anchor.bottomCenter;
 
+  /// The top centre of the name tag, on the map (a camera picture is shown
+  /// just above it).
+  Vector2 get nameTagTop => _nameTag.absolutePositionOfAnchor(Anchor.topCenter);
+
+  /// Extra room kept above the name tag (map pixels) while a camera picture
+  /// is shown there: speech and "..." bubbles go above it.
+  double get headroom => _headroom;
+  double _headroom = 0;
+  set headroom(double value) {
+    if (value == _headroom) return;
+    _headroom = value;
+    _bubble?.y = _bubbleY;
+    _typing?.y = _bubbleY;
+  }
+
+  double get _bubbleY => -16 - _headroom;
+
   /// Counts sheet loads. A load that finishes after a newer one has started
   /// is thrown away, so a quick switch (e.g. the profile arriving while the
   /// default character is still loading) never mixes two characters' sheets.
@@ -398,7 +415,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     showTyping(false);
     _bubble?.removeFromParent();
     final bubble = SpeechBubble(text)
-      ..position = Vector2(size.x / 2, -16)
+      ..position = Vector2(size.x / 2, _bubbleY)
       ..anchor = Anchor.bottomCenter;
     _bubble = bubble;
     add(bubble);
@@ -418,7 +435,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     if (!isLoaded || (_typing?.isMounted ?? false)) return;
     _bubble?.removeFromParent();
     final bubble = TypingBubble()
-      ..position = Vector2(size.x / 2, -16)
+      ..position = Vector2(size.x / 2, _bubbleY)
       ..anchor = Anchor.bottomCenter;
     _typing = bubble;
     add(bubble);
