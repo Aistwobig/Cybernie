@@ -100,4 +100,39 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   }
+
+  testWidgets('back gestures and buttons do not leave the tavern', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(844, 390);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+
+    final navigator = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorKey: navigator,
+        theme: AppTheme.theme,
+        home: const Text('Select a room'),
+      ),
+    );
+    navigator.currentState!.push(
+      MaterialPageRoute<void>(builder: (_) => const TavernRoomScreen()),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(TavernRoomScreen), findsOneWidget);
+
+    // The phone's back button, the browser's back and an edge swipe all
+    // ask the app to go back this way.
+    await tester.binding.handlePopRoute();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(TavernRoomScreen), findsOneWidget);
+    expect(await navigator.currentState!.maybePop(), isTrue);
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.byType(TavernRoomScreen), findsOneWidget);
+
+    // Leave the screen so the game's timers stop.
+    await tester.pumpWidget(const SizedBox());
+  });
 }

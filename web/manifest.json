@@ -6,6 +6,6 @@
   "background_color": "#FFFFFF",
   "theme_color": "#6750A4",
   "description": "My 6ADET final project.",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "prefer_related_applications": false
 }

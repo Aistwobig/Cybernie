@@ -101,10 +101,6 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     _game.onPlayerTap = (id) => _openPlayerCard(id, fromList: false);
     _game.onNoticeBoardNearby = (near) {
@@ -153,7 +149,6 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 
   @override
   void dispose() {
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     _game
       ..onLocalMove = null
@@ -900,15 +895,23 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final room = _buildRoom();
-          return constraints.maxHeight > constraints.maxWidth
-              ? RotatedBox(quarterTurns: 1, child: room)
-              : room;
-        },
+    // Only the leave button (the back arrow in the room title) takes you
+    // out: swiping from the edge, the phone's back button and the
+    // browser's back do nothing here.
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            // The room is drawn landscape; on a phone held upright it's
+            // turned sideways rather than forcing the phone to rotate.
+            final room = _buildRoom();
+            return constraints.maxHeight > constraints.maxWidth
+                ? RotatedBox(quarterTurns: 1, child: room)
+                : room;
+          },
+        ),
       ),
     );
   }
