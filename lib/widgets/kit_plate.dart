@@ -33,7 +33,21 @@ enum Kit {
   goldButton('assets/images/bjf_btn_gold.png', Rect.fromLTWH(48, 48, 461, 69)),
 
   /// Dark tag with an arrow on its right, pointing at the cards.
-  tag('assets/images/bjf_tag.png', Rect.fromLTWH(42, 46, 350, 78));
+  tag('assets/images/bjf_tag.png', Rect.fromLTWH(42, 46, 350, 78)),
+
+  // The tavern HUD (assets/sheets/original_tavern_hud_kit2.png).
+
+  /// Riveted plate (player count, coins).
+  hudPlate('assets/images/th_count.png', Rect.fromLTWH(56, 50, 232, 40)),
+
+  /// The long riveted board behind the chat log.
+  hudPanel('assets/images/th_panel.png', Rect.fromLTWH(80, 70, 1211, 96)),
+
+  /// The "Chat" tab, a big rivet on its left.
+  hudTab('assets/images/th_chat_tab.png', Rect.fromLTWH(110, 52, 260, 40)),
+
+  /// The message box, with its send button on the right.
+  hudInput('assets/images/th_input.png', Rect.fromLTWH(120, 52, 880, 44));
 
   const Kit(this.asset, this.slice);
 

@@ -7,6 +7,8 @@ import '../models/profile.dart';
 import '../services/coin_service.dart';
 import '../services/friends_service.dart';
 import '../services/inventory_service.dart';
+import '../services/music_service.dart';
+import '../services/sfx_service.dart';
 import '../services/notice_board_service.dart';
 import '../services/profile_service.dart';
 import '../services/report_service.dart';
@@ -1361,6 +1363,88 @@ class _InventoryTile extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The tavern's settings (the gear by the chat): music and sound effects
+/// volume, the same ones as in the Home menu.
+class SettingsPanel extends StatelessWidget {
+  const SettingsPanel({super.key, required this.onClose});
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return TavernPanel(
+      title: AppStrings.settingsTitle,
+      onClose: onClose,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        children: [
+          _VolumeSlider(
+            label: AppStrings.musicLabel,
+            icon: Icons.music_note,
+            volume: MusicService.volume,
+            onChanged: MusicService.setVolume,
+            onDone: MusicService.saveVolume,
+          ),
+          const SizedBox(height: 10),
+          _VolumeSlider(
+            label: AppStrings.soundEffectsLabel,
+            icon: Icons.volume_up,
+            volume: SfxService.volume,
+            onChanged: SfxService.setVolume,
+            onDone: SfxService.saveVolume,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VolumeSlider extends StatelessWidget {
+  const _VolumeSlider({
+    required this.label,
+    required this.icon,
+    required this.volume,
+    required this.onChanged,
+    required this.onDone,
+  });
+
+  final String label;
+  final IconData icon;
+  final ValueNotifier<double> volume;
+  final void Function(double) onChanged;
+  final VoidCallback onDone;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<double>(
+      valueListenable: volume,
+      builder: (context, value, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: AppColors.ink),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  style: _body(size: 14, weight: FontWeight.w700),
+                ),
+              ),
+              Text('${(value * 100).round()}%', style: _muted(size: 12)),
+            ],
+          ),
+          Slider(
+            value: value,
+            onChanged: onChanged,
+            onChangeEnd: (_) => onDone(),
           ),
         ],
       ),

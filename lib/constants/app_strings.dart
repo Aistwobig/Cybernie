@@ -170,6 +170,10 @@ class AppStrings {
   static const String bernieComeCloser =
       "Come up to the bar and I'll pour you something!";
   static const String orderButton = 'ORDER';
+  static const String sendButton = 'Send';
+  static const String settingsTitle = 'Settings';
+  static const String getCoinsButton = 'Get more coins';
+
   // Voice chat
   static const String voiceJoin = 'Join voice chat';
   static const String voiceJoining = 'Joining voice chat...';

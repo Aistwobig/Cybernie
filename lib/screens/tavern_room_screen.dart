@@ -27,6 +27,7 @@ import '../services/sfx_service.dart';
 import '../game/tavern_map.dart';
 import '../theme/app_theme.dart';
 import '../widgets/coin_chip.dart';
+import '../widgets/kit_plate.dart';
 import '../widgets/leaderboard_panel.dart';
 import 'blackjack_overlay.dart';
 import 'lottery_overlay.dart';
@@ -593,6 +594,14 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     });
   }
 
+  void _openSettings() {
+    SfxService.play(Sfx.click, gain: 0.6);
+    setState(() {
+      _panel = _Panel.settings;
+      _emotesOpen = false;
+    });
+  }
+
   void _openInventory() {
     SfxService.play(Sfx.click, gain: 0.6);
     setState(() {
@@ -788,6 +797,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           onClose: _closePanel,
           onBack: () => _openPlayerCard(cardId, fromList: _cameFromList),
         );
+      case _Panel.settings:
+        return SettingsPanel(onClose: _closePanel);
       case _Panel.tasks:
         return TasksPanel(onClaim: _claimTask, onClose: _closePanel);
       case _Panel.inventory:
@@ -993,6 +1004,15 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
               ),
               const SizedBox(width: 8),
               const CoinChip(),
+              const SizedBox(width: 4),
+              // Ways to earn more coins: the tasks.
+              _ArtButton(
+                asset: 'assets/images/th_plus.png',
+                aspect: 159 / 132,
+                height: 38,
+                label: AppStrings.getCoinsButton,
+                onTap: _openTasks,
+              ),
             ],
           ),
         ),
@@ -1026,19 +1046,13 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (_messages.isNotEmpty) ...[
-                _ChatLog(
+              if (_messages.isNotEmpty && !_chatCollapsed) ...[
+                _HudChatLog(
                   messages: _messages.length > _visibleMessages
                       ? _messages.sublist(_messages.length - _visibleMessages)
                       : _messages,
-                  collapsed: _chatCollapsed,
-                  unread: _unreadMessages,
-                  onToggle: () => setState(() {
-                    _chatCollapsed = !_chatCollapsed;
-                    if (!_chatCollapsed) _unreadMessages = 0;
-                  }),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
               ],
               if (_emotesOpen) ...[
                 _EmotePicker(onPick: _sendEmote),
@@ -1050,18 +1064,60 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                 ),
                 const SizedBox(height: 4),
               ],
-              _ChatInput(
-                controller: _messageController,
-                isSending: _isSending,
-                onSend: _sendMessage,
-                emotesOpen: _emotesOpen,
-                onToggleEmotes: () =>
-                    setState(() => _emotesOpen = !_emotesOpen),
-                leading: [
+              // The chat tab and settings sit on the message box's top edge.
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: _HudChatTab.height - 8),
+                    child: _HudChatInput(
+                      controller: _messageController,
+                      isSending: _isSending,
+                      onSend: _sendMessage,
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    child: _HudChatTab(
+                      collapsed: _chatCollapsed,
+                      unread: _unreadMessages,
+                      onToggle: () => setState(() {
+                        _chatCollapsed = !_chatCollapsed;
+                        if (!_chatCollapsed) _unreadMessages = 0;
+                      }),
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: -4,
+                    child: _ArtButton(
+                      asset: 'assets/images/th_gear.png',
+                      aspect: 134 / 145,
+                      height: 34,
+                      label: AppStrings.settingsTitle,
+                      onTap: _openSettings,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // Voice chat and emotes, under the message box.
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   _VoiceButtons(
                     voice: _voice,
                     onJoin: _joinVoice,
                     onLeave: _leaveVoice,
+                  ),
+                  const SizedBox(width: 6),
+                  _ArtButton(
+                    asset: 'assets/images/th_emoji.png',
+                    aspect: 227 / 164,
+                    height: _VoiceButtons.height,
+                    label: AppStrings.emotesButton,
+                    onTap: () => setState(() => _emotesOpen = !_emotesOpen),
                   ),
                 ],
               ),
@@ -1072,8 +1128,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   }
 }
 
-/// Voice chat controls beside the chat box: a headset to join; once in,
-/// a mic button (mute / unmute) and a red button to leave.
+/// Voice chat controls under the chat box: the mic (tap to join voice; once
+/// in, tap to mute / unmute) and, while in, the red hang-up button.
 class _VoiceButtons extends StatelessWidget {
   const _VoiceButtons({
     required this.voice,
@@ -1085,95 +1141,112 @@ class _VoiceButtons extends StatelessWidget {
   final VoidCallback onJoin;
   final VoidCallback onLeave;
 
-  Widget _button({
-    required String tooltip,
-    required Widget child,
-    required VoidCallback? onPressed,
-    Color? background,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: SizedBox(
-        width: 40,
-        height: 40,
-        child: OutlinedButton(
-          style: OutlinedButton.styleFrom(
-            backgroundColor: background ?? AppColors.parchment,
-            padding: EdgeInsets.zero,
-            side: BorderSide(color: AppColors.ink),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-          onPressed: onPressed,
-          child: child,
-        ),
-      ),
-    );
-  }
+  static const double height = 40;
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<VoiceState>(
       valueListenable: voice.state,
-      builder: (context, state, _) {
-        switch (state) {
-          case VoiceState.off:
-            return _button(
-              tooltip: AppStrings.voiceJoin,
-              onPressed: onJoin,
-              child: Icon(Icons.headset_mic, size: 20, color: AppColors.ink),
-            );
-          case VoiceState.connecting:
-            return _button(
-              tooltip: AppStrings.voiceJoining,
-              onPressed: null,
-              child: SizedBox.square(
-                dimension: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: AppColors.ink,
+      builder: (context, state, _) => ValueListenableBuilder<bool>(
+        valueListenable: voice.micOn,
+        builder: (context, micOn, _) {
+          final inVoice = state == VoiceState.on;
+          final mic = _ArtButton(
+            asset: 'assets/images/th_mic.png',
+            aspect: 222 / 164,
+            height: height,
+            label: switch (state) {
+              VoiceState.off => AppStrings.voiceJoin,
+              VoiceState.connecting => AppStrings.voiceJoining,
+              VoiceState.on =>
+                micOn ? AppStrings.voiceMute : AppStrings.voiceUnmute,
+            },
+            onTap: switch (state) {
+              VoiceState.off => onJoin,
+              VoiceState.connecting => null,
+              VoiceState.on => () => voice.setMic(!micOn),
+            },
+            overlay: switch (state) {
+              // Not in voice yet: a small "+" to join.
+              VoiceState.off => const Align(
+                alignment: Alignment(0.62, 0.55),
+                child: Icon(
+                  Icons.add_circle,
+                  size: 14,
+                  color: Color(0xFFF5DDAE),
                 ),
               ),
-            );
-          case VoiceState.on:
-            return ValueListenableBuilder<bool>(
-              valueListenable: voice.micOn,
-              builder: (context, micOn, _) => Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _button(
-                    tooltip: micOn
-                        ? AppStrings.voiceMute
-                        : AppStrings.voiceUnmute,
-                    onPressed: () => voice.setMic(!micOn),
-                    background: micOn
-                        ? const Color(0xFF2E8B4E)
-                        : AppColors.parchment,
-                    child: Icon(
-                      micOn ? Icons.mic : Icons.mic_off,
-                      size: 20,
-                      color: micOn ? Colors.white : AppColors.ink,
-                    ),
+              VoiceState.connecting => const Center(
+                child: SizedBox.square(
+                  dimension: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFFF5DDAE),
                   ),
-                  const SizedBox(width: 6),
-                  _button(
-                    tooltip: AppStrings.voiceLeave,
-                    onPressed: onLeave,
-                    background: const Color(0xFFB3261E),
-                    child: const Icon(
-                      Icons.call_end,
-                      size: 20,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            );
-        }
-      },
+              // Muted: a red slash across the mic. Live: a green glow.
+              VoiceState.on =>
+                micOn
+                    ? const DecoratedBox(
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(color: Color(0x557CFF8A), blurRadius: 10),
+                          ],
+                        ),
+                      )
+                    : CustomPaint(painter: _SlashPainter()),
+            },
+          );
+          return Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              mic,
+              if (inVoice) ...[
+                const SizedBox(width: 6),
+                _ArtButton(
+                  asset: 'assets/images/th_hangup.png',
+                  aspect: 232 / 164,
+                  height: height,
+                  label: AppStrings.voiceLeave,
+                  onTap: onLeave,
+                ),
+              ],
+            ],
+          );
+        },
+      ),
     );
   }
+}
+
+/// The red line across a muted mic.
+class _SlashPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final from = Offset(size.width * 0.33, size.height * 0.25);
+    final to = Offset(size.width * 0.67, size.height * 0.75);
+    canvas
+      ..drawLine(
+        from,
+        to,
+        Paint()
+          ..color = const Color(0xFF2A1408)
+          ..strokeWidth = 5
+          ..strokeCap = StrokeCap.round,
+      )
+      ..drawLine(
+        from,
+        to,
+        Paint()
+          ..color = const Color(0xFFE5483B)
+          ..strokeWidth = 2.6
+          ..strokeCap = StrokeCap.round,
+      );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 /// A framed square HUD button (tasks, inventory, leaderboard), with an
@@ -1391,6 +1464,7 @@ enum _Panel {
   leaderboard,
   tasks,
   inventory,
+  settings,
 }
 
 /// The reactions, as big tappable pictures above the chat box. They share
@@ -1457,72 +1531,126 @@ class _RoomTitle extends StatelessWidget {
   final int playerCount;
   final VoidCallback onShowPlayers;
 
+  static const double height = 40;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.only(right: 4),
-      decoration: BoxDecoration(
-        color: AppColors.parchment.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.ink.withValues(alpha: 0.55)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            tooltip: AppStrings.leaveRoomButton,
-            onPressed: onBack,
-            icon: const Icon(Icons.arrow_back, size: 20),
-            color: AppColors.ink,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ArtButton(
+          asset: 'assets/images/th_back.png',
+          aspect: 195 / 168,
+          height: height,
+          label: AppStrings.leaveRoomButton,
+          onTap: onBack,
+        ),
+        const SizedBox(width: 4),
+        // The tavern's name plate (the name is part of the art).
+        Semantics(
+          label: AppStrings.tavernRoomName,
+          child: Image.asset(
+            'assets/images/th_title.png',
+            height: height,
+            width: height * 745 / 196,
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.medium,
           ),
-          Text(
-            AppStrings.tavernRoomName,
-            style: GoogleFonts.lora(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink,
-            ),
-          ),
-          const SizedBox(width: 6),
-          // The live count doubles as the "who's here" button.
-          Tooltip(
-            message: AppStrings.showPlayers,
-            child: InkWell(
+        ),
+        const SizedBox(width: 4),
+        // The live count doubles as the "who's here" button.
+        Tooltip(
+          message: AppStrings.showPlayers,
+          child: Semantics(
+            button: true,
+            label: AppStrings.showPlayers,
+            child: GestureDetector(
               onTap: onShowPlayers,
-              borderRadius: BorderRadius.circular(5),
-              child: Container(
-                height: 32,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(5),
-                  border: Border.all(
-                    color: AppColors.ink.withValues(alpha: 0.35),
-                  ),
-                ),
+              child: KitPlate(
+                kit: Kit.hudPlate,
+                scale: 3.5,
+                height: height,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.people_outline, size: 16, color: AppColors.ink),
-                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.people_outline,
+                      size: 17,
+                      color: Color(0xFFF5DDAE),
+                    ),
+                    const SizedBox(width: 6),
                     Text(
                       AppStrings.playerCount(
                         playerCount,
                         RoomService.maxPlayers,
                       ),
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
+                      style: GoogleFonts.lora(
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
+                        color: const Color(0xFFF5DDAE),
                       ),
                     ),
-                    Icon(Icons.expand_more, size: 16, color: AppColors.ink),
                   ],
                 ),
               ),
             ),
           ),
-        ],
+        ),
+      ],
+    );
+  }
+}
+
+/// A button that's a picture from the HUD kit ([aspect] = its width /
+/// height), dimmed when [onTap] is null; [overlay] is drawn on top (e.g.
+/// the slash over a muted mic).
+class _ArtButton extends StatelessWidget {
+  const _ArtButton({
+    required this.asset,
+    required this.aspect,
+    required this.label,
+    required this.onTap,
+    this.height = 40,
+    this.overlay,
+  });
+
+  final String asset;
+  final double aspect;
+  final String label;
+  final VoidCallback? onTap;
+  final double height;
+  final Widget? overlay;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: Semantics(
+        button: true,
+        label: label,
+        excludeSemantics: true,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Opacity(
+            opacity: onTap == null ? 0.55 : 1,
+            child: SizedBox(
+              width: height * aspect,
+              height: height,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    asset,
+                    fit: BoxFit.fill,
+                    filterQuality: FilterQuality.medium,
+                  ),
+                  ?overlay,
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1598,123 +1726,196 @@ class _HudButton extends StatelessWidget {
   }
 }
 
-/// Recent chat with a header bar that folds the messages down out of the way
-/// (to see more of the tavern) and opens them back up.
-class _ChatLog extends StatelessWidget {
-  const _ChatLog({
-    required this.messages,
+/// The recent messages on the riveted board, above the chat tab.
+class _HudChatLog extends StatelessWidget {
+  const _HudChatLog({required this.messages});
+
+  final List<ChatMessage> messages;
+
+  @override
+  Widget build(BuildContext context) {
+    return KitPlate(
+      kit: Kit.hudPanel,
+      scale: 4,
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final message in messages)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 1.5),
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${message.senderName}: ',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFFFD27A),
+                      ),
+                    ),
+                    TextSpan(text: message.body),
+                  ],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  height: 1.3,
+                  color: const Color(0xFFF5E6C8),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The "Chat" tab: opens and folds the message board, and counts new
+/// messages while it's folded.
+class _HudChatTab extends StatelessWidget {
+  const _HudChatTab({
     required this.collapsed,
     required this.unread,
     required this.onToggle,
   });
 
-  final List<ChatMessage> messages;
   final bool collapsed;
-
-  /// Messages from others that arrived while folded.
   final int unread;
   final VoidCallback onToggle;
+
+  static const double height = 34;
 
   @override
   Widget build(BuildContext context) {
     final label = collapsed && unread > 0
         ? AppStrings.chatNewMessages(unread)
         : AppStrings.chatTitle;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.ink.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(6),
+    return Semantics(
+      button: true,
+      expanded: !collapsed,
+      label: collapsed ? AppStrings.showChat : AppStrings.hideChat,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onToggle,
+        child: KitPlate(
+          kit: Kit.hudTab,
+          scale: 126 / height,
+          height: height,
+          // Clear of the big rivet on the left and the knob on the right.
+          padding: const EdgeInsets.fromLTRB(30, 3, 22, 0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.chat_bubble, size: 15, color: Color(0xFFFFC966)),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.lora(
+                  fontSize: unread > 0 && collapsed ? 12 : 15,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFFF5DDAE),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                collapsed ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                size: 22,
+                color: const Color(0xFFF5DDAE),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    );
+  }
+}
+
+/// The message box with its send button, from the HUD kit.
+class _HudChatInput extends StatelessWidget {
+  const _HudChatInput({
+    required this.controller,
+    required this.isSending,
+    required this.onSend,
+  });
+
+  final TextEditingController controller;
+  final bool isSending;
+  final VoidCallback onSend;
+
+  static const double height = 46;
+
+  /// The send button's share of the picture's width (its right end).
+  static const double _sendWidth = 174 / 147 * height;
+
+  @override
+  Widget build(BuildContext context) {
+    return KitPlate(
+      kit: Kit.hudInput,
+      scale: 147 / height,
+      height: height,
+      padding: EdgeInsets.zero,
+      child: Row(
         children: [
-          Semantics(
-            button: true,
-            expanded: !collapsed,
-            label: collapsed ? AppStrings.showChat : AppStrings.hideChat,
-            excludeSemantics: true,
-            child: InkWell(
-              onTap: onToggle,
-              borderRadius: BorderRadius.circular(6),
-              child: SizedBox(
-                height: 32,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 10, right: 4),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.chat_bubble_outline,
-                        size: 14,
-                        color: AppColors.parchment.withValues(alpha: 0.85),
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          label,
-                          style: GoogleFonts.inter(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.4,
-                            color: AppColors.parchment,
-                          ),
-                        ),
-                      ),
-                      Tooltip(
-                        message: collapsed
-                            ? AppStrings.showChat
-                            : AppStrings.hideChat,
-                        child: Icon(
-                          collapsed
-                              ? Icons.keyboard_arrow_up
-                              : Icons.keyboard_arrow_down,
-                          size: 22,
-                          color: AppColors.parchment,
-                        ),
-                      ),
-                    ],
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 18, right: 6),
+              child: TextField(
+                controller: controller,
+                maxLength: 200,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (_) => onSend(),
+                cursorColor: const Color(0xFFFFD27A),
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: const Color(0xFFF5E6C8),
+                ),
+                decoration: InputDecoration(
+                  hintText: AppStrings.chatHint,
+                  hintStyle: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF8A8F9C),
                   ),
+                  counterText: '',
+                  isDense: true,
+                  filled: false,
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
               ),
             ),
           ),
-          if (!collapsed)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-              child: _messageList(),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _messageList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final message in messages)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 1.5),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: '${message.senderName}: ',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  TextSpan(text: message.body),
-                ],
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: AppColors.parchment,
-                height: 1.3,
+          // The paper-plane button is part of the picture; this makes it
+          // tappable.
+          Semantics(
+            button: true,
+            label: AppStrings.sendButton,
+            child: GestureDetector(
+              onTap: isSending ? null : onSend,
+              behavior: HitTestBehavior.opaque,
+              child: SizedBox(
+                width: _sendWidth,
+                height: height,
+                child: isSending
+                    ? const Center(
+                        child: SizedBox.square(
+                          dimension: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Color(0xFFFFD27A),
+                          ),
+                        ),
+                      )
+                    : null,
               ),
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -1746,115 +1947,6 @@ class _TypingLine extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ChatInput extends StatelessWidget {
-  const _ChatInput({
-    required this.controller,
-    required this.isSending,
-    required this.onSend,
-    required this.emotesOpen,
-    required this.onToggleEmotes,
-    this.leading = const [],
-  });
-
-  final TextEditingController controller;
-  final bool isSending;
-  final VoidCallback onSend;
-  final bool emotesOpen;
-  final VoidCallback onToggleEmotes;
-
-  /// Shown before the emote button (the voice chat buttons).
-  final List<Widget> leading;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (final widget in leading) ...[widget, const SizedBox(width: 8)],
-        Semantics(
-          button: true,
-          selected: emotesOpen,
-          label: AppStrings.emotesButton,
-          excludeSemantics: true,
-          child: Tooltip(
-            message: AppStrings.emotesButton,
-            child: SizedBox(
-              width: 40,
-              height: 40,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  backgroundColor: emotesOpen
-                      ? AppColors.ink
-                      : AppColors.parchment,
-                  padding: EdgeInsets.zero,
-                  side: BorderSide(color: AppColors.ink),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                onPressed: onToggleEmotes,
-                child: const Text('😊', style: TextStyle(fontSize: 20)),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: SizedBox(
-            height: 40,
-            child: TextField(
-              controller: controller,
-              maxLength: 200,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (_) => onSend(),
-              style: GoogleFonts.inter(fontSize: 13, color: AppColors.ink),
-              decoration: InputDecoration(
-                hintText: AppStrings.chatHint,
-                counterText: '',
-                isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 11,
-                ),
-                prefixIcon: Icon(
-                  Icons.chat_bubble_outline,
-                  size: 17,
-                  color: AppColors.ink.withValues(alpha: 0.5),
-                ),
-                prefixIconConstraints: const BoxConstraints(minWidth: 36),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 40,
-          height: 40,
-          child: FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.ink,
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            onPressed: isSending ? null : onSend,
-            child: isSending
-                ? SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: AppColors.onInk,
-                    ),
-                  )
-                : Icon(Icons.send, size: 18, color: AppColors.onInk),
-          ),
-        ),
-      ],
     );
   }
 }

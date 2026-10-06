@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
@@ -74,18 +75,8 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   SpriteComponent? _emote;
   SpriteComponent? _drink;
 
-  late final TextComponent _nameTag = TextComponent(
-    text: _name,
-    anchor: Anchor.bottomCenter,
-    textRenderer: TextPaint(
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w700,
-        color: Colors.white,
-        shadows: [Shadow(blurRadius: 3, color: Colors.black)],
-      ),
-    ),
-  );
+  late final NamePlate _nameTag = NamePlate(_name)
+    ..anchor = Anchor.bottomCenter;
 
   /// Counts sheet loads. A load that finishes after a newer one has started
   /// is thrown away, so a quick switch (e.g. the profile arriving while the
@@ -504,6 +495,85 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     ]);
     _emote = emote;
     add(emote);
+  }
+}
+
+/// A player's name on the riveted plate from the HUD kit, with a green
+/// "online" light on its left.
+class NamePlate extends PositionComponent with HasGameReference {
+  NamePlate(String text) {
+    this.text = text;
+  }
+
+  static const String asset = 'assets/images/th_name.png';
+
+  /// The plate picture's stretchable middle (its ends stay as drawn).
+  static const Rect _slice = Rect.fromLTWH(70, 30, 304, 47);
+
+  /// How many picture pixels make one world pixel.
+  static const double _scale = 107 / _height;
+  static const double _height = 17;
+  static const double _padLeft = 16;
+  static const double _padRight = 9;
+
+  late TextPainter _painter;
+  ui.Image? _image;
+
+  set text(String value) {
+    _painter = TextPainter(
+      text: TextSpan(
+        text: value,
+        style: const TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          color: Color(0xFFF5E6C8),
+          height: 1,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    size = Vector2(
+      (_painter.width + _padLeft + _padRight).clamp(48, 220),
+      _height,
+    );
+  }
+
+  @override
+  Future<void> onLoad() async {
+    _image = await game.images.load(asset);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final image = _image;
+    if (image != null) {
+      canvas
+        ..save()
+        ..scale(1 / _scale);
+      canvas.drawImageNine(
+        image,
+        _slice,
+        Rect.fromLTWH(0, 0, size.x * _scale, size.y * _scale),
+        Paint()..filterQuality = FilterQuality.medium,
+      );
+      canvas.restore();
+    } else {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(size.toRect(), const Radius.circular(5)),
+        Paint()..color = const Color(0xE62A1A10),
+      );
+    }
+    // The green light.
+    final dot = Offset(9.5, size.y / 2);
+    canvas
+      ..drawCircle(dot, 2.6, Paint()..color = const Color(0xFF1F6B22))
+      ..drawCircle(dot, 2, Paint()..color = const Color(0xFF63E05C))
+      ..drawCircle(
+        dot.translate(-0.6, -0.6),
+        0.7,
+        Paint()..color = const Color(0xFFD8FFD0),
+      );
+    _painter.paint(canvas, Offset(_padLeft, (size.y - _painter.height) / 2));
   }
 }
 
