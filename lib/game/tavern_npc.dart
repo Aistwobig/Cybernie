@@ -34,11 +34,11 @@ class TavernNpc extends SpriteAnimationComponent with HasGameReference {
   /// sheet (8 frames, lined up on where they rest), anchored at the bottom.
   factory TavernNpc.drinker({required bool girl, required Vector2 hips}) => girl
       ? TavernNpc(
-          asset: 'assets/images/npc_girl_sitting.png',
+          asset: 'assets/images/npc_girl_sitting2.png',
           frames: 8,
-          cell: Vector2(340, 320),
-          baseline: 310,
-          scaleBy: 0.21,
+          cell: Vector2(320, 400),
+          baseline: 390,
+          scaleBy: 0.176,
           stepTime: 0.25,
           feet: hips,
         )
