@@ -24,6 +24,22 @@ class MusicService {
   static AudioPlayer? _player;
   static bool _waitingForTap = false;
 
+  /// How much of [volume] actually plays: below 1 while voice chat is
+  /// talking over the music, so the two don't drown each other out.
+  static double _duck = 1;
+
+  static double get _playing => volume.value * _duck;
+
+  /// Plays the music at [factor] times its volume (1 = back to normal),
+  /// without changing the saved volume.
+  static Future<void> duck(double factor) async {
+    if (factor == _duck) return;
+    _duck = factor;
+    try {
+      await _player?.setVolume(_playing);
+    } catch (_) {}
+  }
+
   /// Reads the saved volume. Call before runApp.
   static Future<void> load() async {
     try {
@@ -44,7 +60,7 @@ class MusicService {
       final player = _player ??= AudioPlayer();
       if (player.state == PlayerState.playing) return;
       await player.setReleaseMode(ReleaseMode.loop);
-      await player.setVolume(volume.value);
+      await player.setVolume(_playing);
       if (player.state == PlayerState.paused) {
         await player.resume();
       } else {
@@ -79,7 +95,7 @@ class MusicService {
       if (v == 0) {
         await player?.pause();
       } else {
-        await player?.setVolume(v);
+        await player?.setVolume(_playing);
         if (player?.state != PlayerState.playing) await start();
       }
     } catch (_) {}

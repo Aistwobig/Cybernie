@@ -4,6 +4,7 @@ import 'package:flame/components.dart' show Vector2;
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'music_service.dart';
 import 'room_service.dart';
 import 'voice_engine.dart';
 
@@ -124,6 +125,7 @@ class VoiceService {
     state.value = VoiceState.off;
     micOn.value = false;
     speaking.value = const {};
+    MusicService.duck(1);
     if (engine != null) {
       for (final peer in engine.peers) {
         room?.sendVoiceSignal(peer, {'kind': 'bye'});
@@ -186,7 +188,13 @@ class VoiceService {
     }
     final talking = engine.speakers(me: self);
     if (!setEquals(talking, speaking.value)) speaking.value = talking;
+    // Turn the music down while we're in a call with anyone nearby, so it
+    // doesn't drown out their voices.
+    MusicService.duck(engine.peers.isEmpty ? 1 : musicDuring);
   }
+
+  /// How loud the music plays during a voice call (of its normal volume).
+  static const double musicDuring = 0.25;
 
   /// Volume for a voice [distance] map pixels away: full up close, fading
   /// quickly, silent from [_far].
