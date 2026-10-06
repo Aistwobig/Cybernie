@@ -34,6 +34,12 @@ class VoiceService {
   String? myId;
   VoiceEngine? _engine;
 
+  /// A nearby player came into our voice chat (walked close, or joined).
+  void Function(String playerId)? onPeerJoined;
+
+  /// A player dropped out of our voice chat (walked away, or left).
+  void Function(String playerId)? onPeerLeft;
+
   /// Joins voice chat in [room] with the mic on. Throws a readable message
   /// if it can't (no permission, not supported, ...).
   Future<void> join(RoomService room) async {
@@ -109,9 +115,11 @@ class VoiceService {
       if (!connected.contains(id) && distance <= connectRange) {
         // The player with the "smaller" id starts, so only one side does.
         engine.connect(id, initiator: self.compareTo(id) < 0);
+        onPeerJoined?.call(id);
       } else if (connected.contains(id) && distance > hangUpRange) {
         _room?.sendVoiceSignal(id, {'kind': 'bye'});
         engine.disconnect(id);
+        onPeerLeft?.call(id);
       }
       engine.setVolume(id, volumeAt(distance));
     }
@@ -119,6 +127,7 @@ class VoiceService {
     for (final id in connected) {
       if (!voicePlayers.contains(id) || !positions.containsKey(id)) {
         engine.disconnect(id);
+        onPeerLeft?.call(id);
       }
     }
     final talking = engine.speakers(me: self);

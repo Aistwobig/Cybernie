@@ -20,7 +20,10 @@ enum Sfx {
   shuffle('sfx_shuffle'),
   card('sfx_card'),
   win('sfx_win'),
-  lose('sfx_lose');
+  lose('sfx_lose'),
+  // Voice chat: joining (rising chime) and leaving (falling chime).
+  voiceJoin('sfx_voice_join'),
+  voiceLeave('sfx_voice_leave');
 
   const Sfx(this.file);
 

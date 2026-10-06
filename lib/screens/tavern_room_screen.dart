@@ -636,7 +636,11 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   late final VoiceService _voice = VoiceService()
     ..speaking.addListener(
       () => _game.setSpeaking(_voice.speaking.value, _voice.myId),
-    );
+    )
+    // Like Discord: a soft chime as others come into (or drop out of) our
+    // voice chat.
+    ..onPeerJoined = ((_) => SfxService.play(Sfx.voiceJoin, gain: 0.5))
+    ..onPeerLeft = ((_) => SfxService.play(Sfx.voiceLeave, gain: 0.5));
   Timer? _voiceTick;
 
   Future<void> _joinVoice() async {
@@ -645,9 +649,9 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       _showSnack(AppStrings.voiceSignInRequired);
       return;
     }
-    SfxService.play(Sfx.click, gain: 0.6);
     try {
       await _voice.join(room);
+      SfxService.play(Sfx.voiceJoin);
       _voiceTick?.cancel();
       _voiceTick = Timer.periodic(
         const Duration(milliseconds: 200),
@@ -661,6 +665,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   Future<void> _leaveVoice() async {
     _voiceTick?.cancel();
     _voiceTick = null;
+    SfxService.play(Sfx.voiceLeave);
     await _voice.leave();
     _game.setSpeaking(const {}, null);
   }
