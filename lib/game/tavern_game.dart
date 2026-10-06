@@ -484,6 +484,18 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
           size: Vector2(seat.front.width, seat.front.height),
           priority: seat.front.bottom.round(),
         )..paint.filterQuality = FilterQuality.none,
+      // And the two chairs the NPC drinkers sit in.
+      for (final front in TavernMap.drinkerChairFronts)
+        SpriteComponent(
+          sprite: Sprite(
+            mapImage,
+            srcPosition: Vector2(front.left, front.top),
+            srcSize: Vector2(front.width, front.height),
+          ),
+          position: Vector2(front.left, front.top),
+          size: Vector2(front.width, front.height),
+          priority: front.bottom.round(),
+        )..paint.filterQuality = FilterQuality.none,
     ];
 
     player =

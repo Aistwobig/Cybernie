@@ -40,7 +40,7 @@ class TavernNpc extends SpriteAnimationComponent with HasGameReference {
         frames: 7,
         cell: Vector2(140, 200),
         baseline: 170,
-        scaleBy: 0.6,
+        scaleBy: 0.47,
         stepTime: 0.3,
         feet: hips,
       );

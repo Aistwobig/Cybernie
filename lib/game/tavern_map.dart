@@ -28,8 +28,15 @@ class TavernMap {
   /// the hips of the two drinkers on the side chairs of the table by the
   /// stairs.
   static const Offset bardSpot = Offset(966, 338);
-  static const Offset boySpot = Offset(985, 508);
-  static const Offset girlSpot = Offset(1146, 508);
+  static const Offset boySpot = Offset(993, 505);
+  static const Offset girlSpot = Offset(1140, 505);
+
+  /// The front of those two chairs (seat edge and legs), drawn again over
+  /// the drinkers so they sit in the chairs rather than on top of them.
+  static const List<Rect> drinkerChairFronts = [
+    Rect.fromLTWH(970, 500, 40, 28),
+    Rect.fromLTWH(1121, 500, 42, 28),
+  ];
 
   /// The inside of the fireplace, where the burning fire is drawn.
   static const Rect fireplaceFire = Rect.fromLTWH(82, 268, 72, 64);

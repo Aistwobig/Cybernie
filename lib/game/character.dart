@@ -513,8 +513,13 @@ class NamePlate extends PositionComponent with HasGameReference {
   /// How many picture pixels make one world pixel.
   static const double _scale = 107 / _height;
   static const double _height = 17;
-  static const double _padLeft = 16;
-  static const double _padRight = 9;
+
+  /// Space inside each end of the frame, and the light (with its gap)
+  /// before the name. The light and name are centred as one group.
+  static const double _pad = 10;
+  static const double _dot = 7;
+
+  double get _groupWidth => _dot + _painter.width;
 
   late TextPainter _painter;
   ui.Image? _image;
@@ -532,10 +537,7 @@ class NamePlate extends PositionComponent with HasGameReference {
       ),
       textDirection: TextDirection.ltr,
     )..layout();
-    size = Vector2(
-      (_painter.width + _padLeft + _padRight).clamp(48, 220),
-      _height,
-    );
+    size = Vector2((_dot + _painter.width + _pad * 2).clamp(48, 220), _height);
   }
 
   @override
@@ -564,7 +566,8 @@ class NamePlate extends PositionComponent with HasGameReference {
       );
     }
     // The green light.
-    final dot = Offset(9.5, size.y / 2);
+    final left = (size.x - _groupWidth) / 2;
+    final dot = Offset(left + 2, size.y / 2);
     canvas
       ..drawCircle(dot, 2.6, Paint()..color = const Color(0xFF1F6B22))
       ..drawCircle(dot, 2, Paint()..color = const Color(0xFF63E05C))
@@ -573,7 +576,7 @@ class NamePlate extends PositionComponent with HasGameReference {
         0.7,
         Paint()..color = const Color(0xFFD8FFD0),
       );
-    _painter.paint(canvas, Offset(_padLeft, (size.y - _painter.height) / 2));
+    _painter.paint(canvas, Offset(left + _dot, (size.y - _painter.height) / 2));
   }
 }
 
