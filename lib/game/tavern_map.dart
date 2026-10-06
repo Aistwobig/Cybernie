@@ -80,6 +80,19 @@ class TavernMap {
     Seat.tableStool(1162, 696), // table (middle-right)
     Seat.tableStool(983, 903), // big table (bottom-right)
     Seat.tableStool(1073, 903),
+    // Side chairs, sat on facing the table beside them (their backrest is
+    // on the far side): the point is where the seated character's feet
+    // line goes, near the seat's front edge. Numbers: x, y, then the seat's
+    // left and right edge.
+    // Facing left (chairs on the right of their table).
+    Seat.sideChair(1231, 674, 1225, 1252, Facing.west), // middle-right
+    Seat.sideChair(1147, 861, 1141, 1171, Facing.west), // big table
+    Seat.sideChair(386, 805, 380, 408, Facing.west), // long table (left)
+    // Facing right (chairs on the left of their table).
+    Seat.sideChair(1085, 674, 1062, 1091, Facing.east), // middle-right
+    Seat.sideChair(914, 861, 891, 920, Facing.east), // big table
+    Seat.sideChair(239, 586, 216, 245, Facing.east), // round table, back
+    Seat.sideChair(239, 620, 216, 245, Facing.east), // round table, front
   ];
   static const double seatReach = 62;
 
@@ -171,6 +184,24 @@ class Seat {
         frontTop: seatTop + 22,
         frontRight: centerX + 19,
         frontBottom: seatTop + 48,
+      );
+
+  /// A side chair between [seatLeft] and [seatRight], sat on facing
+  /// [facing]. Nothing of it is drawn over the sitter (they sit on top).
+  const Seat.sideChair(
+    double x,
+    double y,
+    double seatLeft,
+    double seatRight,
+    Facing facing,
+  ) : this(
+        x,
+        y,
+        frontLeft: seatLeft,
+        frontTop: y,
+        frontRight: seatRight,
+        frontBottom: y,
+        facing: facing,
       );
 
   /// Where the seated character's feet line goes.

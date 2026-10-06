@@ -31,10 +31,12 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     double feetFraction = 0.963,
     int frames = 8,
     String? sitBackSheetAsset,
+    String? sitSideSheetAsset,
   }) : _sheetAsset = sheetAsset,
        _idleSheetAsset = idleSheetAsset,
        _horizontalRunSheetAsset = horizontalRunSheetAsset,
        _sitBackSheetAsset = sitBackSheetAsset,
+       _sitSideSheetAsset = sitSideSheetAsset,
        _feetFraction = feetFraction,
        _frames = frames,
        _name = name,
@@ -44,6 +46,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   String? _idleSheetAsset;
   String? _horizontalRunSheetAsset;
   String? _sitBackSheetAsset;
+  String? _sitSideSheetAsset;
   double _feetFraction;
   int _frames;
   String _name;
@@ -138,12 +141,14 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     String? horizontalRunSheetAsset,
     int frames = 8,
     String? sitBackSheetAsset,
+    String? sitSideSheetAsset,
   }) async {
     if (asset == _sheetAsset &&
         feetFraction == _feetFraction &&
         idleSheetAsset == _idleSheetAsset &&
         horizontalRunSheetAsset == _horizontalRunSheetAsset &&
         sitBackSheetAsset == _sitBackSheetAsset &&
+        sitSideSheetAsset == _sitSideSheetAsset &&
         frames == _frames) {
       return;
     }
@@ -151,6 +156,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     _idleSheetAsset = idleSheetAsset;
     _horizontalRunSheetAsset = horizontalRunSheetAsset;
     _sitBackSheetAsset = sitBackSheetAsset;
+    _sitSideSheetAsset = sitSideSheetAsset;
     _feetFraction = feetFraction;
     _frames = frames;
     // Not added to the game yet: onLoad will load the new sheet. Otherwise
@@ -184,6 +190,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     final idleSheetAsset = _idleSheetAsset;
     final runSheetAsset = _horizontalRunSheetAsset;
     final sitBackAsset = _sitBackSheetAsset;
+    final sitSideAsset = _sitSideSheetAsset;
     final frames = _frames;
     final feetFraction = _feetFraction;
 
@@ -197,6 +204,9 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     final sitBackImage = sitBackAsset == null
         ? null
         : await game.images.load(sitBackAsset);
+    final sitSideImage = sitSideAsset == null
+        ? null
+        : await game.images.load(sitSideAsset);
     // A newer character was picked meanwhile: finish when that one has.
     if (load != _loads) return _latestLoad;
 
@@ -250,6 +260,23 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
           sitBackImage.height.toDouble(),
         ),
       ).createAnimation(row: 0, stepTime: 0.2 * perFrame);
+    }
+    if (sitSideImage != null) {
+      final sideSheet = SpriteSheet(
+        image: sitSideImage,
+        srcSize: Vector2(
+          sitSideImage.width / frames,
+          sitSideImage.height / 2,
+        ),
+      );
+      builtAnimations[(Facing.west, Pose.sit)] = sideSheet.createAnimation(
+        row: 0,
+        stepTime: 0.2 * perFrame,
+      );
+      builtAnimations[(Facing.east, Pose.sit)] = sideSheet.createAnimation(
+        row: 1,
+        stepTime: 0.2 * perFrame,
+      );
     }
     animations = builtAnimations;
     current = _pose;

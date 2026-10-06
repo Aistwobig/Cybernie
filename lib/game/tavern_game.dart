@@ -56,6 +56,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       ?c.idleSheet,
       ?c.horizontalRunSheet,
       ?c.sitBackSheet,
+      ?c.sitSideSheet,
     ],
     for (final drink in drinks) drink.asset,
     for (final emote in emotes) emote.asset,
@@ -81,6 +82,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         horizontalRunSheetAsset: _character.horizontalRunSheet,
         frames: _character.frames,
         sitBackSheetAsset: _character.sitBackSheet,
+        sitSideSheetAsset: _character.sitSideSheet,
       );
       player.sitsOverSeat = _character.sitsOverSeat;
       // The new character may not have a seated pose.
@@ -253,6 +255,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
           horizontalRunSheetAsset: look.horizontalRunSheet,
           frames: look.frames,
           sitBackSheetAsset: look.sitBackSheet,
+          sitSideSheetAsset: look.sitSideSheet,
         );
         existing.sitsOverSeat = look.sitsOverSeat;
         continue;
@@ -266,6 +269,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         horizontalRunSheetAsset: look.horizontalRunSheet,
         frames: look.frames,
         sitBackSheetAsset: look.sitBackSheet,
+        sitSideSheetAsset: look.sitSideSheet,
         name: p.name,
         start: Vector2(p.x, p.y),
       )..sitsOverSeat = look.sitsOverSeat;
@@ -503,16 +507,17 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     // it, behind anyone walking past in front of it.
     final stoolFronts = [
       for (final seat in TavernMap.seats)
-        SpriteComponent(
-          sprite: Sprite(
-            mapImage,
-            srcPosition: Vector2(seat.front.left, seat.front.top),
-            srcSize: Vector2(seat.front.width, seat.front.height),
-          ),
-          position: Vector2(seat.front.left, seat.front.top),
-          size: Vector2(seat.front.width, seat.front.height),
-          priority: seat.front.bottom.round(),
-        )..paint.filterQuality = FilterQuality.none,
+        if (!seat.front.isEmpty)
+          SpriteComponent(
+            sprite: Sprite(
+              mapImage,
+              srcPosition: Vector2(seat.front.left, seat.front.top),
+              srcSize: Vector2(seat.front.width, seat.front.height),
+            ),
+            position: Vector2(seat.front.left, seat.front.top),
+            size: Vector2(seat.front.width, seat.front.height),
+            priority: seat.front.bottom.round(),
+          )..paint.filterQuality = FilterQuality.none,
       // And the two chairs the NPC drinkers sit in.
       for (final front in TavernMap.drinkerChairFronts)
         SpriteComponent(
@@ -536,6 +541,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
             horizontalRunSheetAsset: _character.horizontalRunSheet,
             frames: _character.frames,
             sitBackSheetAsset: _character.sitBackSheet,
+            sitSideSheetAsset: _character.sitSideSheet,
           )
           ..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy)
           ..sitsOverSeat = _character.sitsOverSeat;

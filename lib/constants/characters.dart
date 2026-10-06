@@ -14,6 +14,7 @@ class GameCharacter {
     this.feetFraction = 0.963,
     this.frames = 8,
     this.sitBackSheet,
+    this.sitSideSheet,
     this.profileIdleSheet,
     this.profileIdleFrames = 8,
     this.profileIdleFrameMs = 200,
@@ -44,6 +45,11 @@ class GameCharacter {
   /// tavern's seats that face away from the camera.
   final String? sitBackSheet;
 
+  /// Optional seated idle seen from the side ([frames] columns x 2 rows:
+  /// facing left on row 0, right on row 1), same cell size and feet line as
+  /// [sheet]. Characters with one can sit on the tavern's side chairs.
+  final String? sitSideSheet;
+
   /// Optional front-facing idle just for the Profile tile (one row of
   /// [profileIdleFrames] frames, [profileIdleFrameMs] each), for a
   /// character whose in-game sheets aren't ready yet.
@@ -66,6 +72,8 @@ const List<GameCharacter> gameCharacters = [
     sheet: AppImages.lunaSheet,
     idleSheet: AppImages.lunaIdleSheet,
     sitBackSheet: AppImages.lunaSitBackSheet,
+    // Hugging her knees on the side chairs, either way round.
+    sitSideSheet: AppImages.lunaSitSideSheet,
     sitsOverSeat: true,
     feetFraction: 374 / 384,
     profileIdleSheet: AppImages.lunaIdleFront,
