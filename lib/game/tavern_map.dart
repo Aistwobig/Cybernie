@@ -30,13 +30,11 @@ class TavernMap {
   static const Offset bardSpot = Offset(966, 338);
   // The boy's spot is his boots (his sheet shows him whole).
   static const Offset boySpot = Offset(998, 520);
-  static const Offset girlSpot = Offset(1140, 505);
+  static const Offset girlSpot = Offset(1140, 508);
 
   /// The front of those two chairs (seat edge and legs), drawn again over
   /// the drinkers so they sit in the chairs rather than on top of them.
-  static const List<Rect> drinkerChairFronts = [
-    Rect.fromLTWH(1121, 500, 42, 28),
-  ];
+  static const List<Rect> drinkerChairFronts = [];
 
   /// The inside of the fireplace, where the burning fire is drawn.
   static const Rect fireplaceFire = Rect.fromLTWH(82, 268, 72, 64);
