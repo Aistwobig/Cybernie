@@ -9,6 +9,7 @@ import '../services/friends_service.dart';
 import '../services/inventory_service.dart';
 import '../services/music_service.dart';
 import '../services/sfx_service.dart';
+import '../services/voice_service.dart';
 import '../services/notice_board_service.dart';
 import '../services/profile_service.dart';
 import '../services/report_service.dart';
@@ -1399,6 +1400,15 @@ class SettingsPanel extends StatelessWidget {
             volume: SfxService.volume,
             onChanged: SfxService.setVolume,
             onDone: SfxService.saveVolume,
+          ),
+          const SizedBox(height: 10),
+          // Other players' voices in voice chat (on top of distance).
+          _VolumeSlider(
+            label: AppStrings.voiceVolumeLabel,
+            icon: Icons.record_voice_over,
+            volume: VoiceService.volume,
+            onChanged: VoiceService.setVolume,
+            onDone: VoiceService.saveVolume,
           ),
         ],
       ),

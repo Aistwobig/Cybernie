@@ -181,6 +181,7 @@ class AppStrings {
   static const String voiceUnmute = 'Unmute your mic';
   static const String voiceLeave = 'Leave voice chat';
   static const String voiceSignInRequired = 'Sign in to use voice chat.';
+  static const String voiceVolumeLabel = 'Voice chat';
 
   // Bernie's lucky wheel
   static const String lotteryTitle = "Bernie's Lucky Wheel";

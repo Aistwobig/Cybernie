@@ -64,6 +64,7 @@ class KitPlate extends StatelessWidget {
     this.scale = 2.4,
     this.width,
     this.height,
+    this.opacity = 1,
   });
 
   final Kit kit;
@@ -75,12 +76,15 @@ class KitPlate extends StatelessWidget {
   final double? width;
   final double? height;
 
+  /// How solid the frame is drawn (the child stays fully visible).
+  final double opacity;
+
   @override
   Widget build(BuildContext context) {
     // Painted with Canvas.drawImageNine rather than DecorationImage's
     // centerSlice, which asserts on non power-of-two scales (rounding).
     return CustomPaint(
-      painter: _NinePainter(kit, scale),
+      painter: _NinePainter(kit, scale, opacity),
       child: Container(
         width: width,
         height: height,
@@ -111,12 +115,14 @@ Future<ui.Image> _loadFrame(String asset) => _loading[asset] ??= () async {
 }();
 
 class _NinePainter extends CustomPainter {
-  _NinePainter(this.kit, this.scale) : super(repaint: _framesLoaded) {
+  _NinePainter(this.kit, this.scale, this.opacity)
+    : super(repaint: _framesLoaded) {
     if (!_frames.containsKey(kit.asset)) _loadFrame(kit.asset);
   }
 
   final Kit kit;
   final double scale;
+  final double opacity;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -136,21 +142,26 @@ class _NinePainter extends CustomPainter {
         image,
         slice,
         dst,
-        Paint()..filterQuality = FilterQuality.medium,
+        Paint()
+          ..filterQuality = FilterQuality.medium
+          ..color = Color.fromRGBO(0, 0, 0, opacity),
       );
     } else {
       canvas.drawImageRect(
         image,
         Rect.fromLTWH(0, 0, image.width.toDouble(), image.height.toDouble()),
         dst,
-        Paint()..filterQuality = FilterQuality.medium,
+        Paint()
+          ..filterQuality = FilterQuality.medium
+          ..color = Color.fromRGBO(0, 0, 0, opacity),
       );
     }
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(_NinePainter old) => old.kit != kit || old.scale != scale;
+  bool shouldRepaint(_NinePainter old) =>
+      old.kit != kit || old.scale != scale || old.opacity != opacity;
 }
 
 /// The gold coin shown with coin amounts (the app's own drawn coin).

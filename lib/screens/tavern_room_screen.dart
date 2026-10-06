@@ -1088,17 +1088,6 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                       }),
                     ),
                   ),
-                  Positioned(
-                    right: 0,
-                    top: -4,
-                    child: _ArtButton(
-                      asset: 'assets/images/th_gear.png',
-                      aspect: 134 / 145,
-                      height: 34,
-                      label: AppStrings.settingsTitle,
-                      onTap: _openSettings,
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -1118,6 +1107,14 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
                     height: _VoiceButtons.height,
                     label: AppStrings.emotesButton,
                     onTap: () => setState(() => _emotesOpen = !_emotesOpen),
+                  ),
+                  const SizedBox(width: 6),
+                  _ArtButton(
+                    asset: 'assets/images/th_gear.png',
+                    aspect: 134 / 145,
+                    height: _VoiceButtons.height,
+                    label: AppStrings.settingsTitle,
+                    onTap: _openSettings,
                   ),
                 ],
               ),
@@ -1737,6 +1734,8 @@ class _HudChatLog extends StatelessWidget {
     return KitPlate(
       kit: Kit.hudPanel,
       scale: 4,
+      // See-through, so the room (and the players) show behind the chat.
+      opacity: 0.55,
       padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1764,6 +1763,11 @@ class _HudChatLog extends StatelessWidget {
                   fontSize: 12,
                   height: 1.3,
                   color: const Color(0xFFF5E6C8),
+                  // Readable over the room showing through.
+                  shadows: const [
+                    Shadow(blurRadius: 3, color: Color(0xE6000000)),
+                    Shadow(offset: Offset(0, 1), color: Color(0xCC000000)),
+                  ],
                 ),
               ),
             ),

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flame/components.dart' show Vector2;
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'room_service.dart';
 import 'voice_engine.dart';
@@ -29,6 +30,28 @@ class VoiceService {
   static const double _far = 420;
   static const double connectRange = 450;
   static const double hangUpRange = 550;
+
+  /// How loud other players' voices are overall, 0 to 1 (Settings), on top
+  /// of how far away they are. Remembered on this device.
+  static final ValueNotifier<double> volume = ValueNotifier(1);
+  static const String _volumeKey = 'voice_volume';
+
+  /// Reads the saved voice volume. Call before runApp.
+  static Future<void> loadVolume() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      volume.value = (prefs.getDouble(_volumeKey) ?? 1).clamp(0.0, 1.0);
+    } catch (_) {}
+  }
+
+  static void setVolume(double value) => volume.value = value.clamp(0.0, 1.0);
+
+  static Future<void> saveVolume() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(_volumeKey, volume.value);
+    } catch (_) {}
+  }
 
   RoomService? _room;
   String? myId;
@@ -121,7 +144,7 @@ class VoiceService {
         engine.disconnect(id);
         onPeerLeft?.call(id);
       }
-      engine.setVolume(id, volumeAt(distance));
+      engine.setVolume(id, volumeAt(distance) * volume.value);
     }
     // Anyone who left voice (or the room): hang up.
     for (final id in connected) {
