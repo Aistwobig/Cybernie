@@ -9,6 +9,7 @@ import '../services/friends_service.dart';
 import '../services/inventory_service.dart';
 import '../services/music_service.dart';
 import '../services/sfx_service.dart';
+import '../services/voice_engine.dart' show MicOption;
 import '../services/voice_service.dart';
 import '../services/notice_board_service.dart';
 import '../services/profile_service.dart';
@@ -1410,6 +1411,8 @@ class SettingsPanel extends StatelessWidget {
             onChanged: VoiceService.setVolume,
             onDone: VoiceService.saveVolume,
           ),
+          const SizedBox(height: 14),
+          const _MicPicker(),
         ],
       ),
     );
@@ -1458,6 +1461,108 @@ class _VolumeSlider extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Which microphone voice chat uses. Browsers only show microphone names
+/// after they've been allowed once (by joining voice chat).
+class _MicPicker extends StatefulWidget {
+  const _MicPicker();
+
+  @override
+  State<_MicPicker> createState() => _MicPickerState();
+}
+
+class _MicPickerState extends State<_MicPicker> {
+  List<MicOption>? _mics;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    List<MicOption> mics;
+    try {
+      mics = await VoiceService.microphones();
+    } catch (_) {
+      mics = const [];
+    }
+    if (mounted) setState(() => _mics = mics);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mics = _mics;
+    final namesHidden = mics != null && mics.any((m) => m.label.isEmpty);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.mic, size: 18, color: AppColors.ink),
+            const SizedBox(width: 6),
+            Text(
+              AppStrings.microphoneLabel,
+              style: _body(size: 14, weight: FontWeight.w700),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        if (mics == null)
+          const LinearProgressIndicator(minHeight: 2)
+        else if (mics.isEmpty)
+          Text(AppStrings.noMicrophones, style: _muted(size: 12))
+        else
+          ValueListenableBuilder<String?>(
+            valueListenable: VoiceService.micId,
+            builder: (context, chosen, _) {
+              // A saved mic that's no longer plugged in falls back to the
+              // default.
+              final value = mics.any((m) => m.id == chosen) ? chosen : null;
+              return DropdownButtonFormField<String?>(
+                initialValue: value,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                ),
+                items: [
+                  DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text(
+                      AppStrings.defaultMicrophone,
+                      overflow: TextOverflow.ellipsis,
+                      style: _body(size: 13),
+                    ),
+                  ),
+                  for (var i = 0; i < mics.length; i++)
+                    if (mics[i].id != 'default')
+                      DropdownMenuItem<String?>(
+                        value: mics[i].id,
+                        child: Text(
+                          mics[i].label.isEmpty
+                              ? AppStrings.microphoneNumber(i + 1)
+                              : mics[i].label,
+                          overflow: TextOverflow.ellipsis,
+                          style: _body(size: 13),
+                        ),
+                      ),
+                ],
+                onChanged: VoiceService.chooseMic,
+              );
+            },
+          ),
+        if (namesHidden) ...[
+          const SizedBox(height: 4),
+          Text(AppStrings.microphoneNamesHint, style: _muted(size: 11.5)),
+        ],
+      ],
     );
   }
 }

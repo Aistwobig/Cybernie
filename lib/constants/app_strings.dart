@@ -182,6 +182,12 @@ class AppStrings {
   static const String voiceLeave = 'Leave voice chat';
   static const String voiceSignInRequired = 'Sign in to use voice chat.';
   static const String voiceVolumeLabel = 'Voice chat';
+  static const String microphoneLabel = 'Microphone';
+  static const String defaultMicrophone = 'Default microphone';
+  static String microphoneNumber(int n) => 'Microphone $n';
+  static const String noMicrophones = 'No microphone found.';
+  static const String microphoneNamesHint =
+      'Join voice chat once to see your microphones by name.';
 
   // Bernie's lucky wheel
   static const String lotteryTitle = "Bernie's Lucky Wheel";

@@ -41,10 +41,38 @@ class VoiceService {
     try {
       final prefs = await SharedPreferences.getInstance();
       volume.value = (prefs.getDouble(_volumeKey) ?? 1).clamp(0.0, 1.0);
+      micId.value = prefs.getString(_micKey);
     } catch (_) {}
   }
 
   static void setVolume(double value) => volume.value = value.clamp(0.0, 1.0);
+
+  /// The microphone picked in Settings (null: the device's default).
+  /// Remembered on this device.
+  static final ValueNotifier<String?> micId = ValueNotifier(null);
+  static const String _micKey = 'voice_mic';
+
+  /// The voice chat in progress, so a new mic choice switches it live.
+  static VoiceService? _active;
+
+  static Future<List<MicOption>> microphones() => listMicrophones();
+
+  static Future<void> chooseMic(String? id) async {
+    micId.value = id;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (id == null) {
+        await prefs.remove(_micKey);
+      } else {
+        await prefs.setString(_micKey, id);
+      }
+    } catch (_) {}
+    try {
+      await _active?._engine?.useMic(id);
+    } catch (error) {
+      debugPrint('Switching mic: $error');
+    }
+  }
 
   static Future<void> saveVolume() async {
     try {
@@ -74,7 +102,9 @@ class VoiceService {
       (to, signal) => room.sendVoiceSignal(to, signal),
     );
     _engine = engine;
+    _active = this;
     try {
+      await engine.useMic(micId.value);
       await engine.start();
       await room.setVoice(true);
       micOn.value = true;
@@ -90,6 +120,7 @@ class VoiceService {
     final engine = _engine;
     final room = _room;
     _engine = null;
+    if (identical(_active, this)) _active = null;
     state.value = VoiceState.off;
     micOn.value = false;
     speaking.value = const {};

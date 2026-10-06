@@ -8,6 +8,16 @@ import 'voice_engine.dart';
 
 VoiceEngine createVoiceEngine(SignalSender send) => _WebVoice(send);
 
+Future<List<MicOption>> listMicrophones() async {
+  final devices = await web.window.navigator.mediaDevices
+      .enumerateDevices()
+      .toDart;
+  return [
+    for (final d in devices.toDart)
+      if (d.kind == 'audioinput') MicOption(d.deviceId, d.label),
+  ];
+}
+
 /// Free public servers that help two players find a route to each other.
 /// (Strict networks may also need a relay "TURN" server: add it here.)
 final List<String> _stunServers = [
@@ -46,20 +56,51 @@ class _WebVoice implements VoiceEngine {
   @override
   Set<String> get peers => _calls.keys.toSet();
 
-  @override
-  Future<void> start() async {
-    if (_mic != null) return;
+  /// The chosen microphone (null: the browser's default).
+  String? _deviceId;
+
+  Future<web.MediaStream> _openMic() {
     final constraints = {
       'echoCancellation': true,
       'noiseSuppression': true,
       'autoGainControl': true,
+      if (_deviceId != null && _deviceId!.isNotEmpty)
+        'deviceId': {'exact': _deviceId},
     }.jsify()!;
-    _mic = await web.window.navigator.mediaDevices
+    return web.window.navigator.mediaDevices
         .getUserMedia(web.MediaStreamConstraints(audio: constraints))
         .toDart;
+  }
+
+  @override
+  Future<void> start() async {
+    if (_mic != null) return;
+    _mic = await _openMic();
     _audio = web.AudioContext();
     _myMeter = _meterFor(_mic!);
     _micOn = true;
+  }
+
+  @override
+  Future<void> useMic(String? deviceId) async {
+    _deviceId = deviceId;
+    final old = _mic;
+    if (old == null) return; // Used when voice chat starts.
+    final fresh = await _openMic();
+    final track = fresh.getAudioTracks().toDart.first..enabled = _micOn;
+    // Swap the microphone in every call without hanging up.
+    for (final call in _calls.values) {
+      for (final sender in call.pc.getSenders().toDart) {
+        if (sender.track?.kind == 'audio') {
+          await sender.replaceTrack(track).toDart;
+        }
+      }
+    }
+    _mic = fresh;
+    _myMeter = _meterFor(fresh);
+    for (final t in old.getTracks().toDart) {
+      t.stop();
+    }
   }
 
   @override

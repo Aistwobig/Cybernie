@@ -4,6 +4,8 @@ import 'voice_engine.dart';
 /// platforms and tests get this engine, which does nothing.
 VoiceEngine createVoiceEngine(SignalSender send) => _NoVoice();
 
+Future<List<MicOption>> listMicrophones() async => const [];
+
 class _NoVoice implements VoiceEngine {
   @override
   bool get supported => false;
@@ -14,6 +16,9 @@ class _NoVoice implements VoiceEngine {
 
   @override
   Future<void> stop() async {}
+
+  @override
+  Future<void> useMic(String? deviceId) async {}
 
   @override
   void setMic(bool on) {}

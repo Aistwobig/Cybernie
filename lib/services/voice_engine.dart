@@ -9,6 +9,18 @@ import 'voice_engine_stub.dart'
 /// Sends a call setup message (offer / answer / candidate) to a player.
 typedef SignalSender = void Function(String toId, Map<String, dynamic> signal);
 
+/// A microphone the player can pick (label is empty until the browser has
+/// been allowed to use the microphone once).
+class MicOption {
+  const MicOption(this.id, this.label);
+
+  final String id;
+  final String label;
+}
+
+/// The microphones on this device.
+Future<List<MicOption>> listMicrophones() => impl.listMicrophones();
+
 abstract class VoiceEngine {
   /// The browser's engine on the web; elsewhere one that isn't supported.
   factory VoiceEngine(SignalSender send) => impl.createVoiceEngine(send);
@@ -20,6 +32,10 @@ abstract class VoiceEngine {
 
   /// Hangs up every call and closes the microphone.
   Future<void> stop();
+
+  /// Uses microphone [deviceId] (null: the default one), switching it live
+  /// in every call if we're already talking.
+  Future<void> useMic(String? deviceId);
 
   /// Mutes or unmutes our microphone in every call.
   void setMic(bool on);
