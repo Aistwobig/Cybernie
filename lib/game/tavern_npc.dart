@@ -32,18 +32,27 @@ class TavernNpc extends SpriteAnimationComponent with HasGameReference {
   /// The two adventurers drinking at the table by the stairs, seated on
   /// its painted chairs facing each other (cut from one picture, so they
   /// move in step: 7 frames, anchored at the hips).
-  factory TavernNpc.drinker({required bool girl, required Vector2 hips}) =>
-      TavernNpc(
-        asset: girl
-            ? 'assets/images/npc_girl.png'
-            : 'assets/images/npc_boy.png',
-        frames: 7,
-        cell: Vector2(140, 200),
-        baseline: 170,
-        scaleBy: 0.47,
-        stepTime: 0.3,
-        feet: hips,
-      );
+  factory TavernNpc.drinker({required bool girl, required Vector2 hips}) => girl
+      ? TavernNpc(
+          asset: 'assets/images/npc_girl.png',
+          frames: 7,
+          cell: Vector2(140, 200),
+          baseline: 170,
+          scaleBy: 0.47,
+          stepTime: 0.3,
+          feet: hips,
+        )
+      // His own full-body sheet (seated, boots on the floor): 8 frames
+      // lined up on the boots, anchored at them.
+      : TavernNpc(
+          asset: 'assets/images/npc_boy.png',
+          frames: 8,
+          cell: Vector2(300, 440),
+          baseline: 430,
+          scaleBy: 0.21,
+          stepTime: 0.25,
+          feet: hips,
+        );
 
   final String asset;
   final int frames;

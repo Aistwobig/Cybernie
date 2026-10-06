@@ -28,13 +28,13 @@ class TavernMap {
   /// the hips of the two drinkers on the side chairs of the table by the
   /// stairs.
   static const Offset bardSpot = Offset(966, 338);
-  static const Offset boySpot = Offset(993, 505);
+  // The boy's spot is his boots (his sheet shows him whole).
+  static const Offset boySpot = Offset(998, 520);
   static const Offset girlSpot = Offset(1140, 505);
 
   /// The front of those two chairs (seat edge and legs), drawn again over
   /// the drinkers so they sit in the chairs rather than on top of them.
   static const List<Rect> drinkerChairFronts = [
-    Rect.fromLTWH(970, 500, 40, 28),
     Rect.fromLTWH(1121, 500, 42, 28),
   ];
 
