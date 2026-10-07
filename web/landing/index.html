@@ -24,11 +24,18 @@
     <a href="#tour">The tavern</a>
     <a href="#roster">Characters</a>
     <a href="#voice">Voice</a>
+    <a href="#friends">Friends</a>
     <a href="#blackjack">Blackjack</a>
     <a href="#extras">Extras</a>
   </nav>
+  <button class="music" id="music" type="button" aria-pressed="false" aria-label="Play the tavern music">
+    <span class="music__bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+    <span class="music__label">Music</span>
+  </button>
   <a class="btn btn--small" href="../">Play now</a>
 </header>
+<!-- The game's own background music (served with the app). -->
+<audio id="bgm" src="../assets/assets/audio/home_theme2.mp3" loop preload="none"></audio>
 
 <main>
 
@@ -44,7 +51,7 @@
       <div class="sign__chains"></div>
       <div class="sign__board">
         <img src="img/favicon.png" alt="">
-        <span>Bernie's</span>
+        <span>Bernie's Tavern</span>
       </div>
     </div>
 
@@ -175,6 +182,66 @@
   </div>
 </section>
 
+<!-- ============ Friends: add, message, QR ============ -->
+<section class="section friends" id="friends">
+  <div class="wrap">
+    <p class="eyebrow">Better with friends</p>
+    <h2 class="h2">Bring your whole party.</h2>
+    <p class="sub">Find your friends, keep chatting when you're apart, and invite anyone with a single scan.</p>
+
+    <div class="fcards">
+      <!-- Add friends -->
+      <article class="fcard reveal">
+        <div class="fcard__demo">
+          <div class="fmock">
+            <div class="fmock__search"><span>🔍</span><span class="fmock__typed" id="typed"></span><i class="caret"></i></div>
+            <div class="frow">
+              <div class="frow__avatar" style="--sheet:url(img/luna_idle.png)"></div>
+              <div class="frow__text"><b>Luna</b><small><i class="dot"></i>Online</small></div>
+              <button class="frow__btn" id="addBtn" type="button" tabindex="-1" aria-hidden="true">Add</button>
+            </div>
+            <div class="frow frow--dim">
+              <div class="frow__avatar" style="--sheet:url(img/thief_idle.png)"></div>
+              <div class="frow__text"><b>Thief</b><small>Active 5 mins ago</small></div>
+              <span class="frow__tag">Friends ✓</span>
+            </div>
+          </div>
+        </div>
+        <h3>Add friends</h3>
+        <p>Search players by name, send a request, and see who's online right now.</p>
+      </article>
+
+      <!-- Messages -->
+      <article class="fcard reveal">
+        <div class="fcard__demo">
+          <div class="fmock fmock--chat">
+            <div class="banner" id="dmBanner">
+              <div class="frow__avatar" style="--sheet:url(img/lily_idle.png)"></div>
+              <div><b>Lily</b><small>see you at the tavern? 🍺</small></div>
+            </div>
+            <div class="chat" id="chat"></div>
+          </div>
+        </div>
+        <h3>Message your friends</h3>
+        <p>Private chats with text and emotes. New messages pop up anywhere in the game, with unread badges.</p>
+      </article>
+
+      <!-- QR invite -->
+      <article class="fcard reveal">
+        <div class="fcard__demo fcard__demo--qr">
+          <div class="qr">
+            <div class="qr__code" id="qrCode" role="img" aria-label="QR code that opens Cybernie"></div>
+            <div class="qr__scan" aria-hidden="true"></div>
+          </div>
+          <p class="qr__hint">Scan with your phone camera to open the tavern</p>
+        </div>
+        <h3>Invite with a QR code</h3>
+        <p>Every profile has its own QR code. A friend scans it, lands on your profile, and adds you in one tap.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
 <!-- ============ Blackjack with Bernie ============ -->
 <section class="section blackjack" id="blackjack">
   <div class="wrap bj__grid">
@@ -256,7 +323,7 @@
         <h3>And more</h3>
         <ul class="more">
           <li><img src="img/coin.png" alt="">Daily coins, tasks and a coin leaderboard</li>
-          <li><img src="img/emote_love.png" alt="">Friends, private messages and a profile QR code</li>
+          <li><img src="img/emote_love.png" alt="">A cozy day and night look, with lanterns that glow</li>
           <li><img src="img/cam.png" alt="">Your camera, floating above your character</li>
           <li><img src="img/mic.png" alt="">Room chat with speech bubbles and "is typing…"</li>
         </ul>
@@ -291,6 +358,7 @@
   </div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="main.js"></script>
 </body>
 </html>

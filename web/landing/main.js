@@ -422,6 +422,114 @@
     }, 600);
   }
 
+  // ---------- Friends: little looping demos ----------
+  // Add friends: type a name, press Add, it turns into "Requested".
+  const typed = $('#typed');
+  const addBtn = $('#addBtn');
+  const typeLoop = () => {
+    const word = 'Luna';
+    let i = 0;
+    typed.textContent = '';
+    addBtn.textContent = 'Add';
+    addBtn.classList.remove('is-sent');
+    const t = setInterval(() => {
+      typed.textContent = word.slice(0, ++i);
+      if (i < word.length) return;
+      clearInterval(t);
+      setTimeout(() => addBtn.classList.add('is-press'), 700);
+      setTimeout(() => {
+        addBtn.classList.remove('is-press');
+        addBtn.classList.add('is-sent');
+        addBtn.textContent = 'Requested ✓';
+      }, 900);
+      setTimeout(typeLoop, 3600);
+    }, 180);
+  };
+
+  // Messages: a short conversation, then a new message banner slides in.
+  const chat = $('#chat');
+  const dmBanner = $('#dmBanner');
+  const lines = [
+    ['them', 'you coming tonight?'],
+    ['me', 'yeah! saving you a seat by the fire'],
+    ['them', '<img src="img/emote_love.png" alt="love emote">'],
+  ];
+  const chatLoop = () => {
+    chat.innerHTML = '';
+    dmBanner.classList.remove('is-on');
+    lines.forEach(([who, text], k) => setTimeout(() => {
+      const m = document.createElement('div');
+      m.className = `msg msg--${who}`;
+      m.innerHTML = text;
+      chat.appendChild(m);
+    }, 600 + k * 1100));
+    setTimeout(() => dmBanner.classList.add('is-on'), 4400);
+    setTimeout(() => dmBanner.classList.remove('is-on'), 7000);
+    setTimeout(chatLoop, 8000);
+  };
+
+  // QR: a real code for this site's game, so scanning it opens Cybernie.
+  const qrBox = $('#qrCode');
+  const gameUrl = new URL('../', location.href).href;
+  if (window.QRCode) {
+    new QRCode(qrBox, { text: gameUrl, width: 256, height: 256, colorDark: '#2a1408', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+  }
+  qrBox.setAttribute('aria-label', `QR code that opens ${gameUrl}`);
+
+  // Start the demos once the section is on screen.
+  if (reduceMotion) {
+    typed.textContent = 'Luna';
+    lines.forEach(([who, text]) => chat.insertAdjacentHTML('beforeend', `<div class="msg msg--${who}">${text}</div>`));
+  } else {
+    let started = false;
+    new IntersectionObserver((entries, obs) => {
+      if (started || !entries.some((e) => e.isIntersecting)) return;
+      started = true;
+      obs.disconnect();
+      typeLoop();
+      chatLoop();
+    }).observe($('#friends'));
+  }
+
+  // ---------- Background music (the game's own song) ----------
+  // Browsers only allow sound after a click, so it's a toggle; the choice is
+  // remembered for next time (it then starts on the first click anywhere).
+  const bgm = $('#bgm');
+  const musicBtn = $('#music');
+  const MUSIC_KEY = 'cybernie-landing-music';
+  const VOLUME = .35;
+  let fade = null;
+  const setMusic = (on) => {
+    musicBtn.setAttribute('aria-pressed', String(on));
+    musicBtn.setAttribute('aria-label', on ? 'Pause the tavern music' : 'Play the tavern music');
+    try { localStorage.setItem(MUSIC_KEY, on ? '1' : '0'); } catch (_) { /* private mode */ }
+    clearInterval(fade);
+    if (on) {
+      bgm.volume = 0;
+      bgm.play().then(() => {
+        fade = setInterval(() => {
+          bgm.volume = Math.min(VOLUME, bgm.volume + .02);
+          if (bgm.volume >= VOLUME) clearInterval(fade);
+        }, 60);
+      }).catch(() => setMusic(false));
+    } else {
+      fade = setInterval(() => {
+        bgm.volume = Math.max(0, bgm.volume - .03);
+        if (bgm.volume <= 0) { clearInterval(fade); bgm.pause(); }
+      }, 40);
+    }
+  };
+  musicBtn.addEventListener('click', () => setMusic(musicBtn.getAttribute('aria-pressed') !== 'true'));
+  let wanted = false;
+  try { wanted = localStorage.getItem(MUSIC_KEY) === '1'; } catch (_) { /* private mode */ }
+  if (wanted) {
+    const resume = (e) => {
+      if (e.target.closest && e.target.closest('#music')) return;
+      setMusic(true);
+    };
+    addEventListener('pointerdown', resume, { once: true });
+  }
+
   // ---------- Fade sections in as they arrive ----------
   for (const el of document.querySelectorAll('.h2, .sub, .eyebrow, .tile, .demo, .ticks, .close__title')) {
     el.classList.add('reveal');
