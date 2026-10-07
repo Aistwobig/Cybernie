@@ -133,8 +133,10 @@ const List<GameCharacter> gameCharacters = [
     sheet: AppImages.thiefSheet,
     idleSheet: AppImages.thiefIdleSheet,
     sitBackSheet: AppImages.thiefSitBackSheet,
-    // Hands on his knees on the side chairs, either way round.
+    // Hands on his knees on the side chairs, either way round; behind a
+    // table, his hands resting on its edge.
     sitSideSheet: AppImages.thiefSitSideSheet,
+    sitFrontSheet: AppImages.thiefSitFrontSheet,
     feetFraction: 374 / 384,
   ),
   // His sheets bake in the bounce: stretched frames are drawn in the air
