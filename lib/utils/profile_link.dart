@@ -21,10 +21,17 @@ class ProfileLink {
     return id.isEmpty ? null : id;
   }
 
-  /// The full web address of [playerId]'s profile on this site (the same
-  /// site the app is running on).
+  /// The live site, for when the app isn't running from a web address (the
+  /// Android app).
+  static const String liveSite = 'https://aistwobig.github.io/Cybernie/';
+
+  /// The full web address of [playerId]'s profile: on this site in a
+  /// browser, on [liveSite] in the app.
   static String url(String playerId) {
-    final base = Uri.base;
+    final here = Uri.base;
+    final base = here.scheme == 'http' || here.scheme == 'https'
+        ? here
+        : Uri.parse(liveSite);
     final path = base.path.endsWith('/') ? base.path : '${base.path}/';
     return Uri(
       scheme: base.scheme,

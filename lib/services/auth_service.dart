@@ -38,9 +38,14 @@ class AuthService {
 
   static Future<void> signOut() => _client.auth.signOut();
 
-  /// The page the app is served from, e.g. http://localhost:8080/ locally or
-  /// `https://<user>.github.io/<repo>/` when deployed. Both must be listed under
-  /// Authentication > URL Configuration > Redirect URLs in Supabase.
-  static String? get _redirectUrl =>
-      kIsWeb ? '${Uri.base.origin}${Uri.base.path}' : null;
+  /// Where Google sends the player back. On the web: the page the app is
+  /// served from, e.g. http://localhost:8080/ locally or
+  /// `https://<user>.github.io/<repo>/` when deployed. In the Android app:
+  /// [appCallback], which opens the app again (see AndroidManifest.xml).
+  /// All of them must be listed under Authentication > URL Configuration >
+  /// Redirect URLs in Supabase.
+  static String get _redirectUrl =>
+      kIsWeb ? '${Uri.base.origin}${Uri.base.path}' : appCallback;
+
+  static const String appCallback = 'com.cybernie://login-callback';
 }
