@@ -104,6 +104,8 @@ const List<GameCharacter> gameCharacters = [
     idleSheet: AppImages.mageIdleSheet,
     horizontalRunSheet: AppImages.mageRunSheet,
     sitBackSheet: AppImages.mageSitBackSheet,
+    // Hugging her knees on the side chairs, either way round.
+    sitSideSheet: AppImages.mageSitSideSheet,
     feetFraction: 246 / 256,
   ),
   GameCharacter(
