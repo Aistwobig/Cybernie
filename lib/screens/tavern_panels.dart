@@ -1553,6 +1553,38 @@ class SettingsPanel extends StatelessWidget {
             namesHint: AppStrings.microphoneNamesHint,
           ),
           const SizedBox(height: 14),
+          // Where other players' voices play.
+          if (VoiceService.canChooseSpeaker)
+            _DevicePicker(
+              icon: Icons.headphones,
+              label: AppStrings.speakerLabel,
+              load: VoiceService.speakers,
+              chosen: VoiceService.speakerId,
+              onChosen: VoiceService.chooseSpeaker,
+              defaultName: AppStrings.defaultSpeaker,
+              numberedName: AppStrings.speakerNumber,
+              noneFound: AppStrings.noSpeakers,
+              namesHint: AppStrings.speakerNamesHint,
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.headphones, size: 18, color: AppColors.ink),
+                    const SizedBox(width: 6),
+                    Text(
+                      AppStrings.speakerLabel,
+                      style: _body(size: 14, weight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(AppStrings.speakerNotSupported, style: _muted(size: 12)),
+              ],
+            ),
+          const SizedBox(height: 14),
           _DevicePicker(
             icon: Icons.videocam,
             label: AppStrings.cameraLabel,

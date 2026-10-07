@@ -1,4 +1,5 @@
 import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'dart:ui_web' as ui_web;
@@ -13,6 +14,11 @@ VoiceEngine createVoiceEngine(SignalSender send) => _WebVoice(send);
 Future<List<DeviceOption>> listMicrophones() => _devices('audioinput');
 
 Future<List<DeviceOption>> listCameras() => _devices('videoinput');
+
+Future<List<DeviceOption>> listSpeakers() => _devices('audiooutput');
+
+bool canChooseSpeaker() =>
+    (web.HTMLAudioElement() as JSObject).has('setSinkId');
 
 Future<List<DeviceOption>> _devices(String kind) async {
   final devices = await web.window.navigator.mediaDevices
@@ -114,6 +120,27 @@ class _WebVoice implements VoiceEngine {
     _myMeter = _meterFor(fresh);
     for (final t in old.getTracks().toDart) {
       t.stop();
+    }
+  }
+
+  /// The chosen speaker for everyone's voices (null: the default one).
+  String? _speakerId;
+
+  /// Plays [audio] on the chosen speaker (where the browser allows it).
+  void _routeAudio(web.HTMLAudioElement audio) {
+    if (!canChooseSpeaker()) return;
+    audio.setSinkId(_speakerId ?? '').toDart.catchError((Object error) {
+      debugPrint('Voice: speaker $error');
+      return null;
+    });
+  }
+
+  @override
+  Future<void> useSpeaker(String? deviceId) async {
+    _speakerId = deviceId;
+    for (final call in _calls.values) {
+      final audio = call.audio;
+      if (audio != null) _routeAudio(audio);
     }
   }
 
@@ -312,6 +339,7 @@ class _WebVoice implements VoiceEngine {
         ..autoplay = true;
       audio.srcObject = stream;
       audio.volume = call.volume;
+      _routeAudio(audio);
       call.audio = audio;
       call.meter = _meterFor(stream);
       audio.play().toDart.catchError((Object _) => null);

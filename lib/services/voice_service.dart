@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'music_service.dart';
 import 'room_service.dart';
 import 'voice_engine.dart';
+import 'voice_engine.dart' as engine show canChooseSpeaker;
 
 enum VoiceState { off, connecting, on }
 
@@ -53,6 +54,7 @@ class VoiceService {
       volume.value = (prefs.getDouble(_volumeKey) ?? 1).clamp(0.0, 1.0);
       micId.value = prefs.getString(_micKey);
       cameraId.value = prefs.getString(_cameraKey);
+      speakerId.value = prefs.getString(_speakerKey);
     } catch (_) {}
   }
 
@@ -109,6 +111,32 @@ class VoiceService {
     }
   }
 
+  /// Where other players' voices play (null: the device's default speaker).
+  /// Remembered on this device. Only some browsers allow choosing.
+  static final ValueNotifier<String?> speakerId = ValueNotifier(null);
+  static const String _speakerKey = 'voice_speaker';
+
+  static bool get canChooseSpeaker => engine.canChooseSpeaker();
+
+  static Future<List<DeviceOption>> speakers() => listSpeakers();
+
+  static Future<void> chooseSpeaker(String? id) async {
+    speakerId.value = id;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (id == null) {
+        await prefs.remove(_speakerKey);
+      } else {
+        await prefs.setString(_speakerKey, id);
+      }
+    } catch (_) {}
+    try {
+      await _active?._engine?.useSpeaker(id);
+    } catch (error) {
+      debugPrint('Switching speaker: $error');
+    }
+  }
+
   static Future<void> saveVolume() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -141,6 +169,7 @@ class VoiceService {
     try {
       await engine.useMic(micId.value);
       await engine.useCamera(cameraId.value);
+      await engine.useSpeaker(speakerId.value);
       await engine.start();
       await room.setVoice(true);
       micOn.value = true;

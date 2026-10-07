@@ -26,6 +26,13 @@ Future<List<DeviceOption>> listMicrophones() => impl.listMicrophones();
 /// The cameras on this device.
 Future<List<DeviceOption>> listCameras() => impl.listCameras();
 
+/// The speakers / headphones on this device.
+Future<List<DeviceOption>> listSpeakers() => impl.listSpeakers();
+
+/// Whether this browser lets a page pick where sound plays (most phone
+/// browsers don't: there the system decides).
+bool canChooseSpeaker() => impl.canChooseSpeaker();
+
 abstract class VoiceEngine {
   /// The browser's engine on the web; elsewhere one that isn't supported.
   factory VoiceEngine(SignalSender send) => impl.createVoiceEngine(send);
@@ -41,6 +48,9 @@ abstract class VoiceEngine {
   /// Uses microphone [deviceId] (null: the default one), switching it live
   /// in every call if we're already talking.
   Future<void> useMic(String? deviceId);
+
+  /// Plays everyone's voices on speaker [deviceId] (null: the default one).
+  Future<void> useSpeaker(String? deviceId);
 
   /// Mutes or unmutes our microphone in every call.
   void setMic(bool on);

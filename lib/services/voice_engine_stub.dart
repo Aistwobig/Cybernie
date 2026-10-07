@@ -10,6 +10,10 @@ Future<List<DeviceOption>> listMicrophones() async => const [];
 
 Future<List<DeviceOption>> listCameras() async => const [];
 
+Future<List<DeviceOption>> listSpeakers() async => const [];
+
+bool canChooseSpeaker() => false;
+
 class _NoVoice implements VoiceEngine {
   @override
   bool get supported => false;
@@ -51,6 +55,9 @@ class _NoVoice implements VoiceEngine {
 
   @override
   Future<void> useCamera(String? deviceId) async {}
+
+  @override
+  Future<void> useSpeaker(String? deviceId) async {}
 
   @override
   bool hasVideo(String? peerId) => false;

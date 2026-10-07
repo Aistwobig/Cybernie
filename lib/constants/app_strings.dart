@@ -194,6 +194,15 @@ class AppStrings {
   static const String noMicrophones = 'No microphone found.';
   static const String microphoneNamesHint =
       'Join voice chat once to see your microphones by name.';
+  static const String speakerLabel = 'Speaker (voice chat)';
+  static const String defaultSpeaker = 'Default speaker';
+  static String speakerNumber(int n) => 'Speaker $n';
+  static const String noSpeakers = 'No speaker found.';
+  static const String speakerNamesHint =
+      'Join voice chat once to see your speakers by name.';
+  static const String speakerNotSupported =
+      "This browser plays voices on your device's current speaker (change "
+      'it in your system settings).';
   static const String cameraLabel = 'Camera';
   static const String defaultCamera = 'Default camera';
   static String cameraNumber(int n) => 'Camera $n';
