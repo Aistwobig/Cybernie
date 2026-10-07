@@ -41,6 +41,12 @@ abstract class ScreenEngine {
   /// A link setup message from [fromId].
   Future<void> handleSignal(String fromId, Map<String, dynamic> signal);
 
+  /// Whether we're playing a shared screen's sound (as a viewer).
+  bool get hasSound;
+
+  /// How loud a shared screen's sound plays, 0 to 1.
+  void setVolume(double volume);
+
   /// The latest frame of the shared screen (ours while sharing, otherwise
   /// the one we receive), or null. The caller disposes it.
   Future<ui.Image?> grabFrame();

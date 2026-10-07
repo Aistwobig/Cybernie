@@ -39,6 +39,36 @@ class _WebScreen implements ScreenEngine {
   /// receive. Plays hidden; the game copies its frames.
   web.HTMLVideoElement? _video;
 
+  /// The shared screen's sound, for viewers (the sharer already hears it).
+  web.HTMLAudioElement? _sound;
+  double _volume = 1;
+
+  @override
+  bool get hasSound => _sound != null;
+
+  @override
+  void setVolume(double volume) {
+    _volume = volume.clamp(0.0, 1.0);
+    _sound?.volume = _volume;
+  }
+
+  void _playSound(web.MediaStreamTrack track) {
+    _stopSound();
+    final sound = web.HTMLAudioElement()
+      ..autoplay = true
+      ..srcObject = (web.MediaStream()..addTrack(track))
+      ..volume = _volume;
+    sound.play().toDart.catchError((Object _) => null);
+    _sound = sound;
+  }
+
+  void _stopSound() {
+    _sound
+      ?..pause()
+      ..srcObject = null;
+    _sound = null;
+  }
+
   @override
   bool get canShare =>
       (web.window.navigator.mediaDevices as JSObject).has('getDisplayMedia');
@@ -56,7 +86,16 @@ class _WebScreen implements ScreenEngine {
                 'height': {'ideal': 720, 'max': 1080},
                 'frameRate': {'ideal': 10, 'max': 15},
               },
-              'audio': false,
+              // Its sound too, where the browser can (Chrome / Edge: a tab's
+              // sound, or the whole computer's on Windows; the picker has a
+              // "share audio" switch). Not echoed back to us.
+              'audio': {
+                'echoCancellation': false,
+                'noiseSuppression': false,
+                'autoGainControl': false,
+              },
+              'systemAudio': 'include',
+              'suppressLocalAudioPlayback': false,
             }.jsify()!
             as web.DisplayMediaStreamOptions;
     final stream = await web.window.navigator.mediaDevices
@@ -113,6 +152,7 @@ class _WebScreen implements ScreenEngine {
       ..srcObject = null
       ..remove();
     _video = null;
+    _stopSound();
   }
 
   web.RTCPeerConnection _newLink(String peerId) {
@@ -138,8 +178,20 @@ class _WebScreen implements ScreenEngine {
       });
     }).toJS;
     pc.ontrack = ((web.RTCTrackEvent event) {
-      if (event.track.kind != 'video') return;
-      _show(web.MediaStream()..addTrack(event.track));
+      if (event.track.kind == 'video') {
+        // _show replaces any earlier picture (and its sound), so keep the
+        // sound if it arrived first.
+        final sound = _sound;
+        final soundTrack = sound == null
+            ? null
+            : (sound.srcObject as web.MediaStream?)?.getAudioTracks().toDart;
+        _show(web.MediaStream()..addTrack(event.track));
+        if (soundTrack != null && soundTrack.isNotEmpty) {
+          _playSound(soundTrack.first);
+        }
+      } else if (event.track.kind == 'audio') {
+        _playSound(event.track);
+      }
     }).toJS;
     pc.onconnectionstatechange = ((web.Event _) {
       final state = pc.connectionState;
@@ -156,7 +208,8 @@ class _WebScreen implements ScreenEngine {
     final capture = _capture;
     if (capture == null || _links.containsKey(peerId)) return;
     final pc = _newLink(peerId);
-    for (final track in capture.getVideoTracks().toDart) {
+    // The picture, and the sound if it's being shared.
+    for (final track in capture.getTracks().toDart) {
       pc.addTrack(track, capture);
     }
     await pc.setLocalDescription().toDart;

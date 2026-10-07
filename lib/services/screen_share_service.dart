@@ -147,6 +147,12 @@ class ScreenShareService {
     }
   }
 
+  /// Whether a shared screen's sound is playing for us.
+  bool get hasSound => _engine?.hasSound ?? false;
+
+  /// How loud a shared screen's sound plays, 0 to 1.
+  void setVolume(double volume) => _engine?.setVolume(volume);
+
   /// The latest frame of the shared screen, or null. The caller disposes it.
   Future<ui.Image?> grabFrame() async {
     if (sharerId.value == null) return null;

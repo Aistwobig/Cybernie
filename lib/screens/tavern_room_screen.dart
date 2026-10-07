@@ -21,6 +21,7 @@ import '../services/chat_service.dart';
 import '../services/coin_service.dart';
 import '../services/inventory_service.dart';
 import '../services/lottery_service.dart';
+import '../services/music_service.dart';
 import '../services/voice_service.dart';
 import '../services/profile_service.dart';
 import '../services/room_service.dart';
@@ -194,6 +195,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onShareTap = null
       ..onFullScreenTap = null;
     _screen.dispose();
+    MusicService.duck(1, reason: 'screen');
     _setFullFrame(null);
     _voice.leave();
     _fireLoop.dispose();
@@ -740,6 +742,13 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
             entry.key,
       },
       onLostToEarlier: (name) => _showSnack(AppStrings.screenShareBusy(name)),
+    );
+    // Its sound follows the voice chat volume in Settings, and turns the
+    // music down while it plays.
+    _screen.setVolume(VoiceService.volume.value);
+    MusicService.duck(
+      _screen.hasSound ? VoiceService.musicDuring : 1,
+      reason: 'screen',
     );
     // Names can arrive after the share started.
     _game.setProjector(_sharerName, mine: _screen.sharing.value);

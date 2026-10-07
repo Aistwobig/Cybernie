@@ -30,5 +30,11 @@ class _NoScreen implements ScreenEngine {
   Future<void> handleSignal(String fromId, Map<String, dynamic> signal) async {}
 
   @override
+  bool get hasSound => false;
+
+  @override
+  void setVolume(double volume) {}
+
+  @override
   Future<ui.Image?> grabFrame() async => null;
 }

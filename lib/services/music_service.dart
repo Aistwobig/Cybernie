@@ -28,17 +28,26 @@ class MusicService {
   static AudioPlayer? _player;
   static bool _waitingForTap = false;
 
-  /// How much of [volume] actually plays: below 1 while voice chat is
-  /// talking over the music, so the two don't drown each other out.
-  static double _duck = 1;
+  /// How much of [volume] actually plays: below 1 while something talks or
+  /// plays over the music (voice chat, a shared screen's sound), so they
+  /// don't drown each other out. Each asks for its own level ([duck]); the
+  /// quietest wins.
+  static final Map<String, double> _ducks = {};
+  static double get _duck =>
+      _ducks.values.fold(1.0, (lowest, f) => f < lowest ? f : lowest);
 
   static double get _playing => volume.value * _duck;
 
-  /// Plays the music at [factor] times its volume (1 = back to normal),
-  /// without changing the saved volume.
-  static Future<void> duck(double factor) async {
-    if (factor == _duck) return;
-    _duck = factor;
+  /// Plays the music at [factor] times its volume while [reason] needs it
+  /// (1 = done), without changing the saved volume.
+  static Future<void> duck(double factor, {String reason = 'voice'}) async {
+    final before = _duck;
+    if (factor >= 1) {
+      _ducks.remove(reason);
+    } else {
+      _ducks[reason] = factor;
+    }
+    if (_duck == before) return;
     try {
       await _player?.setVolume(_playing);
     } catch (_) {}
