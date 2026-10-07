@@ -116,6 +116,8 @@ const List<GameCharacter> gameCharacters = [
     idleSheet: AppImages.lilyIdleSheet,
     // Her back-facing idle, cut at the skirt hem and lowered onto the seat.
     sitBackSheet: AppImages.lilySitBackSheet,
+    // Hugging her knees on the side chairs, either way round.
+    sitSideSheet: AppImages.lilySitSideSheet,
     feetFraction: 374 / 384,
   ),
   // Took the Dancer's place (same index, so saved picks carry over). He
