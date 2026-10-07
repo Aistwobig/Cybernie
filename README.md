@@ -11,6 +11,7 @@
 ![Supabase](https://img.shields.io/badge/Supabase-2.x-3ECF8E?logo=supabase&logoColor=white)
 ![WebRTC](https://img.shields.io/badge/WebRTC-voice_%7C_video_%7C_screen-555555?logo=webrtc&logoColor=white)
 ![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-live-222222?logo=github&logoColor=white)
+[![Android](https://img.shields.io/github/v/release/Aistwobig/Cybernie?label=Android%20APK&logo=android&logoColor=white&color=3DDC84)](https://github.com/Aistwobig/Cybernie/releases/latest)
 ![Status](https://img.shields.io/badge/Status-Beta-E8590C)
 
 </div>
@@ -25,6 +26,7 @@
 | --- | --- |
 | **Landing page** | [aistwobig.github.io/Cybernie/landing](https://aistwobig.github.io/Cybernie/landing/) |
 | **Live app** | [aistwobig.github.io/Cybernie](https://aistwobig.github.io/Cybernie/) |
+| **Android app** | [Download Cybernie v1.0 (APK)](https://github.com/Aistwobig/Cybernie/releases/latest) |
 | **Demo video** | Coming soon |
 | **Course** | Applications Development and Emerging Technologies (6ADET), Holy Angel University |
 | **Author** | Mclaren Ais C. Miranda |
@@ -98,6 +100,30 @@ Coming soon.
 
 ## Running it yourself
 
+### Play it right away
+
+- **In a browser:** open the [live app](https://aistwobig.github.io/Cybernie/)
+  (Chrome, Edge or Firefox, on a computer or a phone). Not sure yet? Take a
+  look at the [landing page](https://aistwobig.github.io/Cybernie/landing/)
+  first.
+- **On Android:** download the APK from the
+  [latest release](https://github.com/Aistwobig/Cybernie/releases/latest)
+  and install it:
+  1. On the phone, download **`Cybernie-v1.0.apk`** (or copy it over from a
+     computer).
+  2. Open it. If Android asks, allow installing apps from that source
+     (Chrome, Files or Drive).
+  3. Tap **Install**, then open Cybernie and sign in with Google.
+
+  If the phone says the app isn't compatible, use
+  **`Cybernie-v1.0-all-phones.apk`** from the same release instead. Web and
+  Android players share the same rooms and can talk, see each other's
+  cameras and share screens with each other.
+
+There is no iOS app yet; iPhone players can use the live app in Safari.
+
+### From the source code
+
 ```bash
 flutter pub get
 cp .env.example .env      # then fill in your Supabase values, see below
@@ -106,6 +132,15 @@ flutter run -d web-server --web-port 8080 --dart-define-from-file=.env
 
 Then open http://localhost:8080. Built and tested with Flutter 3.47.5
 (stable).
+
+To build the Android app instead (needs Android Studio and its Android SDK):
+
+```bash
+flutter build apk --release --split-per-abi --dart-define-from-file=.env
+```
+
+The APKs are written to `build/app/outputs/flutter-apk/`. Use
+`app-arm64-v8a-release.apk` for almost every phone.
 
 ### Environment variables
 
@@ -140,7 +175,8 @@ SQL Editor (New query > paste > Run):
 
 Google sign-in also needs the Google provider turned on in Supabase
 (Authentication > Providers) and your site's address added to the allowed
-redirect URLs.
+redirect URLs. For the Android app, also add
+`com.cybernie://login-callback` there.
 
 ## Privacy and secrets
 
