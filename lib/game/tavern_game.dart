@@ -5,6 +5,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../constants/app_images.dart';
@@ -709,6 +710,46 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
 
   /// The shared screen's newest frame. Takes ownership of [image].
   void setProjectorFrame(ui.Image image) => projector.frame = image;
+
+  // --- Live video (phone app) ----------------------------------------------
+
+  /// Ticks once per frame, after everything has moved: where the cameras
+  /// and the projector are on screen may have changed.
+  final ValueNotifier<int> frames = ValueNotifier(0);
+
+  @override
+  void updateTree(double dt) {
+    super.updateTree(dt);
+    // Not while widgets are being laid out (the game's first update can
+    // happen then): the next frame catches up.
+    if (SchedulerBinding.instance.schedulerPhase !=
+        SchedulerPhase.persistentCallbacks) {
+      frames.value++;
+    }
+  }
+
+  /// [area] (in map pixels) on screen, in the game's own coordinates.
+  Rect _onScreen(Rect area) => Rect.fromPoints(
+    camera.localToGlobal(Vector2(area.left, area.top)).toOffset(),
+    camera.localToGlobal(Vector2(area.right, area.bottom)).toOffset(),
+  );
+
+  /// Where each shown camera picture is on screen (null: ours).
+  Map<String?, Rect> get cameraScreenAreas {
+    if (!isLoaded) return const {};
+    return {
+      if (player.cameraArea case final area?) null: _onScreen(area),
+      for (final entry in _others.entries)
+        if (entry.value.cameraArea case final area?) entry.key: _onScreen(area),
+    };
+  }
+
+  /// Where the projector's picture is on screen, if it's showing one.
+  Rect? get projectorScreenArea {
+    if (!isLoaded || !upstairs) return null;
+    final area = projector.videoArea;
+    return area == null ? null : _onScreen(area);
+  }
 
   // --- Floors ----------------------------------------------------------------
 

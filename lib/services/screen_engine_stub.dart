@@ -1,9 +1,11 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/widgets.dart';
+
 import 'screen_engine.dart';
 
-/// Screen sharing is web-only (the app is built for the web); other
-/// platforms and tests get this engine, which does nothing.
+/// Screen sharing works in browsers and the Android app; other platforms
+/// and tests get this engine, which does nothing.
 ScreenEngine createScreenEngine(ScreenSignalSender send) => _NoScreen();
 
 class _NoScreen implements ScreenEngine {
@@ -12,7 +14,9 @@ class _NoScreen implements ScreenEngine {
 
   @override
   Future<void> startCapture({required void Function() onEnded}) async =>
-      throw UnsupportedError('Screen sharing works in the web version.');
+      throw UnsupportedError(
+        'Screen sharing works in the browser and the Android app.',
+      );
 
   @override
   Future<void> stop() async {}
@@ -37,4 +41,7 @@ class _NoScreen implements ScreenEngine {
 
   @override
   Future<ui.Image?> grabFrame() async => null;
+
+  @override
+  Widget? videoView() => null;
 }

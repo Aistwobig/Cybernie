@@ -28,6 +28,7 @@ dependencies:
   audioplayers: ^6.8.1
   web: ^1.1.1
   qr_flutter: ^4.1.0
+  flutter_webrtc: ^1.6.2+hotfix.4
  
 dev_dependencies:
   flutter_test:

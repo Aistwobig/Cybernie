@@ -1,9 +1,11 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/widgets.dart';
+
 import 'voice_engine.dart';
 
-/// Voice chat is web-only for now (the app is built for the web); other
-/// platforms and tests get this engine, which does nothing.
+/// Voice chat works in browsers and the phone apps; other platforms and
+/// tests get this engine, which does nothing.
 VoiceEngine createVoiceEngine(SignalSender send) => _NoVoice();
 
 Future<List<DeviceOption>> listMicrophones() async => const [];
@@ -19,8 +21,9 @@ class _NoVoice implements VoiceEngine {
   bool get supported => false;
 
   @override
-  Future<void> start() async =>
-      throw UnsupportedError('Voice chat works in the web version.');
+  Future<void> start() async => throw UnsupportedError(
+    'Voice chat works in the browser and the phone app.',
+  );
 
   @override
   Future<void> stop() async {}
@@ -50,8 +53,9 @@ class _NoVoice implements VoiceEngine {
   Set<String> speakers({required String me}) => const {};
 
   @override
-  Future<void> setCamera(bool on) async =>
-      throw UnsupportedError('The camera works in the web version.');
+  Future<void> setCamera(bool on) async => throw UnsupportedError(
+    'The camera works in the browser and the phone app.',
+  );
 
   @override
   Future<void> useCamera(String? deviceId) async {}
@@ -64,4 +68,7 @@ class _NoVoice implements VoiceEngine {
 
   @override
   Future<ui.Image?> grabFrame(String? peerId) async => null;
+
+  @override
+  Widget? videoView(String? peerId) => null;
 }

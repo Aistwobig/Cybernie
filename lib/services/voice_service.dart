@@ -4,6 +4,7 @@ import 'package:flame/components.dart' show Vector2;
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show Widget;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'music_service.dart';
@@ -242,6 +243,10 @@ class VoiceService {
   Future<ui.Image?> grabFrame(String? playerId) async =>
       _engine?.grabFrame(playerId);
 
+  /// In the phone app: a live view of [playerId]'s camera (null: ours), for
+  /// the tavern to place over the camera picture. Null on the web.
+  Widget? videoView(String? playerId) => _engine?.videoView(playerId);
+
   /// A call setup message from another player.
   void handleSignal(String fromId, Map<String, dynamic> signal) {
     final engine = _engine;
@@ -326,10 +331,10 @@ class VoiceService {
           ? 'Your camera is being used by another app.'
           : 'Your microphone is being used by another app.';
     }
-    if (text.contains('web version')) {
+    if (text.contains('phone app')) {
       return camera
-          ? 'The camera works in the web version.'
-          : 'Voice chat works in the web version.';
+          ? 'The camera works in the browser and the phone app.'
+          : 'Voice chat works in the browser and the phone app.';
     }
     return camera
         ? "Couldn't turn on the camera. Try again."

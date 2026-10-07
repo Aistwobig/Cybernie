@@ -4,8 +4,11 @@ library;
 
 import 'dart:ui' as ui;
 
+import 'package:flutter/widgets.dart';
+
 import 'voice_engine_stub.dart'
     if (dart.library.js_interop) 'voice_engine_web.dart'
+    if (dart.library.io) 'voice_engine_native.dart'
     as impl;
 
 /// Sends a call setup message (offer / answer / candidate) to a player.
@@ -34,7 +37,8 @@ Future<List<DeviceOption>> listSpeakers() => impl.listSpeakers();
 bool canChooseSpeaker() => impl.canChooseSpeaker();
 
 abstract class VoiceEngine {
-  /// The browser's engine on the web; elsewhere one that isn't supported.
+  /// The browser's engine on the web, flutter_webrtc's in the phone apps;
+  /// elsewhere one that isn't supported.
   factory VoiceEngine(SignalSender send) => impl.createVoiceEngine(send);
 
   bool get supported;
@@ -86,4 +90,9 @@ abstract class VoiceEngine {
   /// The latest frame of [peerId]'s camera (null: our own), or null if
   /// there's none yet. The caller disposes it.
   Future<ui.Image?> grabFrame(String? peerId);
+
+  /// In the phone apps, where frames can't be copied into the game: a live
+  /// view of [peerId]'s camera (null: ours), which the tavern places over
+  /// the camera picture. Null on the web (see [grabFrame]).
+  Widget? videoView(String? peerId);
 }

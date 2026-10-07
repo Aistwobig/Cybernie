@@ -93,7 +93,7 @@ Coming soon.
 | Game engine | Flame (the tavern, characters, collisions and seating) |
 | State | `setState` and `ValueNotifier`s, with small service classes |
 | Backend | Supabase: Google sign-in, Postgres with row-level security, Realtime (presence, broadcasts, live database changes), Storage for profile photos |
-| Voice, camera, screen sharing | WebRTC, directly between players' browsers (Supabase Realtime carries the call setup) |
+| Voice, camera, screen sharing | WebRTC, directly between players (browser WebRTC on the web, `flutter_webrtc` in the Android app; Supabase Realtime carries the call setup) |
 | Other packages | `audioplayers` (music and sound effects), `shared_preferences` (settings remembered on the device), `image_picker` (profile photos), `google_fonts` and `flutter_svg` (UI), `device_preview` (phone frame), `web` (browser APIs for WebRTC) |
 
 ## Running it yourself
@@ -183,10 +183,11 @@ redirect URLs.
 phone browsers.
 
 **Known issues and limits**
-- Voice chat, the camera and screen sharing only work in the web version.
-  Screen sharing needs a computer browser (Chrome, Edge or Firefox); phones
-  can watch but not share, because phone browsers don't allow it. Shared sound
-  depends on the browser too: a shared tab works best.
+- Voice chat, the camera and screen sharing work in the browser and in the
+  Android app, and web and app players can call each other. Screen sharing
+  from a phone needs the Android app (phone browsers don't allow it), and an
+  Android sharer sends the picture only, without sound. Shared sound from a
+  browser depends on the browser: a shared tab works best.
 - Voice and video connect players directly, so players on very strict
   networks (some school or office Wi-Fi) may not connect. A relay (TURN)
   server would fix this.
@@ -195,8 +196,7 @@ phone browsers.
 - The upstairs meeting room has no NPCs or decorations to interact with yet.
 
 **Next**
-- Native Android and iOS apps (screen sharing from phones, push
-  notifications).
+- An iOS app, and push notifications.
 - A cosmetics shop to spend coins on (name colours, nameplate frames,
   titles).
 - A bard jukebox: tip the bard to choose the tavern's song.

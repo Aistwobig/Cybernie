@@ -115,6 +115,13 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     }
   }
 
+  /// Where this player's camera picture goes, in map pixels (null while the
+  /// camera is off).
+  Rect? get cameraArea {
+    final camera = _camera;
+    return camera == null || !camera.isMounted ? null : camera.videoArea;
+  }
+
   /// Speech and "..." bubbles sit above the name tag, or above the camera
   /// picture while it's shown.
   double get _bubbleY =>
@@ -611,6 +618,13 @@ class CameraPicture extends PositionComponent with ParentIsA<Character> {
 
   static const double _border = 2;
   static const Radius _corner = Radius.circular(6);
+
+  /// Where the picture itself goes, in map pixels (inside the frame). The
+  /// phone app places the live video there.
+  Rect get videoArea => Rect.fromPoints(
+    absolutePositionOf(Vector2.all(_border)).toOffset(),
+    absolutePositionOf(size - Vector2.all(_border)).toOffset(),
+  );
 
   @override
   void update(double dt) {

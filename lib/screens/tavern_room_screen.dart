@@ -1122,6 +1122,19 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           Positioned.fill(
             child: GameWidget(game: _game, focusNode: _gameFocus),
           ),
+          // The phone app's live cameras and shared screen, placed over the
+          // pictures the game draws (the browser copies frames in instead).
+          if (!kIsWeb)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: _LiveVideoLayer(
+                  game: _game,
+                  camera: _voice.videoView,
+                  turns: () => _cameraTurns,
+                  screen: _screen.videoView,
+                ),
+              ),
+            ),
           Positioned(
             top: 12,
             left: 12,
@@ -1199,6 +1212,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
             Positioned.fill(
               child: _ScreenFullView(
                 frame: _fullFrame,
+                live: kIsWeb ? null : _screen.videoView,
+                ticks: _game.frames,
                 title: _screen.sharing.value
                     ? AppStrings.screenShareMineTitle
                     : AppStrings.screenShareFullTitle(_sharerName),
@@ -1527,11 +1542,18 @@ class _VoiceButtons extends StatelessWidget {
 class _ScreenFullView extends StatelessWidget {
   const _ScreenFullView({
     required this.frame,
+    this.live,
+    required this.ticks,
     required this.title,
     required this.onClose,
   });
 
   final ValueListenable<ui.Image?> frame;
+
+  /// The phone app's live view of the screen (instead of [frame]), looked
+  /// up again on every tick of [ticks].
+  final Widget? Function()? live;
+  final Listenable ticks;
   final String title;
   final VoidCallback onClose;
 
@@ -1552,20 +1574,22 @@ class _ScreenFullView extends StatelessWidget {
         child: Stack(
           children: [
             Positioned.fill(
-              child: ValueListenableBuilder<ui.Image?>(
-                valueListenable: frame,
-                builder: (context, image, _) => image == null
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFFFFD027),
-                        ),
-                      )
-                    : RawImage(
-                        image: image,
-                        fit: BoxFit.contain,
-                        filterQuality: FilterQuality.medium,
-                      ),
-              ),
+              child: live != null
+                  ? ListenableBuilder(
+                      listenable: ticks,
+                      builder: (context, _) =>
+                          live!() ?? const _ScreenLoading(),
+                    )
+                  : ValueListenableBuilder<ui.Image?>(
+                      valueListenable: frame,
+                      builder: (context, image, _) => image == null
+                          ? const _ScreenLoading()
+                          : RawImage(
+                              image: image,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.medium,
+                            ),
+                    ),
             ),
             Positioned(
               top: 10,
@@ -2327,4 +2351,81 @@ class _TypingLine extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ScreenLoading extends StatelessWidget {
+  const _ScreenLoading();
+
+  @override
+  Widget build(BuildContext context) =>
+      const Center(child: CircularProgressIndicator(color: Color(0xFFFFD027)));
+}
+
+/// In the phone app, video can't be copied into the game, so each camera
+/// (and the projector's shared screen) plays in its own view, moved every
+/// frame to exactly where the game draws that picture.
+class _LiveVideoLayer extends StatelessWidget {
+  const _LiveVideoLayer({
+    required this.game,
+    required this.camera,
+    required this.turns,
+    required this.screen,
+  });
+
+  final TavernGame game;
+
+  /// The live view of a player's camera (null id: ours).
+  final Widget? Function(String? playerId) camera;
+
+  /// How far each camera picture is turned to stand upright (null: ours).
+  final Map<String?, int> Function() turns;
+
+  /// The live view of the shared screen.
+  final Widget? Function() screen;
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<int>(
+    valueListenable: game.frames,
+    builder: (context, _, _) {
+      final turned = turns();
+      final children = <Widget>[];
+      final projector = game.projectorScreenArea;
+      final shared = projector == null ? null : screen();
+      if (projector != null && shared != null) {
+        children.add(
+          Positioned.fromRect(
+            key: const ValueKey('projector'),
+            rect: projector,
+            child: shared,
+          ),
+        );
+      }
+      for (final MapEntry(key: id, value: area)
+          in game.cameraScreenAreas.entries) {
+        final video = camera(id);
+        if (video == null) continue;
+        // The picture's rounded inner corner (4 map pixels), on screen.
+        final radius = 4 * area.width / 88;
+        Widget picture = RotatedBox(
+          quarterTurns: turned[id] ?? 0,
+          child: video,
+        );
+        // Ours is mirrored, as people expect to see themselves.
+        if (id == null) {
+          picture = Transform.flip(flipX: true, child: picture);
+        }
+        children.add(
+          Positioned.fromRect(
+            key: ValueKey('camera-$id'),
+            rect: area,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(radius),
+              child: picture,
+            ),
+          ),
+        );
+      }
+      return Stack(children: children);
+    },
+  );
 }

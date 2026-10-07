@@ -38,6 +38,13 @@ class ProjectorScreen extends PositionComponent
     _frame = image;
   }
 
+  /// Where the shared picture goes, in map pixels: above the caption, and
+  /// nowhere while nobody shares or the buttons are showing (the phone app
+  /// places the live video there, over everything drawn here).
+  Rect? get videoArea => !_active || _showControls
+      ? null
+      : Rect.fromLTWH(position.x, position.y, size.x, size.y - 11);
+
   bool _hovered = false;
   double _controlsLeft = 0;
   bool get _showControls => _hovered || _controlsLeft > 0;

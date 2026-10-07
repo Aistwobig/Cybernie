@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show Widget;
 
 import 'room_service.dart';
 import 'screen_engine.dart';
@@ -158,6 +159,10 @@ class ScreenShareService {
     if (sharerId.value == null) return null;
     return _engine?.grabFrame();
   }
+
+  /// In the Android app: a live view of the shared screen, for the tavern
+  /// to place over the projector. Null on the web.
+  Widget? videoView() => sharerId.value == null ? null : _engine?.videoView();
 
   Future<void> dispose() async {
     await stop();

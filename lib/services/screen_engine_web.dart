@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show Widget;
 import 'package:web/web.dart' as web;
 
 import 'screen_engine.dart';
@@ -289,6 +290,10 @@ class _WebScreen implements ScreenEngine {
     }
     link.early.clear();
   }
+
+  /// Frames are copied into the game (see [grabFrame]).
+  @override
+  Widget? videoView() => null;
 
   @override
   Future<ui.Image?> grabFrame() async {
