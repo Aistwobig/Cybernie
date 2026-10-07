@@ -492,42 +492,67 @@
   }
 
   // ---------- Background music (the game's own song) ----------
-  // Browsers only allow sound after a click, so it's a toggle; the choice is
-  // remembered for next time (it then starts on the first click anywhere).
+  // It plays by itself: right away where the browser allows it, otherwise on
+  // the visitor's first click, tap or key press anywhere (browsers block
+  // sound until then). Turning it off with the button is remembered.
   const bgm = $('#bgm');
   const musicBtn = $('#music');
   const MUSIC_KEY = 'cybernie-landing-music';
   const VOLUME = .35;
   let fade = null;
-  const setMusic = (on) => {
+  let playing = false;
+  const showButton = (on) => {
     musicBtn.setAttribute('aria-pressed', String(on));
     musicBtn.setAttribute('aria-label', on ? 'Pause the tavern music' : 'Play the tavern music');
-    try { localStorage.setItem(MUSIC_KEY, on ? '1' : '0'); } catch (_) { /* private mode */ }
-    clearInterval(fade);
-    if (on) {
-      bgm.volume = 0;
-      bgm.play().then(() => {
-        fade = setInterval(() => {
-          bgm.volume = Math.min(VOLUME, bgm.volume + .02);
-          if (bgm.volume >= VOLUME) clearInterval(fade);
-        }, 60);
-      }).catch(() => setMusic(false));
-    } else {
-      fade = setInterval(() => {
-        bgm.volume = Math.max(0, bgm.volume - .03);
-        if (bgm.volume <= 0) { clearInterval(fade); bgm.pause(); }
-      }, 40);
-    }
   };
-  musicBtn.addEventListener('click', () => setMusic(musicBtn.getAttribute('aria-pressed') !== 'true'));
-  let wanted = false;
-  try { wanted = localStorage.getItem(MUSIC_KEY) === '1'; } catch (_) { /* private mode */ }
-  if (wanted) {
-    const resume = (e) => {
-      if (e.target.closest && e.target.closest('#music')) return;
-      setMusic(true);
-    };
-    addEventListener('pointerdown', resume, { once: true });
+  const remember = (on) => {
+    try { localStorage.setItem(MUSIC_KEY, on ? '1' : '0'); } catch (_) { /* private mode */ }
+  };
+  // Starts the music (fading in). Resolves false if the browser blocked it.
+  const start = () => {
+    if (playing) return Promise.resolve(true);
+    clearInterval(fade);
+    bgm.volume = 0;
+    return bgm.play().then(() => {
+      playing = true;
+      showButton(true);
+      fade = setInterval(() => {
+        bgm.volume = Math.min(VOLUME, bgm.volume + .02);
+        if (bgm.volume >= VOLUME) clearInterval(fade);
+      }, 60);
+      return true;
+    }).catch(() => false);
+  };
+  const stop = () => {
+    playing = false;
+    showButton(false);
+    clearInterval(fade);
+    fade = setInterval(() => {
+      bgm.volume = Math.max(0, bgm.volume - .03);
+      if (bgm.volume <= 0) { clearInterval(fade); bgm.pause(); }
+    }, 40);
+  };
+  musicBtn.addEventListener('click', () => {
+    if (playing) { stop(); remember(false); } else { start(); remember(true); }
+  });
+
+  // On unless the visitor switched it off before.
+  let musicOff = false;
+  try { musicOff = localStorage.getItem(MUSIC_KEY) === '0'; } catch (_) { /* private mode */ }
+  if (!musicOff) {
+    bgm.preload = 'auto';
+    start().then((ok) => {
+      if (ok) return;
+      // Blocked: start on the first interaction instead.
+      const events = ['pointerdown', 'keydown', 'touchstart'];
+      const kick = (e) => {
+        events.forEach((t) => removeEventListener(t, kick, true));
+        // A click on the music button itself is handled by the button.
+        if (e.target.closest && e.target.closest('#music')) return;
+        start();
+      };
+      events.forEach((t) => addEventListener(t, kick, true));
+    });
   }
 
   // ---------- Fade sections in as they arrive ----------
