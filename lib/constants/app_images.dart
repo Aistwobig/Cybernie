@@ -54,7 +54,7 @@ class AppImages {
   static const String profileRogue = 'assets/images/4.png';
   static const String profileMage = 'assets/images/5.png';
   static const String tavernRoom = 'assets/images/tavern.png';
-  static const String tavernUpstairs = 'assets/images/tavern_upstairs.png';
+  static const String tavernUpstairs = 'assets/images/tavern_upstairs2.png';
 
   /// Tavern HUD buttons (cut from assets/sheets/original_tavern_hud_kit.png):
   /// tasks, inventory, leaderboard, the red "!" badge and the coin.

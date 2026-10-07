@@ -17,7 +17,14 @@ class RoomPlayer {
     this.voice = false,
     this.camera = false,
     this.cameraTurns = 0,
+    this.sharingScreen = false,
+    this.screenSince = 0,
   });
+
+  /// Sharing their screen on the projector upstairs, since [screenSince]
+  /// (milliseconds since 1970; the earlier of two sharers keeps it).
+  final bool sharingScreen;
+  final int screenSince;
 
   /// Quarter turns clockwise that stand their camera picture upright (they
   /// hold a phone sideways while its screen stays upright).
@@ -271,6 +278,13 @@ class RoomService {
     await _channel?.track(_presence);
   }
 
+  /// Tells the room we're sharing our screen on the projector (since
+  /// [since], milliseconds since 1970), or stopped.
+  Future<void> setScreen(bool on, {int since = 0}) async {
+    _presence = {..._presence, 'screen': on, 'screenAt': on ? since : 0};
+    await _channel?.track(_presence);
+  }
+
   /// Sends a voice call setup message to player [to].
   Future<void> sendVoiceSignal(String to, Map<String, dynamic> signal) async {
     await _channel?.sendBroadcastMessage(
@@ -303,6 +317,8 @@ class RoomService {
         voice: data['voice'] == true,
         camera: data['cam'] == true,
         cameraTurns: (data['camTurns'] as num?)?.toInt() ?? 0,
+        sharingScreen: data['screen'] == true,
+        screenSince: (data['screenAt'] as num?)?.toInt() ?? 0,
         x: (data['x'] as num?)?.toDouble() ?? 0,
         y: (data['y'] as num?)?.toDouble() ?? 0,
       );

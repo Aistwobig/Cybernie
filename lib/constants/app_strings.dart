@@ -204,6 +204,17 @@ class AppStrings {
   static const String speakerNotSupported =
       "This browser plays voices on your device's current speaker (change "
       'it in your system settings).';
+  static String screenShareBusy(String name) => '$name is sharing the screen';
+  static const String screenShareUnsupported =
+      'Screen sharing works in a computer browser (Chrome, Edge or '
+      'Firefox). You can still watch from here.';
+  static const String screenShareFailed =
+      "Couldn't share your screen. Try again.";
+  static const String screenShareSignInRequired =
+      'Sign in to share your screen.';
+  static String screenShareFullTitle(String name) => "$name's screen";
+  static const String screenShareMineTitle = 'Your screen';
+  static const String closeFullScreen = 'Close full screen';
   static const String cameraLabel = 'Camera';
   static const String defaultCamera = 'Default camera';
   static String cameraNumber(int n) => 'Camera $n';

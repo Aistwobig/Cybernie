@@ -115,6 +115,28 @@ class TavernMap {
       frontBottom: 820,
       facing: Facing.south,
     ),
+    // --- Upstairs: the long meeting table ----------------------------------
+    // Seven chairs behind it (facing the camera)...
+    Seat.behindMeetingTable(485),
+    Seat.behindMeetingTable(571),
+    Seat.behindMeetingTable(656),
+    Seat.behindMeetingTable(742),
+    Seat.behindMeetingTable(827),
+    Seat.behindMeetingTable(912),
+    Seat.behindMeetingTable(998),
+    // ...and seven in front of it (facing the table).
+    Seat.facingMeetingTable(485),
+    Seat.facingMeetingTable(571),
+    Seat.facingMeetingTable(656),
+    Seat.facingMeetingTable(742),
+    Seat.facingMeetingTable(827),
+    Seat.facingMeetingTable(912),
+    Seat.facingMeetingTable(998),
+    // Its ends: two chairs each, facing the table.
+    Seat.sideChair(414, upstairsTop + 443, 383, 420, Facing.east),
+    Seat.sideChair(414, upstairsTop + 505, 383, 420, Facing.east),
+    Seat.sideChair(1074, upstairsTop + 443, 1066, 1104, Facing.west),
+    Seat.sideChair(1074, upstairsTop + 505, 1066, 1104, Facing.west),
   ];
   static const double seatReach = 62;
 
@@ -185,14 +207,15 @@ class TavernMap {
 
   // --- Upstairs ---------------------------------------------------------------
   //
-  // The upstairs room (AppImages.tavernUpstairs, 1536 x 1024) sits in the
-  // same game world, [upstairsTop] map pixels down: far enough that nobody
-  // on one floor ever sees, hears (voice chat) or meets anyone on the other.
-  // Boxes and spots below are in its own picture's pixels, shifted down.
+  // The upstairs meeting room (AppImages.tavernUpstairs, 1448 x 1086: a long
+  // table, a projector screen) sits in the same game world, [upstairsTop]
+  // map pixels down: far enough that nobody on one floor ever sees, hears
+  // (voice chat) or meets anyone on the other. Spots and boxes below are in
+  // its own picture's pixels ([_up] adds the shift).
 
   static const double upstairsTop = 1400;
-  static const double upstairsWidth = 1536;
-  static const double upstairsHeight = 1024;
+  static const double upstairsWidth = 1448;
+  static const double upstairsHeight = 1086;
 
   static const Rect downstairsArea = Rect.fromLTWH(0, 0, width, height);
   static const Rect upstairsArea = Rect.fromLTWH(
@@ -213,46 +236,68 @@ class TavernMap {
   /// above the steps ([stairsUpArrow]) shows the way.
   static const Rect stairsUp = Rect.fromLTRB(1092, 250, 1170, 320);
   static const Offset stairsUpArrow = Offset(1131, 300);
-  static const Offset upstairsArrival = Offset(768, upstairsTop + 850);
+  static const Offset upstairsArrival = Offset(723, upstairsTop + 795);
 
   /// Walking down through the doorway onto the doormat at the bottom of the
   /// upstairs room goes back downstairs, arriving at [downstairsArrival]
   /// (at the foot of the stairs).
   static const Rect stairsDown = Rect.fromLTRB(
-    692,
-    upstairsTop + 905,
-    843,
-    upstairsTop + 970,
+    632,
+    upstairsTop + 868,
+    815,
+    upstairsTop + 925,
   );
-  static const Offset stairsDownArrow = Offset(768, upstairsTop + 900);
+  static const Offset stairsDownArrow = Offset(723, upstairsTop + 862);
   static const Offset downstairsArrival = Offset(1131, 398);
 
-  /// Upstairs walls, in the upstairs picture's own pixels.
+  /// The projector screen's picture area (where a shared screen shows).
+  static const Rect projectorScreen = Rect.fromLTRB(
+    622,
+    upstairsTop + 100,
+    866,
+    upstairsTop + 229,
+  );
+
+  /// Upstairs walls and furniture, in the upstairs picture's own pixels.
   static const List<Rect> _upstairsLocal = [
-    Rect.fromLTRB(0, 0, 1536, 215), // back wall
-    Rect.fromLTRB(0, 0, 155, 285), // left alcove (top)
-    Rect.fromLTRB(1385, 0, 1536, 285), // right alcove (top)
-    Rect.fromLTRB(0, 0, 80, 410), // far left wall
-    Rect.fromLTRB(1458, 0, 1536, 410), // far right wall
-    Rect.fromLTRB(0, 0, 22, 1024), // left edge
-    Rect.fromLTRB(1514, 0, 1536, 1024), // right edge
-    Rect.fromLTRB(0, 510, 100, 1024), // left posts
-    Rect.fromLTRB(1438, 510, 1536, 1024), // right posts
-    Rect.fromLTRB(0, 585, 155, 780), // left alcove (bottom)
-    Rect.fromLTRB(1385, 585, 1536, 780), // right alcove (bottom)
+    Rect.fromLTRB(0, 0, 1448, 197), // back wall
+    Rect.fromLTRB(608, 0, 880, 245), // projector screen (on its stand)
+    Rect.fromLTRB(0, 0, 148, 270), // left alcove (top)
+    Rect.fromLTRB(1305, 0, 1448, 270), // right alcove (top)
+    Rect.fromLTRB(0, 0, 78, 388), // far left wall
+    Rect.fromLTRB(1372, 0, 1448, 388), // far right wall
+    Rect.fromLTRB(0, 0, 18, 1086), // left edge
+    Rect.fromLTRB(1430, 0, 1448, 1086), // right edge
+    Rect.fromLTRB(0, 490, 95, 1086), // left posts
+    Rect.fromLTRB(1355, 490, 1448, 1086), // right posts
+    Rect.fromLTRB(0, 550, 148, 735), // left alcove (bottom)
+    Rect.fromLTRB(1305, 550, 1448, 735), // right alcove (bottom)
     // Bottom corners, cut diagonally (as steps).
-    Rect.fromLTRB(0, 780, 110, 1024),
-    Rect.fromLTRB(0, 810, 135, 1024),
-    Rect.fromLTRB(0, 840, 160, 1024),
-    Rect.fromLTRB(1430, 780, 1536, 1024),
-    Rect.fromLTRB(1405, 810, 1536, 1024),
-    Rect.fromLTRB(1380, 840, 1536, 1024),
-    // Bottom wall, either side of the doorway, and the doorway's sides.
-    Rect.fromLTRB(0, 858, 628, 1024),
-    Rect.fromLTRB(908, 858, 1536, 1024),
-    Rect.fromLTRB(0, 890, 692, 1024),
-    Rect.fromLTRB(843, 890, 1536, 1024),
-    Rect.fromLTRB(0, 962, 1536, 1024), // below the doormat
+    Rect.fromLTRB(0, 735, 100, 1086),
+    Rect.fromLTRB(0, 765, 125, 1086),
+    Rect.fromLTRB(0, 795, 150, 1086),
+    Rect.fromLTRB(1350, 735, 1448, 1086),
+    Rect.fromLTRB(1325, 765, 1448, 1086),
+    Rect.fromLTRB(1300, 795, 1448, 1086),
+    // Bottom wall either side of the doorway, the doorway's sides, and
+    // below the doormat.
+    Rect.fromLTRB(0, 822, 592, 1086),
+    Rect.fromLTRB(855, 822, 1448, 1086),
+    Rect.fromLTRB(0, 862, 632, 1086),
+    Rect.fromLTRB(815, 862, 1448, 1086),
+    Rect.fromLTRB(0, 915, 1448, 1086),
+    // Plants in the corners.
+    Rect.fromLTRB(158, 195, 203, 228),
+    Rect.fromLTRB(1250, 195, 1300, 228),
+    Rect.fromLTRB(140, 725, 192, 765),
+    Rect.fromLTRB(1258, 725, 1310, 765),
+    // The long table and its chairs (the seats are below; sitting puts
+    // you there).
+    Rect.fromLTRB(428, 392, 1058, 530), // table
+    Rect.fromLTRB(458, 356, 1025, 392), // chairs behind it
+    Rect.fromLTRB(458, 535, 1025, 588), // chairs in front of it
+    Rect.fromLTRB(378, 400, 425, 528), // chairs at its left end
+    Rect.fromLTRB(1062, 400, 1108, 528), // chairs at its right end
   ];
 
   static final List<Rect> _upstairsBoxes = [
@@ -311,6 +356,34 @@ class Seat {
         frontRight: seatRight,
         frontBottom: y,
         facing: facing,
+      );
+
+  /// Upstairs: a chair behind the long table, centred on [centerX], sat on
+  /// facing the camera. The strip of table in front is drawn over the
+  /// sitter, so it hides their legs (reaching far enough down to be drawn
+  /// above a seated character, who is lifted over the seat).
+  const Seat.behindMeetingTable(double centerX)
+    : this(
+        centerX,
+        TavernMap.upstairsTop + 409,
+        frontLeft: centerX - 34,
+        frontTop: TavernMap.upstairsTop + 395,
+        frontRight: centerX + 35,
+        frontBottom: TavernMap.upstairsTop + 440,
+        facing: Facing.south,
+      );
+
+  /// Upstairs: a chair in front of the long table, centred on [centerX],
+  /// sat on facing the table (back to the camera). Its seat edge and legs
+  /// are drawn over the sitter, like the stools downstairs.
+  const Seat.facingMeetingTable(double centerX)
+    : this(
+        centerX,
+        TavernMap.upstairsTop + 578,
+        frontLeft: centerX - 23,
+        frontTop: TavernMap.upstairsTop + 562,
+        frontRight: centerX + 24,
+        frontBottom: TavernMap.upstairsTop + 591,
       );
 
   /// Where the seated character's feet line goes.

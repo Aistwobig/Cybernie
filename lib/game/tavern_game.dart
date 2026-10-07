@@ -16,6 +16,7 @@ import 'bernie.dart';
 import 'character.dart' show Character;
 import 'highlight.dart';
 import 'night_lighting.dart';
+import 'projector.dart';
 import 'player.dart';
 import 'remote_player.dart';
 import 'tavern_map.dart';
@@ -651,6 +652,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         hips: Vector2(TavernMap.girlSpot.dx, TavernMap.girlSpot.dy),
       ),
       _noticeBoard,
+      projector,
       bernie,
       counterFront,
       ...stoolFronts,
@@ -680,6 +682,22 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     );
     camera.viewport.addAll([_joystick, _fade]);
   }
+
+  /// The projector screen upstairs, where a shared screen shows.
+  final ProjectorScreen projector = ProjectorScreen(
+    area: TavernMap.projectorScreen,
+  );
+
+  /// Shows [name]'s shared screen on the projector ("" for nobody; [mine]:
+  /// we're the one sharing).
+  void setProjector(String name, {bool mine = false}) {
+    projector
+      ..sharerName = name
+      ..sharingIsMine = mine;
+  }
+
+  /// The shared screen's newest frame. Takes ownership of [image].
+  void setProjectorFrame(ui.Image image) => projector.frame = image;
 
   // --- Floors ----------------------------------------------------------------
 

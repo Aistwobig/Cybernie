@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flame/game.dart';
@@ -23,6 +24,7 @@ import '../services/lottery_service.dart';
 import '../services/voice_service.dart';
 import '../services/profile_service.dart';
 import '../services/room_service.dart';
+import '../services/screen_share_service.dart';
 import '../services/sfx_service.dart';
 import '../game/tavern_map.dart';
 import '../theme/app_theme.dart';
@@ -145,6 +147,14 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _game.onFootstep = (left) => _game.slimySteps
         ? SfxService.play(left ? Sfx.slimeStep1 : Sfx.slimeStep2, gain: 0.5)
         : SfxService.play(left ? Sfx.step1 : Sfx.step2, gain: 0.45);
+    // The projector upstairs: share a screen, or watch it full screen.
+    _game.projector
+      ..onShareTap = _toggleScreenShare
+      ..onFullScreenTap = () => setState(() => _screenFull = true);
+    _screenTick = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => _updateScreenShare(),
+    );
     _messageController.addListener(_onDraftChanged);
     _prepare();
     _loadHints();
@@ -178,6 +188,13 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _lotteryCheck?.cancel();
     _voiceTick?.cancel();
     _cameraPump?.cancel();
+    _screenTick?.cancel();
+    _screenPump?.cancel();
+    _game.projector
+      ..onShareTap = null
+      ..onFullScreenTap = null;
+    _screen.dispose();
+    _setFullFrame(null);
     _voice.leave();
     _fireLoop.dispose();
     _effectTicker?.cancel();
@@ -361,7 +378,17 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       },
       onDrink: _game.otherPlayerDrinks,
       onTyping: _setTyping,
-      onVoiceSignal: _voice.handleSignal,
+      // Call setup for voice chat, and for the projector's screen share
+      // ('scr-...').
+      onVoiceSignal: (from, signal) {
+        final kind = signal['kind'];
+        if (kind is String && kind.startsWith('scr-')) {
+          final room = _room;
+          if (room != null) _screen.handleSignal(room, from, signal);
+        } else {
+          _voice.handleSignal(from, signal);
+        }
+      },
       onError: () => _showSnack(AppStrings.roomConnectionError),
     );
     // A little welcome jingle once we're in.
@@ -660,6 +687,125 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     ..cameraOn.addListener(_camerasChanged)
     ..watching.addListener(_camerasChanged);
   Timer? _voiceTick;
+
+  // --- The projector upstairs: sharing a screen ------------------------------
+
+  late final ScreenShareService _screen = ScreenShareService()
+    ..sharerId.addListener(_sharerChanged);
+
+  /// Checks who is sharing and links the sharer to everyone upstairs.
+  Timer? _screenTick;
+
+  /// Copies the shared screen onto the projector (or the full-screen view)
+  /// about 10 times a second, while someone shares.
+  Timer? _screenPump;
+  bool _grabbingScreen = false;
+
+  /// The shared screen is open full screen; its newest frame.
+  bool _screenFull = false;
+  final ValueNotifier<ui.Image?> _fullFrame = ValueNotifier(null);
+
+  /// The name shown for whoever is sharing ("" for nobody).
+  String get _sharerName {
+    final id = _screen.sharerId.value;
+    if (id == null) return '';
+    if (id == _screen.myId || id == _room?.myId) return _myName;
+    return _nameInRoom(id);
+  }
+
+  void _sharerChanged() {
+    final id = _screen.sharerId.value;
+    _game.setProjector(_sharerName, mine: _screen.sharing.value);
+    if (id == null) {
+      _screenPump?.cancel();
+      _screenPump = null;
+      _setFullFrame(null);
+      if (_screenFull && mounted) setState(() => _screenFull = false);
+    } else {
+      _screenPump ??= Timer.periodic(
+        const Duration(milliseconds: 100),
+        (_) => _pumpScreen(),
+      );
+    }
+  }
+
+  void _updateScreenShare() {
+    if (!_game.isLoaded || !_game.player.isLoaded) return;
+    _screen.update(
+      others: _others,
+      // Everyone upstairs sees the projector.
+      viewers: {
+        for (final entry in _game.otherPlayerPositions.entries)
+          if (TavernMap.isUpstairs(Offset(entry.value.x, entry.value.y)))
+            entry.key,
+      },
+      onLostToEarlier: (name) => _showSnack(AppStrings.screenShareBusy(name)),
+    );
+    // Names can arrive after the share started.
+    _game.setProjector(_sharerName, mine: _screen.sharing.value);
+  }
+
+  void _pumpScreen() {
+    if (_grabbingScreen) return;
+    // Nothing to draw while we're downstairs, unless it's open full screen.
+    if (!_screenFull && !_game.upstairs) return;
+    _grabbingScreen = true;
+    _screen.grabFrame().then(
+      (image) {
+        _grabbingScreen = false;
+        if (image == null) return;
+        if (!mounted) {
+          image.dispose();
+        } else if (_screenFull) {
+          _setFullFrame(image);
+        } else {
+          _game.setProjectorFrame(image);
+        }
+      },
+      onError: (Object _) {
+        _grabbingScreen = false;
+      },
+    );
+  }
+
+  void _setFullFrame(ui.Image? image) {
+    final old = _fullFrame.value;
+    _fullFrame.value = image;
+    old?.dispose();
+  }
+
+  /// "Share screen" / "Stop sharing" on the projector.
+  Future<void> _toggleScreenShare() async {
+    if (_screen.sharing.value) {
+      await _screen.stop();
+      _sharerChanged();
+      return;
+    }
+    final room = _room;
+    if (room == null) {
+      _showSnack(AppStrings.screenShareSignInRequired);
+      return;
+    }
+    try {
+      await _screen.start(
+        room,
+        others: _others,
+        onStoppedByBrowser: () async {
+          await _screen.stop();
+          _sharerChanged();
+        },
+      );
+      _sharerChanged();
+    } on ScreenShareBusy catch (busy) {
+      _showSnack(AppStrings.screenShareBusy(busy.name));
+    } on ScreenShareUnsupported {
+      _showSnack(AppStrings.screenShareUnsupported);
+    } on ScreenShareCancelled {
+      // Closed the browser's picker: nothing to say.
+    } catch (_) {
+      _showSnack(AppStrings.screenShareFailed);
+    }
+  }
 
   /// Copies the cameras' newest frames into the game (drawn above each
   /// player's head) about 15 times a second, while any camera is shown.
@@ -1032,6 +1178,21 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
               ),
             ),
           ..._buildHud(constraints, panel),
+          // The projector's shared screen, full screen.
+          if (_screenFull)
+            Positioned.fill(
+              child: _ScreenFullView(
+                frame: _fullFrame,
+                title: _screen.sharing.value
+                    ? AppStrings.screenShareMineTitle
+                    : AppStrings.screenShareFullTitle(_sharerName),
+                onClose: () {
+                  setState(() => _screenFull = false);
+                  _setFullFrame(null);
+                  _gameFocus.requestFocus();
+                },
+              ),
+            ),
           // Over everything until the room is fully ready, then fades away
           // (and is removed once it has).
           if (!_loadingGone)
@@ -1340,6 +1501,87 @@ class _VoiceButtons extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+/// The projector's shared screen filling the view, with whose it is and a
+/// close button (Esc closes it too).
+class _ScreenFullView extends StatelessWidget {
+  const _ScreenFullView({
+    required this.frame,
+    required this.title,
+    required this.onClose,
+  });
+
+  final ValueListenable<ui.Image?> frame;
+  final String title;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      autofocus: true,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.escape) {
+          onClose();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: ColoredBox(
+        color: Colors.black,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: ValueListenableBuilder<ui.Image?>(
+                valueListenable: frame,
+                builder: (context, image, _) => image == null
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFFFFD027),
+                        ),
+                      )
+                    : RawImage(
+                        image: image,
+                        fit: BoxFit.contain,
+                        filterQuality: FilterQuality.medium,
+                      ),
+              ),
+            ),
+            Positioned(
+              top: 10,
+              left: 12,
+              right: 60,
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: Color(0xFFF5E6C8),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+                ),
+              ),
+            ),
+            Positioned(
+              top: 4,
+              right: 6,
+              child: IconButton(
+                tooltip: AppStrings.closeFullScreen,
+                onPressed: onClose,
+                icon: const Icon(Icons.fullscreen_exit),
+                color: const Color(0xFFF5E6C8),
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0x66000000),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
