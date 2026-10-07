@@ -1,6 +1,6 @@
 # Cybernie
 
-> A cozy multiplayer pixel-art tavern for the web: pick a character, walk
+> A cozy multiplayer pixel-art tavern for the web/app: pick a character, walk
 > into Bernie's Tavern, and hang out with friends through chat, proximity
 > voice and video, drinks, mini-games and a meeting room with screen sharing.
 
