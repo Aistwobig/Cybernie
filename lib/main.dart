@@ -154,7 +154,8 @@ class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CYBERNIE',
+      // The browser tab's title (the icon is web/favicon.png).
+      title: 'Cybernie',
       debugShowCheckedModeBanner: false,
 
       // Required for DevicePreview to actually control the app.

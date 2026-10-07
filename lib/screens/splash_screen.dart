@@ -1,20 +1,58 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../config/supabase_config.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/text_styles.dart';
 
-class SplashScreen extends StatelessWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen> {
+  StreamSubscription<AuthState>? _auth;
+  bool _leaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // The saved session can finish restoring (or renewing) just after this
+    // screen opened: then go straight in, no sign-in needed.
+    if (SupabaseConfig.isConfigured) {
+      try {
+        _auth = AuthService.authChanges.listen((state) {
+          if (state.session != null) _go('/welcome');
+        });
+      } catch (_) {
+        // Supabase isn't started (e.g. in tests): nothing to listen to.
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _auth?.cancel();
+    super.dispose();
+  }
+
+  void _go(String route) {
+    if (_leaving || !mounted) return;
+    _leaving = true;
+    Navigator.of(context).pushReplacementNamed(route);
+  }
 
   void _goToLogin(BuildContext context) {
     // Already signed in (or just returned from Google): skip the login screen.
-    Navigator.of(
-      context,
-    ).pushReplacementNamed(AuthService.isSignedIn ? '/welcome' : '/login');
+    _go(AuthService.isSignedIn ? '/welcome' : '/login');
   }
 
   @override

@@ -29,12 +29,23 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     if (SupabaseConfig.isConfigured) {
+      // Signed in now, or the saved session finishes restoring (or
+      // renewing) after this screen opened: no need to sign in again.
       _authSubscription = AuthService.authChanges.listen((state) {
-        if (state.event == AuthChangeEvent.signedIn && mounted) {
-          Navigator.of(context).pushReplacementNamed('/welcome');
-        }
+        if (state.session != null) _goHome();
       });
+      if (AuthService.isSignedIn) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _goHome());
+      }
     }
+  }
+
+  bool _leaving = false;
+
+  void _goHome() {
+    if (_leaving || !mounted) return;
+    _leaving = true;
+    Navigator.of(context).pushReplacementNamed('/welcome');
   }
 
   @override
