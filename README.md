@@ -1,4 +1,21 @@
+<div align="center">
+
 # Cybernie
+
+**A cozy multiplayer pixel-art tavern: walk in, sit down, and hang out with friends.**
+
+![License](https://img.shields.io/badge/License-MIT-C9A227)
+![Flutter](https://img.shields.io/badge/Flutter-3.47-2F9E44?logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-3.12-0175C2?logo=dart&logoColor=white)
+![Flame](https://img.shields.io/badge/Flame-1.38-E8590C)
+![Supabase](https://img.shields.io/badge/Supabase-2.x-3ECF8E?logo=supabase&logoColor=white)
+![WebRTC](https://img.shields.io/badge/WebRTC-voice_%7C_video_%7C_screen-555555?logo=webrtc&logoColor=white)
+![GitHub Pages](https://img.shields.io/badge/GitHub_Pages-live-222222?logo=github&logoColor=white)
+![Status](https://img.shields.io/badge/Status-Beta-E8590C)
+
+</div>
+
+---
 
 > A cozy multiplayer pixel-art tavern for the web/app: pick a character, walk
 > into Bernie's Tavern, and hang out with friends through chat, proximity
