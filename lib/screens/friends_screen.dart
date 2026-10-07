@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../utils/last_seen.dart';
 import '../widgets/dm_banner.dart';
 import '../widgets/fantasy_ui.dart';
+import '../widgets/friend_pill.dart';
 import '../widgets/player_avatar.dart';
 import 'direct_chat_screen.dart';
 import 'player_profile_screen.dart';
@@ -343,20 +344,13 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 subtitle: lastSeenLabel(player, now),
                 isOnline: player.isOnline(now),
                 onTap: () => _openProfile(player),
-                trailing: _requested.contains(player.id)
-                    ? Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Text(
-                          AppStrings.pendingLabel,
-                          style: FantasyText.mono(size: 13),
-                        ),
-                      )
-                    : FramedTextButton(
-                        label: AppStrings.addButton,
-                        onPressed: _sending.contains(player.id)
-                            ? null
-                            : () => _sendRequest(player),
-                      ),
+                trailing: FriendPill(
+                  state: _requested.contains(player.id)
+                      ? FriendPillState.requested
+                      : FriendPillState.add,
+                  busy: _sending.contains(player.id),
+                  onAdd: () => _sendRequest(player),
+                ),
               ),
         ],
       ),

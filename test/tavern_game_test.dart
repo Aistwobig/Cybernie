@@ -168,6 +168,22 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
       }
       expect(game.player.children.whereType<SpriteComponent>(), isEmpty);
+
+      // Emotes can be spammed: several at once stack over the head.
+      for (var i = 0; i < 3; i++) {
+        game.emote('👋');
+      }
+      for (var i = 0; i < 5; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+      expect(game.player.children.whereType<SpriteComponent>(), hasLength(3));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+      expect(game.player.children.whereType<SpriteComponent>(), isEmpty);
       expect(tester.takeException(), isNull);
 
       // Walking up to the notice board offers it, and E opens it.

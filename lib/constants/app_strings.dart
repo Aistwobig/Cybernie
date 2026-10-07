@@ -108,6 +108,10 @@ class AppStrings {
   static const String declineButton = 'DECLINE';
   static const String addButton = 'ADD';
   static const String pendingLabel = 'Pending';
+  // The friend pill on player rows (see FriendPill).
+  static const String addPill = 'Add';
+  static const String requestedPill = 'Requested ✓';
+  static const String friendsPill = 'Friends ✓';
   static const String friendsLabel = 'Friends';
   static const String friendSafetyNote =
       'SAFETY NOTE: Please be aware of fake accounts and do not share '

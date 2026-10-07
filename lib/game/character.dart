@@ -582,10 +582,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
         Vector2(drift, -18 - _emoteRandom.nextDouble() * 10),
         EffectController(duration: 2.2, curve: Curves.easeOutCubic),
       ),
-      RemoveEffect(
-        delay: 2.4,
-        onComplete: () => _emotes.remove(emote),
-      ),
+      RemoveEffect(delay: 2.4, onComplete: () => _emotes.remove(emote)),
     ]);
     _emotes.add(emote);
     add(emote);

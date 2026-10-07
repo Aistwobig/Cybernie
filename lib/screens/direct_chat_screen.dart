@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_strings.dart';
 import '../models/profile.dart';
-import '../theme/app_theme.dart';
 import '../utils/last_seen.dart';
 import '../widgets/direct_chat_view.dart';
 import '../widgets/player_avatar.dart';
@@ -27,7 +26,7 @@ class DirectChatScreen extends StatelessWidget {
     final online = friend.isOnline();
 
     return Scaffold(
-      backgroundColor: AppColors.parchment,
+      backgroundColor: ChatColors.bar,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -41,7 +40,7 @@ class DirectChatScreen extends StatelessWidget {
                     tooltip: AppStrings.backButton,
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.arrow_back, size: 22),
-                    color: AppColors.ink,
+                    color: ChatColors.cream,
                   ),
                   PlayerAvatar(
                     photoUrl: friend.avatarUrl,
@@ -60,10 +59,10 @@ class DirectChatScreen extends StatelessWidget {
                             friend.displayName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.lora(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.ink,
+                              fontWeight: FontWeight.w800,
+                              color: ChatColors.cream,
                             ),
                           ),
                         ),
@@ -73,8 +72,8 @@ class DirectChatScreen extends StatelessWidget {
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: online
-                                ? AppColors.online
-                                : AppColors.ink.withValues(alpha: 0.55),
+                                ? const Color(0xFF4CD964)
+                                : ChatColors.muted,
                           ),
                         ),
                       ],
@@ -83,7 +82,7 @@ class DirectChatScreen extends StatelessWidget {
                 ],
               ),
             ),
-            Container(height: 1, color: AppColors.ink.withValues(alpha: 0.18)),
+            Container(height: 1, color: const Color(0x66B8742E)),
             Expanded(child: DirectChatView(friend: friend)),
           ],
         ),

@@ -8,7 +8,29 @@ import '../models/profile.dart';
 import '../services/direct_message_service.dart';
 import '../services/dm_notifier.dart';
 import '../services/sfx_service.dart';
-import '../theme/app_theme.dart';
+
+/// The chat's colours (as on the landing page): deep purple, with your
+/// messages in gold and theirs in soft cream. The same in day and night.
+class ChatColors {
+  ChatColors._();
+
+  static const Color bgTop = Color(0xFF2A1D3D);
+  static const Color bgBottom = Color(0xFF1B1229);
+  static const Color bar = Color(0xFF1B1229);
+  static const Color gold = Color(0xFFFFD027);
+  static const Color goldInk = Color(0xFF2A1408);
+  static const Color cream = Color(0xFFF5E6C8);
+  static const Color muted = Color(0xFFB9A98D);
+  static const Color copper = Color(0xFFB8742E);
+  static const Color theirs = Color(0x1FF5E6C8);
+  static const Color field = Color(0x59000000);
+
+  static const LinearGradient background = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [bgTop, bgBottom],
+  );
+}
 
 /// A private conversation with [friend]: the messages, newest at the bottom,
 /// and a box to write text or send one of the game's emotes.
@@ -205,6 +227,13 @@ class _DirectChatViewState extends State<DirectChatView> {
   @override
   Widget build(BuildContext context) {
     final pad = widget.compact ? 10.0 : 16.0;
+    return DecoratedBox(
+      decoration: const BoxDecoration(gradient: ChatColors.background),
+      child: _buildColumn(pad),
+    );
+  }
+
+  Widget _buildColumn(double pad) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -212,11 +241,7 @@ class _DirectChatViewState extends State<DirectChatView> {
         if (_editing != null)
           _EditingBar(onCancel: () => setState(_stopEditing)),
         if (_emotesOpen)
-          _EmoteRow(
-            compact: widget.compact,
-            enabled: true,
-            onPick: _sendEmote,
-          ),
+          _EmoteRow(compact: widget.compact, enabled: true, onPick: _sendEmote),
         _Composer(
           controller: _controller,
           focusNode: _inputFocus,
@@ -243,7 +268,7 @@ class _DirectChatViewState extends State<DirectChatView> {
           height: 22,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.ink,
+            color: ChatColors.gold,
           ),
         ),
       );
@@ -338,20 +363,17 @@ class _MessageTile extends StatelessWidget {
           vertical: compact ? 7 : 9,
         ),
         decoration: BoxDecoration(
-          color: mine ? AppColors.ink : AppColors.card,
+          color: mine ? ChatColors.gold : ChatColors.theirs,
           borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(12),
-            topRight: const Radius.circular(12),
-            bottomLeft: Radius.circular(mine ? 12 : 3),
-            bottomRight: Radius.circular(mine ? 3 : 12),
+            topLeft: const Radius.circular(14),
+            topRight: const Radius.circular(14),
+            bottomLeft: Radius.circular(mine ? 14 : 4),
+            bottomRight: Radius.circular(mine ? 4 : 14),
           ),
-          border: mine
-              ? null
-              : Border.all(color: AppColors.ink.withValues(alpha: 0.25)),
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: AppColors.frameBrown.withValues(alpha: 0.6),
+                    color: ChatColors.copper,
                     blurRadius: 0,
                     spreadRadius: 2,
                   ),
@@ -363,7 +385,8 @@ class _MessageTile extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: compact ? 13 : 14.5,
             height: 1.35,
-            color: mine ? AppColors.onInk : AppColors.ink,
+            fontWeight: mine ? FontWeight.w600 : FontWeight.w400,
+            color: mine ? ChatColors.goldInk : ChatColors.cream,
           ),
         ),
       );
@@ -389,10 +412,7 @@ class _MessageTile extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             meta,
-            style: GoogleFonts.inter(
-              fontSize: 10.5,
-              color: AppColors.ink.withValues(alpha: 0.5),
-            ),
+            style: GoogleFonts.inter(fontSize: 10.5, color: ChatColors.muted),
           ),
           if (selected)
             Padding(
@@ -410,7 +430,7 @@ class _MessageTile extends StatelessWidget {
                   _ActionChip(
                     icon: Icons.delete_outline,
                     label: AppStrings.dmDelete,
-                    color: const Color(0xFFB3261E),
+                    color: const Color(0xFFFF8A80),
                     onTap: onDelete,
                   ),
                 ],
@@ -453,9 +473,9 @@ class _ActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = color ?? AppColors.ink;
+    final fg = color ?? ChatColors.cream;
     return Material(
-      color: AppColors.card,
+      color: const Color(0x40000000),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(5),
         side: BorderSide(color: fg.withValues(alpha: 0.6)),
@@ -496,10 +516,10 @@ class _EditingBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.only(left: 14),
-      color: AppColors.parchmentDim.withValues(alpha: 0.6),
+      color: const Color(0x1FFFD027),
       child: Row(
         children: [
-          Icon(Icons.edit_outlined, size: 15, color: AppColors.ink),
+          const Icon(Icons.edit_outlined, size: 15, color: ChatColors.gold),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -507,7 +527,7 @@ class _EditingBar extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.ink,
+                color: ChatColors.cream,
               ),
             ),
           ),
@@ -515,7 +535,7 @@ class _EditingBar extends StatelessWidget {
             tooltip: AppStrings.cancelButton,
             onPressed: onCancel,
             icon: const Icon(Icons.close, size: 18),
-            color: AppColors.ink,
+            color: ChatColors.cream,
           ),
         ],
       ),
@@ -539,11 +559,9 @@ class _EmoteRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        border: Border(
-          top: BorderSide(color: AppColors.ink.withValues(alpha: 0.15)),
-        ),
+      decoration: const BoxDecoration(
+        color: ChatColors.bar,
+        border: Border(top: BorderSide(color: Color(0x66B8742E))),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -609,11 +627,9 @@ class _Composer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(4, 6, compact ? 6 : 10, compact ? 6 : 10),
-      decoration: BoxDecoration(
-        color: AppColors.parchment,
-        border: Border(
-          top: BorderSide(color: AppColors.ink.withValues(alpha: 0.15)),
-        ),
+      decoration: const BoxDecoration(
+        color: ChatColors.bar,
+        border: Border(top: BorderSide(color: Color(0x66B8742E))),
       ),
       child: Row(
         children: [
@@ -623,7 +639,7 @@ class _Composer extends StatelessWidget {
             onPressed: editing ? null : onToggleEmotes,
             icon: const Icon(Icons.emoji_emotions_outlined),
             selectedIcon: const Icon(Icons.emoji_emotions),
-            color: AppColors.ink,
+            color: emotesOpen ? ChatColors.gold : ChatColors.cream,
           ),
           Expanded(
             child: TextField(
@@ -634,11 +650,30 @@ class _Composer extends StatelessWidget {
               maxLines: 4,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => onSend(),
-              style: GoogleFonts.inter(fontSize: 14, color: AppColors.ink),
+              cursorColor: ChatColors.gold,
+              style: GoogleFonts.inter(fontSize: 14, color: ChatColors.cream),
               decoration: InputDecoration(
                 hintText: hint,
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: ChatColors.muted,
+                ),
                 counterText: '',
                 isDense: true,
+                filled: true,
+                fillColor: ChatColors.field,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: ChatColors.gold),
+                ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 10,
@@ -652,26 +687,27 @@ class _Composer extends StatelessWidget {
             height: 40,
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.ink,
+                backgroundColor: ChatColors.gold,
+                disabledBackgroundColor: ChatColors.gold.withValues(alpha: 0.5),
                 padding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
               onPressed: sending ? null : onSend,
               child: sending
-                  ? SizedBox(
+                  ? const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.onInk,
+                        color: ChatColors.goldInk,
                       ),
                     )
                   : Icon(
                       editing ? Icons.check : Icons.send,
                       size: 18,
-                      color: AppColors.onInk,
+                      color: ChatColors.goldInk,
                       semanticLabel: editing
                           ? AppStrings.dmSaveEdit
                           : AppStrings.dmSend,
@@ -702,10 +738,7 @@ class _Note extends StatelessWidget {
             Text(
               text,
               textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: AppColors.ink.withValues(alpha: 0.6),
-              ),
+              style: GoogleFonts.inter(fontSize: 13, color: ChatColors.muted),
             ),
             if (onRetry != null)
               TextButton(
@@ -714,7 +747,7 @@ class _Note extends StatelessWidget {
                   AppStrings.retryButton,
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.ink,
+                    color: ChatColors.gold,
                   ),
                 ),
               ),

@@ -53,8 +53,9 @@ class _DmBannerHostState extends State<DmBannerHost> {
       children: [
         widget.child,
         AnimatedPositioned(
-          duration: const Duration(milliseconds: 260),
-          curve: Curves.easeOutCubic,
+          // A little overshoot as it lands, like on the landing page.
+          duration: const Duration(milliseconds: 450),
+          curve: const Cubic(0.2, 0.9, 0.3, 1.15),
           top: alert == null ? -120 : top,
           left: 0,
           right: 0,
@@ -97,8 +98,8 @@ class _Banner extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.fromLTRB(12, 10, 6, 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xF22A1A10),
-                  borderRadius: BorderRadius.circular(14),
+                  color: const Color(0xF52A1A10),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: const Color(0xFFB8742E),
                     width: 1.5,
@@ -113,34 +114,33 @@ class _Banner extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    PlayerAvatar(photoUrl: alert.from.avatarUrl, radius: 18),
+                    // A copper ring around the photo, as on the landing page.
+                    Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFFB8742E),
+                      ),
+                      child: PlayerAvatar(
+                        photoUrl: alert.from.avatarUrl,
+                        radius: 17,
+                      ),
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.chat_bubble,
-                                size: 13,
-                                color: Color(0xFFFFD027),
-                              ),
-                              const SizedBox(width: 5),
-                              Flexible(
-                                child: Text(
-                                  alert.from.displayName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFFF5E6C8),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            alert.from.displayName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFFF5E6C8),
+                            ),
                           ),
                           const SizedBox(height: 2),
                           if (message.isEmote)
@@ -183,7 +183,7 @@ class _Banner extends StatelessWidget {
   static final TextStyle _preview = GoogleFonts.inter(
     fontSize: 13,
     height: 1.25,
-    color: const Color(0xDDF5E6C8),
+    color: const Color(0xFFD9C7A3),
   );
 }
 

@@ -8,6 +8,7 @@ import '../models/profile.dart';
 import '../services/friends_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/last_seen.dart';
+import '../widgets/friend_pill.dart';
 import 'friends_screen.dart' show PlayerRow, SearchField;
 
 /// Add Friends: search every player who has signed in, send requests, and
@@ -285,9 +286,9 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
     final busy = _busy.contains(player.id);
     switch (_statusById[player.id] ?? FriendStatus.none) {
       case FriendStatus.friends:
-        return const _StatusText(AppStrings.friendsLabel);
+        return const FriendPill(state: FriendPillState.friends);
       case FriendStatus.requestSent:
-        return const _StatusText(AppStrings.pendingLabel);
+        return const FriendPill(state: FriendPillState.requested);
       case FriendStatus.requestReceived:
         return _SmallButton(
           label: AppStrings.acceptButton,
@@ -298,11 +299,11 @@ class _AddFriendsScreenState extends State<AddFriendsScreen> {
                     _act(player, () => FriendsService.acceptRequest(player.id)),
         );
       case FriendStatus.none:
-        return _SmallButton(
-          label: AppStrings.addButton,
-          onPressed: busy
-              ? null
-              : () => _act(player, () => FriendsService.sendRequest(player.id)),
+        return FriendPill(
+          state: FriendPillState.add,
+          busy: busy,
+          onAdd: () =>
+              _act(player, () => FriendsService.sendRequest(player.id)),
         );
     }
   }
@@ -379,26 +380,6 @@ class _SmallButton extends StatelessWidget {
               onPressed: onPressed,
               child: Text(label, style: style),
             ),
-    );
-  }
-}
-
-class _StatusText extends StatelessWidget {
-  const _StatusText(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Text(
-        text,
-        style: GoogleFonts.inter(
-          fontSize: 11,
-          color: AppColors.ink.withValues(alpha: 0.45),
-        ),
-      ),
     );
   }
 }
