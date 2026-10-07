@@ -352,6 +352,29 @@ class AppStrings {
 
   // Private messages between friends
   static const String messageButton = 'MESSAGE';
+  // A player's profile page, and sharing yours with a QR code.
+  static const String playerProfileTitle = 'Player';
+  static const String playerProfileError =
+      "Couldn't load this player. Check your connection and try again.";
+  static const String aboutLabel = 'ABOUT';
+  static String noBioYet(String name) => "$name hasn't written a bio yet.";
+  static String playsAs(String character) => 'Plays as $character';
+  static const String thisIsYou = 'This is your profile, as others see it.';
+  static const String editMyProfile = 'EDIT MY PROFILE';
+  static const String signInToAddFriends =
+      'Sign in to add this player as a friend.';
+  static String requestSentHint(String name) =>
+      "$name will see your request. You can message once they accept.";
+  static const String removeFriendTitle = 'Remove friend?';
+  static String removeFriendConfirm(String name) =>
+      'Remove $name from your friends? You can add them again later.';
+  static const String generateQrButton = 'GENERATE QR CODE';
+  static const String qrTitle = 'My profile QR code';
+  static const String qrHint =
+      "Let a friend scan this with their phone camera to open your profile "
+      'and add you.';
+  static const String copyLinkButton = 'Copy link';
+  static const String linkCopied = 'Link copied';
   static String messageFriend(String name) => 'Message $name';
   static String dmHint(String name) => 'Message $name…';
   static String dmEmpty(String name) =>

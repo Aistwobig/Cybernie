@@ -9,6 +9,8 @@ import 'config/supabase_config.dart';
 import 'services/auth_service.dart';
 import 'services/dm_notifier.dart';
 import 'screens/direct_chat_screen.dart';
+import 'screens/player_profile_screen.dart';
+import 'utils/profile_link.dart';
 import 'widgets/dm_banner.dart';
 import 'services/music_service.dart';
 import 'services/sfx_service.dart';
@@ -85,6 +87,14 @@ class App extends StatefulWidget {
   /// Bottom-nav tabs slide between each other (see AppNav.tabRoute); other
   /// screens use the normal page transition.
   static Route<dynamic>? _page(RouteSettings settings) {
+    // A player's profile (from their QR code): /player/<id>.
+    final playerId = ProfileLink.playerIdIn(settings.name);
+    if (playerId != null) {
+      return MaterialPageRoute<void>(
+        settings: settings,
+        builder: (_) => PlayerProfileScreen(playerId: playerId),
+      );
+    }
     final builder = _routes[settings.name];
     if (builder == null) return null;
     return AppNav.tabs.contains(settings.name)
@@ -100,7 +110,13 @@ class App extends StatefulWidget {
   static List<Route<dynamic>> _initialRoutes(String name) {
     Route<dynamic> page(String route) => _page(RouteSettings(name: route))!;
 
-    if (!AuthService.isSignedIn) return [page('/')];
+    final playerId = ProfileLink.playerIdIn(name);
+    if (!AuthService.isSignedIn) {
+      // A scanned profile link: open it once they've signed in.
+      if (playerId != null) ProfileLink.savePending(playerId);
+      return [page('/')];
+    }
+    if (playerId != null) return [page('/welcome'), page(name)];
     const entryScreens = {'/', '/login', '/welcome'};
     if (entryScreens.contains(name) || !_routes.containsKey(name)) {
       return [page('/welcome')];

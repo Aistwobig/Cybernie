@@ -10,6 +10,8 @@ import '../constants/characters.dart';
 import '../constants/app_strings.dart';
 import '../models/profile.dart';
 import '../services/auth_service.dart';
+import '../services/friends_service.dart';
+import '../widgets/profile_qr_dialog.dart';
 import '../services/profile_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_nav.dart';
@@ -297,6 +299,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
                       children: [
                         _buildPlayerCard(),
+                        // Share your profile: friends scan it to add you.
+                        if (AuthService.isSignedIn) ...[
+                          const SizedBox(height: 10),
+                          Center(
+                            child: FramedTextButton(
+                              label: AppStrings.generateQrButton,
+                              onPressed: () => ProfileQrDialog.show(
+                                context,
+                                playerId: FriendsService.myId,
+                                playerName: _playerName,
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 12),
                         const StarBanner(
                           title: AppStrings.chooseCharacter,

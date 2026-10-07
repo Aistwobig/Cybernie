@@ -27,6 +27,7 @@ dependencies:
   flame: ^1.38.2
   audioplayers: ^6.8.1
   web: ^1.1.1
+  qr_flutter: ^4.1.0
  
 dev_dependencies:
   flutter_test:

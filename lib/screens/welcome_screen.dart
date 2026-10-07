@@ -13,6 +13,8 @@ import '../services/profile_service.dart';
 import '../services/room_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_nav.dart';
+import '../utils/profile_link.dart';
+import 'player_profile_screen.dart';
 import '../widgets/fantasy_ui.dart';
 import '../widgets/sprite_walk_preview.dart';
 import 'select_room_screen.dart';
@@ -53,6 +55,15 @@ class _WelcomeScreenState extends State<WelcomeScreen> with RouteAware {
     super.initState();
     _loadPlayerName();
     _watchTavern();
+    _openScannedProfile();
+  }
+
+  /// A profile QR code scanned before signing in: open it now.
+  Future<void> _openScannedProfile() async {
+    if (!AuthService.isSignedIn) return;
+    final playerId = await ProfileLink.takePending();
+    if (playerId == null || !mounted) return;
+    await PlayerProfileScreen.open(context, playerId);
   }
 
   @override

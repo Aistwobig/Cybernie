@@ -13,6 +13,7 @@ import '../widgets/dm_banner.dart';
 import '../widgets/fantasy_ui.dart';
 import '../widgets/player_avatar.dart';
 import 'direct_chat_screen.dart';
+import 'player_profile_screen.dart';
 
 /// Friends list: real players you've added, with their photo, an online dot
 /// and when they were last active. Online friends are listed first.
@@ -151,24 +152,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
     if (mounted) _loadFriends();
   }
 
-  Future<void> _showFriend(Profile friend) async {
-    final result = await showModalBottomSheet<_FriendSheetResult>(
-      context: context,
-      backgroundColor: AppColors.parchment,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      builder: (sheetContext) => _FriendSheet(friend: friend),
-    );
-    if (!mounted) return;
-    switch (result) {
-      case _FriendSheetResult.removed:
-        _loadFriends();
-      case _FriendSheetResult.message:
-        await DirectChatScreen.open(context, friend);
-      case null:
-        break;
-    }
+  /// A player's full profile page; friendships may change there.
+  Future<void> _openProfile(Profile player) async {
+    await PlayerProfileScreen.open(context, player.id);
+    if (mounted) _loadFriends();
   }
 
   List<Profile> get _filteredFriends => _friends.where(_matchesQuery).toList();
@@ -311,7 +298,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   isOnline: friend.isOnline(now),
                   // Tap a friend to see their profile (and message them);
                   // the chat button goes straight to the conversation.
-                  onTap: () => _showFriend(friend),
+                  onTap: () => _openProfile(friend),
                   // With how many of their messages are unread.
                   trailing: DmUnreadBadge(
                     friendId: friend.id,
@@ -355,6 +342,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 profile: player,
                 subtitle: lastSeenLabel(player, now),
                 isOnline: player.isOnline(now),
+                onTap: () => _openProfile(player),
                 trailing: _requested.contains(player.id)
                     ? Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -587,142 +575,6 @@ class _RingedAvatar extends StatelessWidget {
   }
 }
 
-/// A friend's card: big photo, name, username, status, and Remove friend.
-/// Pops `true` if the friend was removed.
-enum _FriendSheetResult { removed, message }
-
-class _FriendSheet extends StatefulWidget {
-  const _FriendSheet({required this.friend});
-
-  final Profile friend;
-
-  @override
-  State<_FriendSheet> createState() => _FriendSheetState();
-}
-
-class _FriendSheetState extends State<_FriendSheet> {
-  bool _confirming = false;
-  bool _removing = false;
-
-  Future<void> _remove() async {
-    if (!_confirming) {
-      setState(() => _confirming = true);
-      return;
-    }
-    setState(() => _removing = true);
-    try {
-      await FriendsService.remove(widget.friend.id);
-      if (mounted) Navigator.of(context).pop(_FriendSheetResult.removed);
-    } catch (_) {
-      if (mounted) {
-        setState(() => _removing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text(AppStrings.friendActionError)),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final friend = widget.friend;
-    final online = friend.isOnline();
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            PlayerAvatar(
-              photoUrl: friend.avatarUrl,
-              radius: 40,
-              isOnline: online,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              friend.displayName,
-              style: GoogleFonts.lora(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
-              ),
-            ),
-            if (friend.username.isNotEmpty)
-              Text(
-                '@${friend.username}',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AppColors.ink.withValues(alpha: 0.55),
-                ),
-              ),
-            const SizedBox(height: 4),
-            Text(
-              lastSeenLabel(friend),
-              style: GoogleFonts.inter(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: online
-                    ? const Color(0xFF1E9E5A)
-                    : AppColors.ink.withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.ink,
-                  foregroundColor: AppColors.onInk,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                onPressed: () =>
-                    Navigator.of(context).pop(_FriendSheetResult.message),
-                icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                label: Text(
-                  AppStrings.messageButton,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 42,
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFC62828),
-                  side: const BorderSide(color: Color(0xFFC62828)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                ),
-                onPressed: _removing ? null : _remove,
-                child: Text(
-                  _confirming
-                      ? AppStrings.confirmRemoveFriend
-                      : AppStrings.removeFriendButton,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Small tracked heading above a group of players.
 class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.text);
 
