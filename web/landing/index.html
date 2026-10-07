@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cybernie: a night at Bernie's Tavern</title>
+  <meta name="description" content="Cybernie is a cozy multiplayer pixel-art tavern for the web. Pick a character, walk in, sit down, and hang out with friends through chat, proximity voice, video and screen sharing.">
+  <meta name="theme-color" content="#120c1f">
+  <link rel="icon" type="image/png" href="img/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ Top bar ============ -->
+<header class="bar" id="bar">
+  <a class="bar__brand" href="#top" aria-label="Cybernie, back to top">
+    <img src="img/favicon.png" alt="" width="28" height="28">
+    <span>Cybernie</span>
+  </a>
+  <nav class="bar__nav" aria-label="Sections">
+    <a href="#tour">The tavern</a>
+    <a href="#roster">Characters</a>
+    <a href="#voice">Voice</a>
+    <a href="#blackjack">Blackjack</a>
+    <a href="#extras">Extras</a>
+  </nav>
+  <a class="btn btn--small" href="../">Play now</a>
+</header>
+
+<main>
+
+<!-- ============ Hero: a night outside the tavern ============ -->
+<section class="hero" id="top">
+  <div class="sky" aria-hidden="true">
+    <div class="stars" id="stars"></div>
+    <div class="moon"></div>
+  </div>
+
+  <div class="hero__inner">
+    <div class="sign" aria-hidden="true">
+      <div class="sign__chains"></div>
+      <div class="sign__board">
+        <img src="img/favicon.png" alt="">
+        <span>Bernie's</span>
+      </div>
+    </div>
+
+    <h1 class="title">Cyber<em>nie</em></h1>
+    <p class="lead">
+      A cozy multiplayer pixel-art tavern for the web. Pick a hero, walk in,
+      grab a seat and hang out with your friends, in text, voice, video and
+      on the big screen upstairs.
+    </p>
+    <div class="actions">
+      <a class="btn" href="../">Enter the tavern</a>
+      <a class="btn btn--ghost" href="#tour">Take a look inside</a>
+    </div>
+    <p class="hero__note">Free · Runs in your browser · Sign in with Google</p>
+  </div>
+
+  <!-- The street: everyone heading to the tavern. -->
+  <div class="street" aria-hidden="true">
+    <div class="street__walkers" id="walkers"></div>
+    <div class="street__ground"></div>
+  </div>
+</section>
+
+<!-- ============ Scroll tour of the tavern ============ -->
+<section class="tour" id="tour" aria-label="A tour of the tavern">
+  <div class="tour__sticky">
+    <div class="tour__window">
+      <div class="map" id="map">
+        <img class="map__img" src="img/tavern.jpg" alt="The pixel-art map of Bernie's Tavern" width="1402" height="1122">
+        <!-- Live bits of the map, placed in map pixels (see main.js). -->
+        <div class="sprite fire" data-x="82" data-y="268" data-w="72" data-h="64"></div>
+        <div class="sprite bard" data-x="966" data-y="338" data-w="100" data-h="111" data-anchor="feet"></div>
+        <!-- Bernie behind his bar; the counter top is drawn over him. -->
+        <div class="sprite bernie" data-x="625" data-y="335" data-w="68" data-h="87" data-anchor="feet"></div>
+        <div class="sprite counter" data-x="372" data-y="306" data-w="428" data-h="39"></div>
+        <div class="ping" data-x="620" data-y="330"></div>
+        <div class="ping" data-x="300" data-y="600"></div>
+        <div class="ping" data-x="1274" data-y="232"></div>
+        <div class="ping" data-x="1131" data-y="300"></div>
+      </div>
+      <div class="map map--up" id="mapUp">
+        <img class="map__img" src="img/upstairs.jpg" alt="The upstairs meeting room with its long table and projector" width="1448" height="1086">
+        <div class="projector" data-x="622" data-y="100" data-w="244" data-h="129">
+          <div class="projector__slide">
+            <b>Week 8</b>
+            <span>Final demo ✦</span>
+            <i></i><i></i><i></i>
+          </div>
+          <div class="projector__tag">Mclaren is sharing</div>
+        </div>
+      </div>
+      <div class="tour__vignette" aria-hidden="true"></div>
+    </div>
+
+    <ol class="tour__steps" id="steps">
+      <li class="step is-on">
+        <h2>Step inside.</h2>
+        <p>One room, up to twenty players, all moving in real time. Walk with WASD, the arrow keys, or the joystick on your phone.</p>
+      </li>
+      <li class="step">
+        <h2>Bernie's pouring.</h2>
+        <p>Order from the bartender with your coins. Every drink does something: Goblin Cider makes you quick, Tavern Ale makes the room sway.</p>
+      </li>
+      <li class="step">
+        <h2>Pull up a chair.</h2>
+        <p>Stools, side chairs, the seats behind the big table: every character sits the right way on every one of them, by the crackling fire.</p>
+      </li>
+      <li class="step">
+        <h2>Read the board. Climb the stairs.</h2>
+        <p>The notice board has news from the tavern. The stairs lead up to somewhere new.</p>
+      </li>
+      <li class="step">
+        <h2>Share your screen.</h2>
+        <p>The meeting room upstairs has a projector. Put your screen on it, sound and all, for everyone in the room, or open it full screen.</p>
+      </li>
+    </ol>
+
+    <div class="tour__dots" id="dots" aria-hidden="true">
+      <i class="is-on"></i><i></i><i></i><i></i><i></i>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Character roster ============ -->
+<section class="section roster" id="roster">
+  <div class="wrap">
+    <p class="eyebrow">Six heroes</p>
+    <h2 class="h2">Who's walking in tonight?</h2>
+    <p class="sub">Each one has their own walk, idle and sitting animations. Hover or tap a card to send them on their way.</p>
+    <div class="cards" id="cards"></div>
+  </div>
+</section>
+
+<!-- ============ Proximity voice demo ============ -->
+<section class="section voice" id="voice">
+  <div class="wrap voice__grid">
+    <div>
+      <p class="eyebrow">Proximity voice chat</p>
+      <h2 class="h2">Talk like you're in the room.</h2>
+      <p class="sub">Voices get quieter as you walk away, and drop out when you're out of earshot, just like a real tavern. Turn your camera on and your video floats above your head.</p>
+      <ul class="ticks">
+        <li>Straight from browser to browser: nothing is recorded.</li>
+        <li>Pick your mic, camera and speaker in Settings.</li>
+        <li>The music dips while people talk.</li>
+      </ul>
+    </div>
+
+    <div class="demo" aria-label="Voice distance demo">
+      <div class="demo__floor" id="floor">
+        <div class="demo__char demo__char--me">
+          <div class="sprite-anim" style="--sheet:url(img/luna_idle.png);--frames:8;--ar:101/128" role="img" aria-label="Luna"></div>
+          <span class="demo__name">You</span>
+        </div>
+        <div class="demo__char demo__char--friend" id="friend">
+          <div class="rings" id="rings"><i></i><i></i><i></i></div>
+          <div class="camera-bubble" id="camBubble"><span>🙂</span></div>
+          <div class="sprite-anim" style="--sheet:url(img/rogue_idle.png);--frames:8;--ar:90/128" role="img" aria-label="Your friend, the Rogue"></div>
+          <span class="demo__name">Friend</span>
+        </div>
+      </div>
+      <label class="demo__slider">
+        <span>Walk your friend away</span>
+        <input type="range" id="distance" min="60" max="560" value="90" aria-describedby="volumeText">
+      </label>
+      <div class="meter" aria-hidden="true"><div class="meter__fill" id="meter"></div></div>
+      <p class="demo__readout" id="volumeText">Right next to you: full volume.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Blackjack with Bernie ============ -->
+<section class="section blackjack" id="blackjack">
+  <div class="wrap bj__grid">
+    <div class="bj__copy">
+      <p class="eyebrow">Bernie's card table</p>
+      <h2 class="h2">Think you can beat the cat?</h2>
+      <p class="sub">Pull up to the bar and play blackjack against Bernie. Bet your coins, hit or stand, and watch him shuffle, squint at your hand, and sulk when you win.</p>
+      <ul class="ticks">
+        <li>A hand-painted deck of 52 tavern cats.</li>
+        <li>Bernie reacts to every win, loss and bust.</li>
+        <li>Climb the richest-player leaderboard.</li>
+      </ul>
+    </div>
+
+    <div class="bj" aria-label="A practice hand of blackjack against Bernie">
+      <div class="bj__scene">
+        <div class="bj__bernie" id="bjBernie" role="img" aria-label="Bernie the dealer"></div>
+        <div class="bj__front"></div>
+        <div class="bj__bubble" id="bjSay">Fancy a hand, friend?</div>
+        <div class="bj__hand bj__hand--dealer" id="bjDealer"></div>
+        <div class="bj__hand bj__hand--you" id="bjYou"></div>
+        <div class="bj__totals">
+          <span id="bjDealerTotal">Bernie: –</span>
+          <span id="bjYouTotal">You: –</span>
+        </div>
+      </div>
+      <div class="bj__actions">
+        <button class="btn btn--small" type="button" id="bjDeal">Deal</button>
+        <button class="btn btn--small btn--ghost" type="button" id="bjHit" disabled>Hit</button>
+        <button class="btn btn--small btn--ghost" type="button" id="bjStand" disabled>Stand</button>
+      </div>
+      <p class="bj__note">Practice hand, no coins. Real bets are in the game.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Extras: drinks, emotes, wheel ============ -->
+<section class="section extras" id="extras">
+  <div class="wrap">
+    <p class="eyebrow">There's always something going on</p>
+    <h2 class="h2">The little things.</h2>
+
+    <div class="tiles">
+      <article class="tile tile--wheel">
+        <h3>Spin Bernie's lucky wheel</h3>
+        <p>A free spin twice a day. Try it here: the prizes are the real ones.</p>
+        <div class="wheel">
+          <img class="wheel__disc" id="wheelDisc" src="img/wheel_disc.png" alt="">
+          <img class="wheel__frame" src="img/wheel_frame.png" alt="">
+          <button class="wheel__spin" id="spin" type="button" aria-label="Spin the wheel">
+            <img src="img/wheel_spin.png" alt="">
+          </button>
+        </div>
+        <p class="wheel__result" id="wheelResult" aria-live="polite">&nbsp;</p>
+      </article>
+
+      <article class="tile">
+        <h3>Something to drink?</h3>
+        <p>Four drinks behind the bar, each with its own effect.</p>
+        <ul class="drinks">
+          <li><button type="button" data-effect="You walk faster for a while."><img src="img/drink_goblin_cider.png" alt="">Goblin Cider</button></li>
+          <li><button type="button" data-effect="The whole room sways and shakes."><img src="img/drink_ale.png" alt="">Tavern Ale</button></li>
+          <li><button type="button" data-effect="Hearts float up, and friends drift closer."><img src="img/drink_berry_wine.png" alt="">Berry Wine</button></li>
+          <li><button type="button" data-effect="A little moonlight follows you around."><img src="img/drink_moonberry.png" alt="">Moonberry</button></li>
+        </ul>
+        <p class="drinks__effect" id="drinkEffect" aria-live="polite">Tap a drink.</p>
+      </article>
+
+      <article class="tile">
+        <h3>Say it with an emote</h3>
+        <p>Pop one over your head. Tap to try.</p>
+        <div class="emote-stage" id="emoteStage">
+          <div class="sprite-anim" style="--sheet:url(img/lily_idle.png);--frames:8;--ar:101/128" role="img" aria-label="Lily"></div>
+        </div>
+        <div class="emotes" id="emotes"></div>
+      </article>
+
+      <article class="tile tile--list">
+        <h3>And more</h3>
+        <ul class="more">
+          <li><img src="img/coin.png" alt="">Daily coins, tasks and a coin leaderboard</li>
+          <li><img src="img/emote_love.png" alt="">Friends, private messages and a profile QR code</li>
+          <li><img src="img/cam.png" alt="">Your camera, floating above your character</li>
+          <li><img src="img/mic.png" alt="">Room chat with speech bubbles and "is typing…"</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Closing call to action ============ -->
+<section class="close">
+  <div class="close__stage" aria-hidden="true">
+    <div class="notes" id="notes"></div>
+    <div class="sprite-anim close__bard" style="--sheet:url(img/bard.png);--frames:8;--ar:135/150;--h:150px"></div>
+  </div>
+  <h2 class="close__title">The bard's playing.<br>Your seat's waiting.</h2>
+  <a class="btn btn--big" href="../">Enter the tavern</a>
+  <p class="close__small">Opens the game. Sign in with Google to save your character and friends.</p>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__grid">
+    <div>
+      <a class="bar__brand" href="#top"><img src="img/favicon.png" alt="" width="24" height="24"><span>Cybernie</span></a>
+      <p>A final project for Applications Development and Emerging Technologies (6ADET), Holy Angel University, by Mclaren Ais C. Miranda.</p>
+    </div>
+    <div>
+      <p>Built with Flutter, Flame, Supabase and WebRTC. Free and open source under the MIT licence.</p>
+      <p><a href="https://github.com/Aistwobig/Cybernie">View the code on GitHub</a></p>
+    </div>
+  </div>
+</footer>
+
+<script src="main.js"></script>
+</body>
+</html>
