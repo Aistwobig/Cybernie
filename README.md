@@ -4,15 +4,30 @@
 > into Bernie's Tavern, and hang out with friends through chat, proximity
 > voice and video, drinks, mini-games and a meeting room with screen sharing.
 
-**Live demo:** https://aistwobig.github.io/Cybernie/
-**Demo video:** `docs/demo.mp4` (coming soon)
-**Course:** Applications Development and Emerging Technologies (6ADET), Holy Angel University
-**Author:** Mclaren Ais C. Miranda
+| | |
+| --- | --- |
+| **Live app** | [aistwobig.github.io/Cybernie](https://aistwobig.github.io/Cybernie/) |
+| **Demo video** | Coming soon |
+| **Course** | Applications Development and Emerging Technologies (6ADET), Holy Angel University |
+| **Author** | Mclaren Ais C. Miranda |
 
 This repository lives in the author's own GitHub account and is public on
 purpose. There is no `student.json` here and there should not be one: see
 `docs/06-security-and-privacy.md` for what a public repo means for secrets and
 personal data.
+
+## Contents
+
+- [Screenshots](#screenshots)
+- [What it does](#what-it-does)
+- [Built with](#built-with)
+- [Running it yourself](#running-it-yourself)
+- [Privacy and secrets](#privacy-and-secrets)
+- [Project documentation](#project-documentation)
+- [Status and what is next](#status-and-what-is-next)
+- [Credits](#credits)
+- [AI use](#ai-use)
+- [Licence](#licence)
 
 ---
 
