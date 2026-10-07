@@ -993,7 +993,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     SfxService.play(Sfx.pop);
     _game.emote(emoji);
     _room?.sendEmote(emoji);
-    setState(() => _emotesOpen = false);
+    // The picker stays open, so emotes can be sent again and again (they
+    // stack over the head); the emote button closes it.
     _gameFocus.requestFocus();
   }
 

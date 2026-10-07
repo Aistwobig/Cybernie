@@ -161,10 +161,16 @@ class _DirectChatViewState extends State<DirectChatView> {
     });
   }
 
-  Future<void> _sendEmote(Emote emote) => _run(() async {
-    _put(await DirectMessageService.sendEmote(_friendId, emote.id));
-    if (mounted) setState(() => _emotesOpen = false);
-  });
+  /// Emotes can be spammed: each tap sends one at once (no waiting for the
+  /// previous one), and the row stays open.
+  Future<void> _sendEmote(Emote emote) async {
+    SfxService.play(Sfx.pop);
+    try {
+      _put(await DirectMessageService.sendEmote(_friendId, emote.id));
+    } catch (_) {
+      _showSnack(AppStrings.dmSendError);
+    }
+  }
 
   void _startEditing(DirectMessage message) {
     setState(() {
@@ -208,7 +214,7 @@ class _DirectChatViewState extends State<DirectChatView> {
         if (_emotesOpen)
           _EmoteRow(
             compact: widget.compact,
-            enabled: !_sending,
+            enabled: true,
             onPick: _sendEmote,
           ),
         _Composer(

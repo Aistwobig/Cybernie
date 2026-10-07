@@ -78,7 +78,6 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   bool canSitFacing(Facing direction) =>
       animations?.containsKey((direction, Pose.sit)) ?? false;
   SpeechBubble? _bubble;
-  SpriteComponent? _emote;
   SpriteComponent? _drink;
 
   late final NamePlate _nameTag = NamePlate(_name)
@@ -547,19 +546,31 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
   /// How big emotes are drawn on the map.
   static const double emoteSize = 34;
 
-  /// Pops the emote sent as [id] (see emotes.dart) up beside the head,
-  /// floats it upward, then removes it.
+  /// At most this many emotes float over a head at once (spamming stacks
+  /// them; the oldest goes first).
+  static const int maxEmotes = 12;
+  final List<SpriteComponent> _emotes = [];
+  final math.Random _emoteRandom = math.Random();
+
+  /// Pops the emote sent as [id] (see emotes.dart) up beside the head and
+  /// floats it upward, drifting a little, then removes it. Sending several
+  /// quickly stacks them, each on its own path.
   Future<void> emote(String id) async {
     final picked = emoteById(id);
     if (!isLoaded || picked == null) return;
     final image = await game.images.load(picked.asset);
     if (!isMounted) return;
-    _emote?.removeFromParent();
+    _emotes.removeWhere((e) => !e.isMounted && e.isRemoved);
+    while (_emotes.length >= maxEmotes) {
+      _emotes.removeAt(0).removeFromParent();
+    }
+    final jitter = (_emoteRandom.nextDouble() - 0.5) * 16;
+    final drift = (_emoteRandom.nextDouble() - 0.5) * 14;
     final emote = SpriteComponent(
       sprite: Sprite(image),
       size: Vector2.all(emoteSize),
       anchor: Anchor.bottomCenter,
-      position: Vector2(size.x * 0.9, 14),
+      position: Vector2(size.x * 0.9 + jitter, 14),
       scale: Vector2.all(0.2),
     );
     emote.addAll([
@@ -568,12 +579,15 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
         EffectController(duration: 0.3, curve: Curves.easeOutBack),
       ),
       MoveByEffect(
-        Vector2(0, -18),
+        Vector2(drift, -18 - _emoteRandom.nextDouble() * 10),
         EffectController(duration: 2.2, curve: Curves.easeOutCubic),
       ),
-      RemoveEffect(delay: 2.4),
+      RemoveEffect(
+        delay: 2.4,
+        onComplete: () => _emotes.remove(emote),
+      ),
     ]);
-    _emote = emote;
+    _emotes.add(emote);
     add(emote);
   }
 }
