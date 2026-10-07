@@ -376,16 +376,6 @@
   };
   standBtn.addEventListener('click', stand);
   pose(0);
-  // TEMP-SHOT
-  const qs0 = new URLSearchParams(location.search);
-  if (qs0.get('only')) {
-    document.querySelectorAll('main > section, .footer').forEach((s) => { if (!s.matches(qs0.get('only'))) s.style.display = 'none'; });
-    setTimeout(() => document.querySelectorAll('.reveal').forEach((e) => e.classList.add('is-in')), 50);
-    if (qs0.get('still')) document.head.insertAdjacentHTML('beforeend', '<style>*{transition:none!important;animation:none!important}</style>');
-    if (qs0.get('deal')) setTimeout(() => dealBtn.click(), 100);
-    if (qs0.get('stand')) setTimeout(() => standBtn.click(), 2600);
-  }
-  // END-TEMP-SHOT
 
   // ---------- Drinks ----------
   const effect = $('#drinkEffect');
