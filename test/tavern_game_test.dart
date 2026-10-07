@@ -22,6 +22,24 @@ void main() {
       if (game.isLoaded && game.player.isLoaded) break;
     }
     expect(game.player.isLoaded, isTrue);
+    // Every upstairs seat's front (the table strip, or the chair's seat
+    // edge, drawn over whoever sits there) is cut from the upstairs map.
+    final upstairsMap = game.images.fromCache(AppImages.tavernUpstairs);
+    for (final seat in TavernMap.seats) {
+      if (seat.front.isEmpty || !TavernMap.isUpstairs(seat.front.topLeft)) {
+        continue;
+      }
+      final front = game.world.children.whereType<SpriteComponent>().where(
+        (c) => c.position == Vector2(seat.front.left, seat.front.top),
+      );
+      expect(front, hasLength(1));
+      expect(front.single.sprite!.image, same(upstairsMap));
+      expect(
+        front.single.sprite!.srcPosition.y,
+        seat.front.top - TavernMap.upstairsTop,
+      );
+    }
+
     final floors = <bool>[];
     game.onFloorChanged = floors.add;
     Future<void> settle() async {

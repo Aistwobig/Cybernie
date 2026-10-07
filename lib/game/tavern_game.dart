@@ -536,15 +536,26 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     // Each stool's front as its own sprite over the map, layered by depth
     // like the characters (by its bottom edge): in front of whoever sits on
     // it, behind anyone walking past in front of it.
+    // (Upstairs seats are cut from the upstairs picture, at the same spot
+    // in it.)
     final stoolFronts = [
       for (final seat in TavernMap.seats)
         if (!seat.front.isEmpty)
           SpriteComponent(
-            sprite: Sprite(
-              mapImage,
-              srcPosition: Vector2(seat.front.left, seat.front.top),
-              srcSize: Vector2(seat.front.width, seat.front.height),
-            ),
+            sprite: TavernMap.isUpstairs(seat.front.topLeft)
+                ? Sprite(
+                    upstairsImage,
+                    srcPosition: Vector2(
+                      seat.front.left,
+                      seat.front.top - TavernMap.upstairsTop,
+                    ),
+                    srcSize: Vector2(seat.front.width, seat.front.height),
+                  )
+                : Sprite(
+                    mapImage,
+                    srcPosition: Vector2(seat.front.left, seat.front.top),
+                    srcSize: Vector2(seat.front.width, seat.front.height),
+                  ),
             position: Vector2(seat.front.left, seat.front.top),
             size: Vector2(seat.front.width, seat.front.height),
             priority: seat.front.bottom.round(),
