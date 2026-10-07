@@ -206,6 +206,19 @@ class VoiceService {
     micOn.value = on;
   }
 
+  /// Quarter turns clockwise that stand our camera picture upright. On a
+  /// phone whose screen stays upright while it's held sideways (the tavern
+  /// is drawn turned to fit), the camera sends its picture lying on its
+  /// side: 1 then. Shared with the room, so everyone turns it the same way.
+  int get cameraTurns => _cameraTurns;
+  int _cameraTurns = 0;
+
+  void setCameraTurns(int turns) {
+    if (turns == _cameraTurns) return;
+    _cameraTurns = turns;
+    if (cameraOn.value) _room?.setCamera(true, turns: turns);
+  }
+
   /// Turns our camera on or off (while in voice chat). Throws a readable
   /// message if it can't.
   Future<void> setCamera(bool on) async {
@@ -215,7 +228,7 @@ class VoiceService {
     try {
       await engine.setCamera(on);
       cameraOn.value = on;
-      await _room?.setCamera(on);
+      await _room?.setCamera(on, turns: cameraTurns);
     } catch (error) {
       debugPrint('Camera: $error');
       throw _explain(error, camera: true);

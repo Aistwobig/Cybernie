@@ -11,6 +11,62 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('the stairs lead upstairs and back down', (tester) async {
+    final game = TavernGame(playerName: 'Tester');
+    await tester.pumpWidget(MaterialApp(home: GameWidget(game: game)));
+    for (var i = 0; i < 200; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump(const Duration(milliseconds: 16));
+      if (game.isLoaded && game.player.isLoaded) break;
+    }
+    expect(game.player.isLoaded, isTrue);
+    final floors = <bool>[];
+    game.onFloorChanged = floors.add;
+    Future<void> settle() async {
+      for (var i = 0; i < 40; i++) {
+        await tester.pump(const Duration(milliseconds: 16));
+      }
+    }
+
+    // From the foot of the stairs, walk up between the railings.
+    final foot = TavernMap.downstairsArrival;
+    game.player.position.setValues(foot.dx, foot.dy);
+    await settle();
+    expect(game.upstairs, isFalse);
+    for (var i = 0; i < 60; i++) {
+      game.player.walk(Vector2(0, -1), 1 / 60);
+    }
+    expect(
+      TavernMap.stairsUp.contains(
+        Offset(game.player.position.x, game.player.position.y),
+      ),
+      isTrue,
+      reason: 'the bottom steps can be climbed',
+    );
+    await settle();
+    expect(floors, [true]);
+    expect(game.upstairs, isTrue);
+    final top = TavernMap.upstairsArrival;
+    expect(game.player.position, Vector2(top.dx, top.dy));
+    // The camera stays on the upstairs room.
+    expect(
+      game.camera.viewfinder.position.y,
+      greaterThan(TavernMap.upstairsTop),
+    );
+
+    // Back down through the doorway onto the doormat.
+    for (var i = 0; i < 60; i++) {
+      game.player.walk(Vector2(0, 1), 1 / 60);
+    }
+    await settle();
+    expect(floors, [true, false]);
+    expect(game.upstairs, isFalse);
+    expect(game.player.position, Vector2(foot.dx, foot.dy));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'the tavern loads and the player can walk',
     (tester) async {

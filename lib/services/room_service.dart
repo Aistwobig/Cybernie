@@ -16,7 +16,12 @@ class RoomPlayer {
     this.character = 1,
     this.voice = false,
     this.camera = false,
+    this.cameraTurns = 0,
   });
+
+  /// Quarter turns clockwise that stand their camera picture upright (they
+  /// hold a phone sideways while its screen stays upright).
+  final int cameraTurns;
 
   /// In voice chat right now (their mic may still be muted).
   final bool voice;
@@ -259,9 +264,10 @@ class RoomService {
     await _channel?.track(_presence);
   }
 
-  /// Tells the room our camera is on (or off).
-  Future<void> setCamera(bool on) async {
-    _presence = {..._presence, 'cam': on};
+  /// Tells the room our camera is on (or off), and how many quarter turns
+  /// clockwise its picture needs to stand upright ([turns]).
+  Future<void> setCamera(bool on, {int turns = 0}) async {
+    _presence = {..._presence, 'cam': on, 'camTurns': turns};
     await _channel?.track(_presence);
   }
 
@@ -296,6 +302,7 @@ class RoomService {
         character: (data['char'] as num?)?.toInt() ?? 1,
         voice: data['voice'] == true,
         camera: data['cam'] == true,
+        cameraTurns: (data['camTurns'] as num?)?.toInt() ?? 0,
         x: (data['x'] as num?)?.toDouble() ?? 0,
         y: (data['y'] as num?)?.toDouble() ?? 0,
       );

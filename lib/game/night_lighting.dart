@@ -35,6 +35,12 @@ class NightLighting extends Component {
     _Light(1070, 460, 100, seed: 6.4), // table (top-right)
     _Light(1160, 615, 100, seed: 7.9), // table (middle-right)
     _Light(1028, 820, 105, seed: 8.5), // big table (bottom-right)
+    // Upstairs (1400 map pixels further down; see TavernMap.upstairsTop):
+    // the four wall lanterns between the windows.
+    _Light(383, 1400 + 120, 120, seed: 9.2),
+    _Light(626, 1400 + 120, 120, seed: 10.6),
+    _Light(1087, 1400 + 120, 120, seed: 11.3),
+    _Light(1322, 1400 + 120, 120, seed: 12.7),
   ];
 
   static const Color _warm = Color(0xFFFFA64D);

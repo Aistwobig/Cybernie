@@ -47,6 +47,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   /// fully drawn), drinks and emotes.
   static List<String> get allAssets => {
     AppImages.tavernRoom,
+    AppImages.tavernUpstairs,
     AppImages.bernieIdle,
     AppImages.fireplaceFire,
     AppImages.joystickBase,
@@ -311,13 +312,23 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   };
 
   /// Shows a camera picture above the head of everyone in [ids] (null: us,
-  /// mirrored) and nobody else.
-  void showCameras(Set<String?> ids) {
+  /// mirrored) and nobody else, each turned by its [turns] (quarter turns
+  /// clockwise; see Character.showCamera).
+  void showCameras(Set<String?> ids, {Map<String?, int> turns = const {}}) {
     if (!isLoaded) return;
-    if (player.isLoaded) player.showCamera(ids.contains(null), mirror: true);
+    if (player.isLoaded) {
+      player.showCamera(
+        ids.contains(null),
+        mirror: true,
+        turns: turns[null] ?? 0,
+      );
+    }
     for (final entry in _others.entries) {
       if (entry.value.isLoaded) {
-        entry.value.showCamera(ids.contains(entry.key));
+        entry.value.showCamera(
+          ids.contains(entry.key),
+          turns: turns[entry.key] ?? 0,
+        );
       }
     }
   }
@@ -491,6 +502,18 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       onTap: () => bernie.selected = false,
     )..paint.filterQuality = FilterQuality.none;
 
+    // Upstairs, further down the same world (see TavernMap.upstairsTop).
+    final upstairsImage = await images.load(AppImages.tavernUpstairs);
+    final upstairsMap =
+        _Floor(
+            sprite: Sprite(upstairsImage),
+            size: Vector2(TavernMap.upstairsWidth, TavernMap.upstairsHeight),
+            priority: -1,
+            onTap: () => bernie.selected = false,
+          )
+          ..position = Vector2(0, TavernMap.upstairsTop)
+          ..paint.filterQuality = FilterQuality.none;
+
     bernie = Bernie(
       position: Vector2(TavernMap.bartenderSpot.dx, TavernMap.bartenderSpot.dy),
     )..onSelectedChanged = (selected) => onBernieSelected?.call(selected);
@@ -601,13 +624,22 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     if (sceneFilter != null) {
       // The fire stays bright: it's a light source.
       fire.paint.colorFilter = AppColors.artFilter;
-      for (final part in [map, counterFront, _noticeBoard, ...stoolFronts]) {
+      for (final part in [
+        map,
+        upstairsMap,
+        counterFront,
+        _noticeBoard,
+        ...stoolFronts,
+      ]) {
         part.paint.colorFilter = sceneFilter;
       }
     }
 
     world.addAll([
       map,
+      upstairsMap,
+      _arrowUp,
+      _arrowDown,
       fire,
       TavernNpc.bard(Vector2(TavernMap.bardSpot.dx, TavernMap.bardSpot.dy)),
       TavernNpc.drinker(
@@ -646,7 +678,78 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       knobRadius: 22,
       margin: const EdgeInsets.only(left: 24, bottom: 20),
     );
-    camera.viewport.add(_joystick);
+    camera.viewport.addAll([_joystick, _fade]);
+  }
+
+  // --- Floors ----------------------------------------------------------------
+
+  final _StairsArrow _arrowUp = _StairsArrow(
+    at: TavernMap.stairsUpArrow,
+    up: true,
+  );
+  final _StairsArrow _arrowDown = _StairsArrow(
+    at: TavernMap.stairsDownArrow,
+    up: false,
+  );
+  final _Fade _fade = _Fade();
+
+  /// We're upstairs.
+  bool get upstairs => TavernMap.isUpstairs(_playerAt);
+  Offset get _playerAt => Offset(player.position.x, player.position.y);
+
+  /// Called once we've arrived on the other floor (true: upstairs).
+  void Function(bool upstairs)? onFloorChanged;
+
+  /// How close we need to be for a stairs arrow to show.
+  static const double _arrowReach = 150;
+
+  /// A floor change in progress: fading out to [_arrival], then back in.
+  Offset? _arrival;
+  Facing _arrivalFacing = Facing.south;
+  double _fadeTime = 0;
+  static const double _fadeOut = 0.18;
+  static const double _fadeIn = 0.28;
+  bool get changingFloor => _arrival != null || _fade.opacity > 0;
+
+  void _checkStairs() {
+    final at = _playerAt;
+    _arrowUp.shown =
+        !upstairs && (at - TavernMap.stairsUpArrow).distance < _arrowReach;
+    _arrowDown.shown =
+        upstairs && (at - TavernMap.stairsDownArrow).distance < _arrowReach;
+    if (_arrival != null || _fade.opacity > 0) return;
+    if (TavernMap.stairsUp.contains(at)) {
+      _arrival = TavernMap.upstairsArrival;
+      _arrivalFacing = Facing.north;
+      _fadeTime = 0;
+    } else if (TavernMap.stairsDown.contains(at)) {
+      _arrival = TavernMap.downstairsArrival;
+      _arrivalFacing = Facing.south;
+      _fadeTime = 0;
+    }
+  }
+
+  /// Runs the fade: out, move to the other floor, back in.
+  void _updateFloorChange(double dt) {
+    _fadeTime += dt;
+    final arrival = _arrival;
+    if (arrival != null) {
+      _fade.opacity = _fadeTime / _fadeOut;
+      if (_fadeTime < _fadeOut) return;
+      if (sitting) standUp();
+      player
+        ..position.setValues(arrival.dx, arrival.dy)
+        ..facing = _arrivalFacing
+        ..moving = false;
+      _arrival = null;
+      _fadeTime = 0;
+      _stepProgress = 0;
+      _followPlayer();
+      _sendPosition();
+      onFloorChanged?.call(upstairs);
+    } else if (_fade.opacity > 0) {
+      _fade.opacity = 1 - _fadeTime / _fadeIn;
+    }
   }
 
   @override
@@ -656,10 +759,14 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     // until then it has no animations to switch between.
     if (!isLoaded || !player.isLoaded) return;
 
-    // Joystick wins over the keyboard when both are in use.
-    final input = _joystick.relativeDelta.isZero()
+    // Joystick wins over the keyboard when both are in use. Nobody walks
+    // while changing floors.
+    final input = changingFloor
+        ? Vector2.zero()
+        : _joystick.relativeDelta.isZero()
         ? _keyboardInput.direction
         : _joystick.relativeDelta.clone();
+    if (changingFloor) _updateFloorChange(dt);
     // Moving while seated gets up first.
     if (sitting && input.length2 > 0.01) standUp();
     // Cap dt so a dropped frame can't carry the player through a wall.
@@ -669,6 +776,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       _countSteps(player.position.distanceTo(before));
     }
     _maybeSendPosition(dt);
+    _checkStairs();
     _checkNoticeBoard();
     _checkSeats();
     _checkBar();
@@ -754,17 +862,25 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
     }
   }
 
-  /// Centers the camera on the player without showing past the map's edges.
+  /// Centers the camera on the player without showing past the edges of
+  /// the floor they're on.
   void _followPlayer() {
     final halfView = size / camera.viewfinder.zoom / 2;
+    final floor = TavernMap.floorAt(_playerAt);
     camera.viewfinder.position = Vector2(
-      _clampCenter(player.position.x, halfView.x, TavernMap.width),
-      _clampCenter(player.position.y, halfView.y, TavernMap.height),
+      _clampCenter(player.position.x, halfView.x, floor.left, floor.right),
+      _clampCenter(player.position.y, halfView.y, floor.top, floor.bottom),
     );
   }
 
-  static double _clampCenter(double value, double half, double extent) =>
-      half * 2 >= extent ? extent / 2 : value.clamp(half, extent - half);
+  static double _clampCenter(
+    double value,
+    double half,
+    double start,
+    double end,
+  ) => half * 2 >= end - start
+      ? (start + end) / 2
+      : value.clamp(start + half, end - half);
 
   /// Shows or hides the collision boxes (red) and the player's feet box
   /// (green). While shown, tapping the map prints its coordinates.
@@ -776,6 +892,87 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       _hitboxOverlay = _HitboxOverlay(player);
       world.add(_hitboxOverlay!);
     }
+  }
+}
+
+/// A golden arrow over the stairs (up) or the upstairs doorway (down),
+/// bobbing, shown while the player is near enough to use it.
+class _StairsArrow extends PositionComponent {
+  _StairsArrow({required Offset at, required this.up})
+    : super(
+        position: Vector2(at.dx, at.dy),
+        anchor: Anchor.center,
+        size: Vector2(26, 30),
+        priority: 90000, // over the map and characters
+      );
+
+  /// Points up (true) or down.
+  final bool up;
+
+  /// 0 (hidden) to 1, eased toward [shown].
+  double _opacity = 0;
+  bool shown = false;
+  double _time = 0;
+
+  @override
+  void update(double dt) {
+    _time += dt;
+    final target = shown ? 1.0 : 0.0;
+    _opacity += (target - _opacity) * math.min(1, dt * 8);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    if (_opacity < 0.02) return;
+    // Bob along the way it points.
+    final bob = math.sin(_time * 5) * 3 * (up ? -1 : 1);
+    canvas.save();
+    canvas.translate(size.x / 2, size.y / 2 + bob);
+    if (!up) canvas.scale(1, -1);
+    final arrow = Path()
+      ..moveTo(0, -14)
+      ..lineTo(12, 0)
+      ..lineTo(5, 0)
+      ..lineTo(5, 13)
+      ..lineTo(-5, 13)
+      ..lineTo(-5, 0)
+      ..lineTo(-12, 0)
+      ..close();
+    final alpha = (_opacity * 255).round();
+    canvas
+      ..drawPath(
+        arrow.shift(const Offset(0, 1.5)),
+        Paint()..color = Color.fromARGB((alpha * 0.45).round(), 0, 0, 0),
+      )
+      ..drawPath(
+        arrow,
+        Paint()
+          ..color = Color.fromARGB(alpha, 0x2A, 0x14, 0x08)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..strokeJoin = StrokeJoin.round,
+      )
+      ..drawPath(
+        arrow,
+        Paint()..color = Color.fromARGB(alpha, 0xFF, 0xD0, 0x27),
+      )
+      ..restore();
+  }
+}
+
+/// Black over the whole screen, for a quick fade when changing floors.
+class _Fade extends Component with HasGameReference {
+  _Fade() : super(priority: 1 << 21);
+
+  double opacity = 0;
+
+  @override
+  void render(Canvas canvas) {
+    if (opacity <= 0) return;
+    canvas.drawRect(
+      Offset.zero & Size(game.size.x, game.size.y),
+      Paint()..color = Color.fromRGBO(0, 0, 0, opacity.clamp(0.0, 1.0)),
+    );
   }
 }
 
@@ -849,7 +1046,11 @@ class _KeyboardInput extends Component with KeyboardHandler {
 class _HitboxOverlay extends PositionComponent with TapCallbacks {
   _HitboxOverlay(this.player)
     : super(
-        size: Vector2(TavernMap.width, TavernMap.height),
+        // Both floors (upstairs is further down the same world).
+        size: Vector2(
+          TavernMap.upstairsWidth,
+          TavernMap.upstairsTop + TavernMap.upstairsHeight,
+        ),
         priority: 100000, // above every character
       );
 
@@ -880,7 +1081,7 @@ class _HitboxOverlay extends PositionComponent with TapCallbacks {
 
   @override
   void render(Canvas canvas) {
-    for (final box in TavernMap.collisionBoxes) {
+    for (final box in TavernMap.allCollisionBoxes) {
       canvas
         ..drawRect(box, _boxFill)
         ..drawRect(box, _boxEdge);

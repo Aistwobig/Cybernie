@@ -133,6 +133,14 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     };
     _game.onDrinkOrdered = (drinkId) => _room?.sendDrink(drinkId);
     _game.onSeatTooFar = () => _showSnack(AppStrings.walkCloserToSit);
+    // Up or down the stairs: a couple of quick steps.
+    _game.onFloorChanged = (_) {
+      SfxService.play(Sfx.step1, gain: 0.5);
+      Future.delayed(
+        const Duration(milliseconds: 140),
+        () => SfxService.play(Sfx.step2, gain: 0.5),
+      );
+    };
     // Footsteps on the boards, or the slime's wet squish.
     _game.onFootstep = (left) => _game.slimySteps
         ? SfxService.play(left ? Sfx.slimeStep1 : Sfx.slimeStep2, gain: 0.5)
@@ -162,6 +170,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       ..onAtBarChanged = null
       ..onDrinkOrdered = null
       ..onSeatTooFar = null
+      ..onFloorChanged = null
       ..onFootstep = null
       ..onInteract = null;
     _orderPause?.cancel();
@@ -663,9 +672,15 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     ..._voice.watching.value,
   };
 
+  /// How far each camera picture is turned to stand upright (null: ours).
+  Map<String?, int> get _cameraTurns => {
+    null: _voice.cameraTurns,
+    for (final p in _others) p.id: p.cameraTurns,
+  };
+
   void _camerasChanged() {
     final ids = _cameraIds;
-    _game.showCameras(ids);
+    _game.showCameras(ids, turns: _cameraTurns);
     if (ids.isEmpty) {
       _cameraPump?.cancel();
       _cameraPump = null;
@@ -679,8 +694,9 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
 
   void _pumpCameras() {
     final ids = _cameraIds;
-    // Again every time, in case a player's character was rebuilt.
-    _game.showCameras(ids);
+    // Again every time, in case a player's character was rebuilt (or a
+    // phone was turned).
+    _game.showCameras(ids, turns: _cameraTurns);
     for (final id in ids) {
       // One grab at a time per camera.
       if (!_grabbing.add(id)) continue;
@@ -923,9 +939,12 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
             // The room is drawn landscape; on a phone held upright it's
             // turned sideways rather than forcing the phone to rotate.
             final room = _buildRoom();
-            return constraints.maxHeight > constraints.maxWidth
-                ? RotatedBox(quarterTurns: 1, child: room)
-                : room;
+            final sideways = constraints.maxHeight > constraints.maxWidth;
+            // Then the phone is held sideways while its screen (and so its
+            // camera) stays upright: the camera's picture lies on its side,
+            // so it's turned a quarter clockwise for everyone.
+            _voice.setCameraTurns(sideways ? 1 : 0);
+            return sideways ? RotatedBox(quarterTurns: 1, child: room) : room;
           },
         ),
       ),

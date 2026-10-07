@@ -148,7 +148,11 @@ class TavernMap {
     Rect.fromLTRB(355, 358, 850, 425), // bar stools
     Rect.fromLTRB(1012, 215, 1072, 312), // plant by the door
     Rect.fromLTRB(950, 322, 982, 340), // the bard (an NPC)
-    Rect.fromLTRB(1072, 85, 1190, 352), // stairs
+    // Stairs: the two railings and the top; the bottom steps can be walked
+    // onto, and climbing them (see [stairsUp]) goes upstairs.
+    Rect.fromLTRB(1072, 85, 1092, 352),
+    Rect.fromLTRB(1170, 85, 1190, 352),
+    Rect.fromLTRB(1072, 85, 1190, 250),
     Rect.fromLTRB(1212, 170, 1340, 290), // notice board
     Rect.fromLTRB(1278, 265, 1340, 522), // stacked barrels (right)
     Rect.fromLTRB(1232, 400, 1280, 488), // plant on stool (right)
@@ -170,7 +174,90 @@ class TavernMap {
   ];
 
   static bool isBlocked(Rect feet) =>
-      collisionBoxes.any((box) => box.overlaps(feet));
+      collisionBoxes.any((box) => box.overlaps(feet)) ||
+      _upstairsBoxes.any((box) => box.overlaps(feet));
+
+  /// Every collision box on both floors (for the debug hitbox view).
+  static List<Rect> get allCollisionBoxes => [
+    ...collisionBoxes,
+    ..._upstairsBoxes,
+  ];
+
+  // --- Upstairs ---------------------------------------------------------------
+  //
+  // The upstairs room (AppImages.tavernUpstairs, 1536 x 1024) sits in the
+  // same game world, [upstairsTop] map pixels down: far enough that nobody
+  // on one floor ever sees, hears (voice chat) or meets anyone on the other.
+  // Boxes and spots below are in its own picture's pixels, shifted down.
+
+  static const double upstairsTop = 1400;
+  static const double upstairsWidth = 1536;
+  static const double upstairsHeight = 1024;
+
+  static const Rect downstairsArea = Rect.fromLTWH(0, 0, width, height);
+  static const Rect upstairsArea = Rect.fromLTWH(
+    0,
+    upstairsTop,
+    upstairsWidth,
+    upstairsHeight,
+  );
+
+  static bool isUpstairs(Offset at) => at.dy >= upstairsTop - 100;
+
+  /// The floor [at] is on.
+  static Rect floorAt(Offset at) =>
+      isUpstairs(at) ? upstairsArea : downstairsArea;
+
+  /// Climbing the stairs into here (between the railings, past the bottom
+  /// steps) takes you upstairs, arriving at [upstairsArrival]. The arrow
+  /// above the steps ([stairsUpArrow]) shows the way.
+  static const Rect stairsUp = Rect.fromLTRB(1092, 250, 1170, 320);
+  static const Offset stairsUpArrow = Offset(1131, 300);
+  static const Offset upstairsArrival = Offset(768, upstairsTop + 850);
+
+  /// Walking down through the doorway onto the doormat at the bottom of the
+  /// upstairs room goes back downstairs, arriving at [downstairsArrival]
+  /// (at the foot of the stairs).
+  static const Rect stairsDown = Rect.fromLTRB(
+    692,
+    upstairsTop + 905,
+    843,
+    upstairsTop + 970,
+  );
+  static const Offset stairsDownArrow = Offset(768, upstairsTop + 900);
+  static const Offset downstairsArrival = Offset(1131, 398);
+
+  /// Upstairs walls, in the upstairs picture's own pixels.
+  static const List<Rect> _upstairsLocal = [
+    Rect.fromLTRB(0, 0, 1536, 215), // back wall
+    Rect.fromLTRB(0, 0, 155, 285), // left alcove (top)
+    Rect.fromLTRB(1385, 0, 1536, 285), // right alcove (top)
+    Rect.fromLTRB(0, 0, 80, 410), // far left wall
+    Rect.fromLTRB(1458, 0, 1536, 410), // far right wall
+    Rect.fromLTRB(0, 0, 22, 1024), // left edge
+    Rect.fromLTRB(1514, 0, 1536, 1024), // right edge
+    Rect.fromLTRB(0, 510, 100, 1024), // left posts
+    Rect.fromLTRB(1438, 510, 1536, 1024), // right posts
+    Rect.fromLTRB(0, 585, 155, 780), // left alcove (bottom)
+    Rect.fromLTRB(1385, 585, 1536, 780), // right alcove (bottom)
+    // Bottom corners, cut diagonally (as steps).
+    Rect.fromLTRB(0, 780, 110, 1024),
+    Rect.fromLTRB(0, 810, 135, 1024),
+    Rect.fromLTRB(0, 840, 160, 1024),
+    Rect.fromLTRB(1430, 780, 1536, 1024),
+    Rect.fromLTRB(1405, 810, 1536, 1024),
+    Rect.fromLTRB(1380, 840, 1536, 1024),
+    // Bottom wall, either side of the doorway, and the doorway's sides.
+    Rect.fromLTRB(0, 858, 628, 1024),
+    Rect.fromLTRB(908, 858, 1536, 1024),
+    Rect.fromLTRB(0, 890, 692, 1024),
+    Rect.fromLTRB(843, 890, 1536, 1024),
+    Rect.fromLTRB(0, 962, 1536, 1024), // below the doormat
+  ];
+
+  static final List<Rect> _upstairsBoxes = [
+    for (final box in _upstairsLocal) box.shift(const Offset(0, upstairsTop)),
+  ];
 }
 
 /// A place to sit: where the seated character's feet go, and which way

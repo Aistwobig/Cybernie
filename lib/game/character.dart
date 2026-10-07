@@ -89,11 +89,13 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
 
   /// Shows (or hides) this player's camera above the name tag. [mirror]:
   /// flipped like a mirror (our own camera, as people expect to see
-  /// themselves).
-  void showCamera(bool on, {bool mirror = false}) {
+  /// themselves). [turns]: quarter turns clockwise to stand the picture
+  /// upright (a phone held sideways sends it lying on its side).
+  void showCamera(bool on, {bool mirror = false, int turns = 0}) {
+    _camera?.turns = turns;
     if (on == (_camera != null)) return;
     if (on) {
-      final picture = CameraPicture(mirror: mirror);
+      final picture = CameraPicture(mirror: mirror)..turns = turns;
       _camera = picture;
       add(picture);
     } else {
@@ -274,10 +276,7 @@ abstract class Character extends SpriteAnimationGroupComponent<(Facing, Pose)>
     if (sitSideImage != null) {
       final sideSheet = SpriteSheet(
         image: sitSideImage,
-        srcSize: Vector2(
-          sitSideImage.width / frames,
-          sitSideImage.height / 2,
-        ),
+        srcSize: Vector2(sitSideImage.width / frames, sitSideImage.height / 2),
       );
       builtAnimations[(Facing.west, Pose.sit)] = sideSheet.createAnimation(
         row: 0,
@@ -589,6 +588,9 @@ class CameraPicture extends PositionComponent with ParentIsA<Character> {
   static final Vector2 pictureSize = Vector2(92, 69);
 
   final bool mirror;
+
+  /// Quarter turns clockwise that stand the frames upright.
+  int turns = 0;
   ui.Image? _frame;
 
   set frame(ui.Image image) {
@@ -630,25 +632,27 @@ class CameraPicture extends PositionComponent with ParentIsA<Character> {
     final frame = _frame;
     if (frame == null) return;
     // Fill the box, cropping the frame's longer side (like object-fit:
-    // cover).
+    // cover). The frame is first turned upright (a sideways frame fills
+    // the box with its sides swapped), then mirrored if it's ours.
     final target = inner.outerRect;
+    final sideways = turns.isOdd;
+    final dw = sideways ? target.height : target.width;
+    final dh = sideways ? target.width : target.height;
     final fw = frame.width.toDouble(), fh = frame.height.toDouble();
-    final scale = math.max(target.width / fw, target.height / fh);
-    final sw = target.width / scale, sh = target.height / scale;
+    final scale = math.max(dw / fw, dh / fh);
+    final sw = dw / scale, sh = dh / scale;
     final source = Rect.fromLTWH((fw - sw) / 2, (fh - sh) / 2, sw, sh);
     canvas
       ..save()
-      ..clipRRect(inner);
-    if (mirror) {
-      canvas
-        ..translate(target.center.dx * 2, 0)
-        ..scale(-1, 1);
-    }
+      ..clipRRect(inner)
+      ..translate(target.center.dx, target.center.dy);
+    if (mirror) canvas.scale(-1, 1);
     canvas
+      ..rotate(turns * math.pi / 2)
       ..drawImageRect(
         frame,
         source,
-        target,
+        Rect.fromCenter(center: Offset.zero, width: dw, height: dh),
         Paint()..filterQuality = FilterQuality.medium,
       )
       ..restore();
