@@ -108,7 +108,9 @@ TextStyle _muted({double size = 12}) => GoogleFonts.inter(
 
 // --- Who's here --------------------------------------------------------------
 
-/// Everyone in the room, you first. Tap someone to open their card.
+/// Everyone in the room, you first. Tap someone to open their card. While
+/// anyone is in voice chat, they're listed first under their own heading,
+/// with a mic (green while they talk) and a camera if theirs is on.
 class PlayersPanel extends StatelessWidget {
   const PlayersPanel({
     super.key,
@@ -117,6 +119,10 @@ class PlayersPanel extends StatelessWidget {
     required this.others,
     required this.onSelect,
     required this.onClose,
+    this.meInVoice = false,
+    this.myCameraOn = false,
+    this.talking = const {},
+    this.myId,
   });
 
   final String myName;
@@ -125,10 +131,59 @@ class PlayersPanel extends StatelessWidget {
   final void Function(String playerId) onSelect;
   final VoidCallback onClose;
 
+  /// We're in voice chat, with our camera on or not.
+  final bool meInVoice;
+  final bool myCameraOn;
+
+  /// Who is talking right now (player ids; [myId] for us).
+  final Set<String> talking;
+  final String? myId;
+
   @override
   Widget build(BuildContext context) {
     final sorted = [...others]
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    final inVoice = [
+      for (final p in sorted)
+        if (p.voice) p,
+    ];
+    final rest = [
+      for (final p in sorted)
+        if (!p.voice) p,
+    ];
+    final voiceCount = inVoice.length + (meInVoice ? 1 : 0);
+
+    final me = _PlayerTile(
+      name: myName,
+      avatarUrl: myAvatarUrl,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (meInVoice)
+            _VoiceBadges(
+              talking: myId != null && talking.contains(myId),
+              camera: myCameraOn,
+            ),
+          Text(AppStrings.youLabel, style: _muted()),
+        ],
+      ),
+    );
+    Widget tile(RoomPlayer player) => _PlayerTile(
+      name: player.name,
+      avatarUrl: player.avatarUrl,
+      onTap: () => onSelect(player.id),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (player.voice)
+            _VoiceBadges(
+              talking: talking.contains(player.id),
+              camera: player.camera,
+            ),
+          Icon(Icons.chevron_right, size: 20, color: AppColors.ink),
+        ],
+      ),
+    );
 
     return TavernPanel(
       title: AppStrings.playersHere(others.length + 1, RoomService.maxPlayers),
@@ -136,27 +191,101 @@ class PlayersPanel extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.symmetric(vertical: 4),
         children: [
-          _PlayerTile(
-            name: myName,
-            avatarUrl: myAvatarUrl,
-            trailing: Text(AppStrings.youLabel, style: _muted()),
-          ),
-          for (final player in sorted)
-            _PlayerTile(
-              name: player.name,
-              avatarUrl: player.avatarUrl,
-              onTap: () => onSelect(player.id),
-              trailing: Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: AppColors.ink,
-              ),
+          if (voiceCount == 0) ...[
+            me,
+            for (final player in sorted) tile(player),
+          ] else ...[
+            _SectionHeading(
+              icon: Icons.mic,
+              text: AppStrings.inVoiceSection(voiceCount),
             ),
+            if (meInVoice) me,
+            for (final player in inVoice) tile(player),
+            if (!meInVoice || rest.isNotEmpty)
+              const _SectionHeading(
+                icon: Icons.people,
+                text: AppStrings.notInVoiceSection,
+              ),
+            if (!meInVoice) me,
+            for (final player in rest) tile(player),
+          ],
           if (others.isEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Text(AppStrings.aloneInRoom, style: _muted(size: 13)),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A small heading in the Who's here list ("In voice chat (3)").
+class _SectionHeading extends StatelessWidget {
+  const _SectionHeading({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 2),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: AppColors.ink.withValues(alpha: 0.6)),
+          const SizedBox(width: 6),
+          Text(
+            text.toUpperCase(),
+            style: _muted(
+              size: 11,
+            ).copyWith(fontWeight: FontWeight.w800, letterSpacing: 0.6),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A voice chat member's mic (green while they talk) and, if their camera
+/// is on, a camera.
+class _VoiceBadges extends StatelessWidget {
+  const _VoiceBadges({required this.talking, required this.camera});
+
+  final bool talking;
+  final bool camera;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (camera)
+            Tooltip(
+              message: AppStrings.cameraOnLabel,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.videocam,
+                  size: 17,
+                  color: AppColors.ink.withValues(alpha: 0.75),
+                ),
+              ),
+            ),
+          Tooltip(
+            message: talking
+                ? AppStrings.talkingLabel
+                : AppStrings.inVoiceLabel,
+            child: Icon(
+              talking ? Icons.graphic_eq : Icons.mic,
+              size: 17,
+              color: talking
+                  ? const Color(0xFF2E9E44)
+                  : AppColors.ink.withValues(alpha: 0.75),
+            ),
+          ),
         ],
       ),
     );

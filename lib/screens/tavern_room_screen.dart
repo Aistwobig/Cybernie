@@ -682,20 +682,22 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     for (final id in ids) {
       // One grab at a time per camera.
       if (!_grabbing.add(id)) continue;
-      _voice.grabFrame(id).then(
-        (image) {
-          _grabbing.remove(id);
-          if (image == null) return;
-          if (mounted) {
-            _game.setCameraFrame(id, image);
-          } else {
-            image.dispose();
-          }
-        },
-        onError: (Object _) {
-          _grabbing.remove(id);
-        },
-      );
+      _voice
+          .grabFrame(id)
+          .then(
+            (image) {
+              _grabbing.remove(id);
+              if (image == null) return;
+              if (mounted) {
+                _game.setCameraFrame(id, image);
+              } else {
+                image.dispose();
+              }
+            },
+            onError: (Object _) {
+              _grabbing.remove(id);
+            },
+          );
     }
   }
 
@@ -828,12 +830,24 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       case _Panel.none:
         return null;
       case _Panel.players:
-        return PlayersPanel(
-          myName: _myName,
-          myAvatarUrl: _myAvatarUrl,
-          others: _others,
-          onSelect: (id) => _openPlayerCard(id, fromList: true),
-          onClose: _closePanel,
+        // Kept up to date as people join voice, talk or turn cameras on.
+        return ListenableBuilder(
+          listenable: Listenable.merge([
+            _voice.state,
+            _voice.cameraOn,
+            _voice.speaking,
+          ]),
+          builder: (context, _) => PlayersPanel(
+            myName: _myName,
+            myAvatarUrl: _myAvatarUrl,
+            others: _others,
+            onSelect: (id) => _openPlayerCard(id, fromList: true),
+            onClose: _closePanel,
+            meInVoice: _voice.state.value == VoiceState.on,
+            myCameraOn: _voice.cameraOn.value,
+            talking: _voice.speaking.value,
+            myId: _voice.myId,
+          ),
         );
       case _Panel.playerCard:
         if (cardId == null) return null;

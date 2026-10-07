@@ -142,6 +142,11 @@ class AppStrings {
   static String playersHere(int count, int max) => "Who's here ($count / $max)";
   static const String showPlayers = "See who's here";
   static const String youLabel = 'You';
+  static String inVoiceSection(int count) => 'In voice chat ($count)';
+  static const String notInVoiceSection = 'In the tavern';
+  static const String inVoiceLabel = 'In voice chat';
+  static const String talkingLabel = 'Talking';
+  static const String cameraOnLabel = 'Camera on';
   static const String aloneInRoom =
       "It's just you for now. Invite a friend to join!";
   static const String inThisRoom = 'In this room';
