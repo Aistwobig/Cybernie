@@ -6,6 +6,7 @@ import '../constants/app_strings.dart';
 import '../constants/emotes.dart';
 import '../models/profile.dart';
 import '../services/direct_message_service.dart';
+import '../services/dm_notifier.dart';
 import '../services/sfx_service.dart';
 import '../theme/app_theme.dart';
 
@@ -49,6 +50,8 @@ class _DirectChatViewState extends State<DirectChatView> {
   @override
   void initState() {
     super.initState();
+    // Reading this conversation: no banners for it, and it's all read.
+    DmNotifier.opened(_friendId);
     _feed = DirectMessageService.listen(
       onNew: (m) {
         if (m.senderId != _friendId) return;
@@ -65,6 +68,7 @@ class _DirectChatViewState extends State<DirectChatView> {
 
   @override
   void dispose() {
+    DmNotifier.closed(_friendId);
     _feed?.close();
     _controller.dispose();
     _inputFocus.dispose();

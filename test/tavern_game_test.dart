@@ -251,9 +251,7 @@ void main() {
       await doubleTapSeat();
       expect(game.sitting, isFalse, reason: 'double-tap again stands up');
       // From across the room it asks you to walk closer instead.
-      game.sitOn(
-        TavernMap.seats.lastWhere((s) => s.facing == Facing.north),
-      );
+      game.sitOn(TavernMap.seats.lastWhere((s) => s.facing == Facing.north));
       expect(game.sitting, isFalse);
       expect(tooFar, 1);
 

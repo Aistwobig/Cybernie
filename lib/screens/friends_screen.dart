@@ -9,6 +9,7 @@ import '../services/auth_service.dart';
 import '../services/friends_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/last_seen.dart';
+import '../widgets/dm_banner.dart';
 import '../widgets/fantasy_ui.dart';
 import '../widgets/player_avatar.dart';
 import 'direct_chat_screen.dart';
@@ -311,12 +312,16 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   // Tap a friend to see their profile (and message them);
                   // the chat button goes straight to the conversation.
                   onTap: () => _showFriend(friend),
-                  trailing: FramedIconButton(
-                    icon: Icons.chat_bubble_outline,
-                    tooltip: AppStrings.messageFriend(friend.displayName),
-                    dark: true,
-                    size: 40,
-                    onPressed: () => DirectChatScreen.open(context, friend),
+                  // With how many of their messages are unread.
+                  trailing: DmUnreadBadge(
+                    friendId: friend.id,
+                    child: FramedIconButton(
+                      icon: Icons.chat_bubble_outline,
+                      tooltip: AppStrings.messageFriend(friend.displayName),
+                      dark: true,
+                      size: 40,
+                      onPressed: () => DirectChatScreen.open(context, friend),
+                    ),
                   ),
                 ),
           ],

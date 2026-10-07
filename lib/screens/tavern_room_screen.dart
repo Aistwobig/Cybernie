@@ -19,6 +19,7 @@ import '../models/profile.dart';
 import '../services/auth_service.dart';
 import '../services/chat_service.dart';
 import '../services/coin_service.dart';
+import '../services/dm_notifier.dart';
 import '../services/inventory_service.dart';
 import '../services/lottery_service.dart';
 import '../services/music_service.dart';
@@ -148,6 +149,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _game.onFootstep = (left) => _game.slimySteps
         ? SfxService.play(left ? Sfx.slimeStep1 : Sfx.slimeStep2, gain: 0.5)
         : SfxService.play(left ? Sfx.step1 : Sfx.step2, gain: 0.45);
+    DmNotifier.addOpener(_openFromBanner);
     // The projector upstairs: share a screen, or watch it full screen.
     _game.projector
       ..onShareTap = _toggleScreenShare
@@ -189,6 +191,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     _lotteryCheck?.cancel();
     _voiceTick?.cancel();
     _cameraPump?.cancel();
+    DmNotifier.removeOpener(_openFromBanner);
     _screenTick?.cancel();
     _screenPump?.cancel();
     _game.projector
@@ -571,6 +574,9 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
       _emotesOpen = false;
     });
   }
+
+  /// Opening a private message banner in the tavern: the side panel.
+  late final void Function(Profile friend) _openFromBanner = _openDirectChat;
 
   void _openDirectChat(Profile friend) => setState(() {
     _chatFriend = friend;

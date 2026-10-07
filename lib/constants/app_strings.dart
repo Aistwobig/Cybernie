@@ -357,6 +357,9 @@ class AppStrings {
   static String dmEmpty(String name) =>
       'No messages yet. Say hi to $name or send an emote!';
   static const String dmLoadError = "Couldn't load your messages.";
+  static String dmBannerLabel(String name) =>
+      'New message from $name. Tap to open.';
+  static const String dmBannerEmote = 'sent an emote';
   static const String dmNotSetUp =
       "Private messages aren't set up yet. Run the direct_messages "
       'migration in Supabase.';

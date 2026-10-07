@@ -8,6 +8,7 @@ import '../constants/app_strings.dart';
 import '../theme/app_theme.dart';
 import '../services/sfx_service.dart';
 import '../utils/app_nav.dart';
+import 'dm_banner.dart';
 
 /// The fantasy UI kit: pixel-art frames, castle header, ornate buttons and
 /// the bottom bar shared by Home, Friends and Profile. Art lives in
@@ -736,6 +737,7 @@ class FantasyBottomNav extends StatelessWidget {
                   label: tabs[i].$3,
                   isActive: i == currentIndex,
                   onTap: () => _go(context, i),
+                  badgeUnreadMessages: i == 1,
                 ),
               ),
             ],
@@ -752,7 +754,11 @@ class _NavTab extends StatelessWidget {
     required this.label,
     required this.isActive,
     required this.onTap,
+    this.badgeUnreadMessages = false,
   });
+
+  /// Shows how many private messages are unread (the Friends tab).
+  final bool badgeUnreadMessages;
 
   final IconData icon;
   final String label;
@@ -783,7 +789,11 @@ class _NavTab extends StatelessWidget {
                     : null,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Center(
+                child: badgeUnreadMessages
+                    ? DmUnreadBadge(child: Icon(icon, color: color, size: 24))
+                    : Icon(icon, color: color, size: 24),
+              ),
             ),
             const SizedBox(height: 4),
             MediaQuery.withClampedTextScaling(

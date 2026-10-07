@@ -187,7 +187,6 @@ class TavernMap {
     Rect.fromLTRB(1212, 170, 1280, 290),
     Rect.fromLTRB(1278, 265, 1340, 522), // stacked barrels (right)
     Rect.fromLTRB(1235, 430, 1278, 488), // plant on a stool (right)
-
     // --- Left side -----------------------------------------------------------
     Rect.fromLTRB(65, 427, 118, 630), // booth with two stools
     Rect.fromLTRB(205, 558, 245, 642), // chair (round table)
@@ -201,11 +200,9 @@ class TavernMap {
     Rect.fromLTRB(378, 778, 418, 828), // its chair (right end)
     Rect.fromLTRB(98, 860, 150, 925), // plant (bottom-left)
     Rect.fromLTRB(202, 925, 315, 977), // two barrels (bottom-left)
-
     // --- Entrance ------------------------------------------------------------
     Rect.fromLTRB(428, 950, 480, 977), // plant left of the door
     Rect.fromLTRB(790, 950, 850, 977), // plant right of the door
-
     // --- Right side ----------------------------------------------------------
     // Table (top-right), where the two drinkers sit.
     Rect.fromLTRB(1015, 440, 1122, 535),

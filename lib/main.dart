@@ -7,6 +7,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'config/supabase_config.dart';
 import 'services/auth_service.dart';
+import 'services/dm_notifier.dart';
+import 'screens/direct_chat_screen.dart';
+import 'widgets/dm_banner.dart';
 import 'services/music_service.dart';
 import 'services/sfx_service.dart';
 import 'services/voice_service.dart';
@@ -35,6 +38,13 @@ Future<void> main() async {
     );
     // Marks the signed-in player as online while the app is open.
     PresenceService.start();
+    // Private messages: banners and unread counts anywhere in the app.
+    // Outside the tavern, tapping a banner opens the chat full screen.
+    DmNotifier.addOpener((friend) {
+      final context = App.navigatorKey.currentContext;
+      if (context != null) DirectChatScreen.open(context, friend);
+    });
+    DmNotifier.start();
   } else {
     debugPrint(
       'Supabase is not configured: copy .env.example to .env and run with '
@@ -57,6 +67,9 @@ class App extends StatefulWidget {
 
   @override
   State<App> createState() => _AppState();
+
+  /// For opening screens from outside any screen (e.g. a message banner).
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey();
 
   static final Map<String, WidgetBuilder> _routes = {
     '/': (context) => const SplashScreen(),
@@ -130,7 +143,12 @@ class _AppState extends State<App> {
 
       // Required for DevicePreview to actually control the app.
       locale: DevicePreview.locale(context),
-      builder: DevicePreview.appBuilder,
+      navigatorKey: App.navigatorKey,
+      // New private messages slide in over every screen.
+      builder: (context, child) => DevicePreview.appBuilder(
+        context,
+        DmBannerHost(child: child ?? const SizedBox.shrink()),
+      ),
 
       theme: AppTheme.theme,
 
