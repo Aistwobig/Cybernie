@@ -126,8 +126,11 @@ const List<GameCharacter> gameCharacters = [
     name: AppStrings.characterSlime,
     sheet: AppImages.slimeSheet,
     idleSheet: AppImages.slimeIdleSheet,
-    // His back-facing idle without the floor shadow, resting on the seat.
+    // His idle without the floor shadow, resting on the seat, facing any
+    // way: so he can sit on every chair (centred on the side chairs' seats).
     sitBackSheet: AppImages.slimeSitBackSheet,
+    sitSideSheet: AppImages.slimeSitSideSheet,
+    sitFrontSheet: AppImages.slimeSitFrontSheet,
     feetFraction: 246 / 256,
     frames: 16,
   ),

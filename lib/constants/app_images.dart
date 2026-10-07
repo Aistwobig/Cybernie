@@ -27,6 +27,8 @@ class AppImages {
   static const String slimeSheet = 'assets/images/slime_walk.png';
   static const String slimeIdleSheet = 'assets/images/slime_idle.png';
   static const String slimeSitBackSheet = 'assets/images/slime_sit_back.png';
+  static const String slimeSitSideSheet = 'assets/images/slime_sit_side.png';
+  static const String slimeSitFrontSheet = 'assets/images/slime_sit_front.png';
   static const String flowerBanner = 'assets/images/flower_banner.png';
 
   /// Bernie the bartender (an NPC): 8-frame idle, 300 x 384 cells.
