@@ -93,6 +93,28 @@ class TavernMap {
     Seat.sideChair(914, 871, 891, 920, Facing.east), // big table
     Seat.sideChair(239, 596, 216, 245, Facing.east), // round table, back
     Seat.sideChair(239, 630, 216, 245, Facing.east), // round table, front
+    // Chairs behind the big table (bottom-right), sat on facing the camera.
+    // Their "front" is the strip of table just below them, drawn over the
+    // sitter so the table hides their legs. It reaches down far enough to
+    // be drawn above a seated character (who is lifted over the seat).
+    Seat(
+      992,
+      790,
+      frontLeft: 958,
+      frontTop: 776,
+      frontRight: 1027,
+      frontBottom: 820,
+      facing: Facing.south,
+    ),
+    Seat(
+      1078,
+      790,
+      frontLeft: 1044,
+      frontTop: 776,
+      frontRight: 1113,
+      frontBottom: 820,
+      facing: Facing.south,
+    ),
   ];
   static const double seatReach = 62;
 

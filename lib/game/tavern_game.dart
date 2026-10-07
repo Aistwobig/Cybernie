@@ -57,6 +57,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
       ?c.horizontalRunSheet,
       ?c.sitBackSheet,
       ?c.sitSideSheet,
+      ?c.sitFrontSheet,
     ],
     for (final drink in drinks) drink.asset,
     for (final emote in emotes) emote.asset,
@@ -83,6 +84,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         frames: _character.frames,
         sitBackSheetAsset: _character.sitBackSheet,
         sitSideSheetAsset: _character.sitSideSheet,
+        sitFrontSheetAsset: _character.sitFrontSheet,
       );
       player.sitsOverSeat = _character.sitsOverSeat;
       // The new character may not have a seated pose.
@@ -256,6 +258,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
           frames: look.frames,
           sitBackSheetAsset: look.sitBackSheet,
           sitSideSheetAsset: look.sitSideSheet,
+          sitFrontSheetAsset: look.sitFrontSheet,
         );
         existing.sitsOverSeat = look.sitsOverSeat;
         continue;
@@ -270,6 +273,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
         frames: look.frames,
         sitBackSheetAsset: look.sitBackSheet,
         sitSideSheetAsset: look.sitSideSheet,
+        sitFrontSheetAsset: look.sitFrontSheet,
         name: p.name,
         start: Vector2(p.x, p.y),
       )..sitsOverSeat = look.sitsOverSeat;
@@ -542,6 +546,7 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
             frames: _character.frames,
             sitBackSheetAsset: _character.sitBackSheet,
             sitSideSheetAsset: _character.sitSideSheet,
+            sitFrontSheetAsset: _character.sitFrontSheet,
           )
           ..position = Vector2(TavernMap.spawnPoint.dx, TavernMap.spawnPoint.dy)
           ..sitsOverSeat = _character.sitsOverSeat;

@@ -20,6 +20,7 @@ class Player extends Character {
     super.frames,
     super.sitBackSheetAsset,
     super.sitSideSheetAsset,
+    super.sitFrontSheetAsset,
   });
 
   static const double speed = 170; // map pixels per second
