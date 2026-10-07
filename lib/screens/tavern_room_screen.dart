@@ -133,8 +133,10 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     };
     _game.onDrinkOrdered = (drinkId) => _room?.sendDrink(drinkId);
     _game.onSeatTooFar = () => _showSnack(AppStrings.walkCloserToSit);
-    _game.onFootstep = (left) =>
-        SfxService.play(left ? Sfx.step1 : Sfx.step2, gain: 0.45);
+    // Footsteps on the boards, or the slime's wet squish.
+    _game.onFootstep = (left) => _game.slimySteps
+        ? SfxService.play(left ? Sfx.slimeStep1 : Sfx.slimeStep2, gain: 0.5)
+        : SfxService.play(left ? Sfx.step1 : Sfx.step2, gain: 0.45);
     _messageController.addListener(_onDraftChanged);
     _prepare();
     _loadHints();

@@ -36,6 +36,9 @@ class TavernGame extends FlameGame with HasKeyboardHandlerComponents {
   }
 
   GameCharacter _character;
+
+  /// Our character squishes instead of stepping (the slime).
+  bool get slimySteps => _character.slimySteps;
   String _playerName;
 
   /// Switches our character, e.g. once the profile has loaded.

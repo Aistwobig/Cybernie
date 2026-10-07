@@ -16,6 +16,9 @@ enum Sfx {
   // Footsteps on the tavern boards (alternated, left and right foot).
   step1('sfx_step1'),
   step2('sfx_step2'),
+  // The slime's wet squish instead (two variants, alternated too).
+  slimeStep1('sfx_slime_step1'),
+  slimeStep2('sfx_slime_step2'),
   // Bernie's blackjack table.
   shuffle('sfx_shuffle'),
   card('sfx_card'),

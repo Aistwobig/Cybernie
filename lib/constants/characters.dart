@@ -20,7 +20,11 @@ class GameCharacter {
     this.profileIdleFrames = 8,
     this.profileIdleFrameMs = 200,
     this.sitsOverSeat = false,
+    this.slimySteps = false,
   });
+
+  /// Walks with a wet squish instead of footsteps on the boards.
+  final bool slimySteps;
 
   final String name;
 
@@ -145,6 +149,7 @@ const List<GameCharacter> gameCharacters = [
     sitFrontSheet: AppImages.slimeSitFrontSheet,
     feetFraction: 246 / 256,
     frames: 16,
+    slimySteps: true,
   ),
 ];
 
