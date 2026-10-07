@@ -144,57 +144,90 @@ class TavernMap {
   /// forgiving than [seatReach], for fingers on phones).
   static const double seatTapReach = 110;
 
-  /// Everything a player's feet cannot walk through.
+  /// Everything a player's feet cannot walk through: the walls, and each
+  /// piece of furniture on its own (traced from the picture), so the floor
+  /// between and around them stays walkable.
   static const List<Rect> collisionBoxes = [
     // --- Outer walls -------------------------------------------------------
     Rect.fromLTRB(0, 0, 1402, 282), // back wall, shelves, door
     Rect.fromLTRB(0, 0, 62, 1122), // left wall
     Rect.fromLTRB(1340, 0, 1402, 1122), // right wall (upper)
-    Rect.fromLTRB(1297, 540, 1402, 1122), // right wall (lower step-in)
-    Rect.fromLTRB(0, 982, 555, 1122), // bottom wall, left of entrance
-    Rect.fromLTRB(722, 982, 1402, 1122), // bottom wall, right of entrance
-    Rect.fromLTRB(555, 1040, 722, 1122), // entrance, below the doormat
-    // Bottom-left diagonal corner, as steps.
-    Rect.fromLTRB(62, 780, 85, 982),
-    Rect.fromLTRB(85, 840, 110, 982),
-    Rect.fromLTRB(110, 895, 135, 982),
-    Rect.fromLTRB(135, 940, 160, 982),
-    // Bottom-right diagonal corner, as steps.
-    Rect.fromLTRB(1265, 930, 1297, 982),
-    Rect.fromLTRB(1240, 960, 1265, 982),
+    Rect.fromLTRB(1293, 525, 1402, 1122), // right wall (lower step-in)
+    Rect.fromLTRB(0, 977, 562, 1122), // bottom wall, left of entrance
+    Rect.fromLTRB(710, 977, 1402, 1122), // bottom wall, right of entrance
+    Rect.fromLTRB(562, 1042, 710, 1122), // entrance, below the doormat
+    // Bottom-left corner, cut diagonally (as steps).
+    Rect.fromLTRB(62, 775, 75, 892),
+    Rect.fromLTRB(62, 790, 88, 892),
+    Rect.fromLTRB(62, 892, 100, 977),
+    Rect.fromLTRB(62, 910, 115, 977),
+    Rect.fromLTRB(62, 930, 135, 977),
+    Rect.fromLTRB(62, 950, 155, 977),
+    // Bottom-right corner, cut diagonally (as steps).
+    Rect.fromLTRB(1285, 870, 1402, 977),
+    Rect.fromLTRB(1265, 890, 1402, 977),
+    Rect.fromLTRB(1250, 915, 1402, 977),
+    Rect.fromLTRB(1235, 940, 1402, 977),
+    Rect.fromLTRB(1220, 960, 1402, 977),
 
     // --- Back of the room --------------------------------------------------
-    Rect.fromLTRB(62, 85, 178, 365), // fireplace
-    Rect.fromLTRB(178, 230, 318, 328), // barrels + plant left of the bar
+    Rect.fromLTRB(62, 85, 175, 362), // fireplace
+    Rect.fromLTRB(182, 282, 318, 328), // two barrels left of the bar
     Rect.fromLTRB(328, 85, 868, 358), // bar counter and shelves
     Rect.fromLTRB(355, 358, 850, 425), // bar stools
-    Rect.fromLTRB(1012, 215, 1072, 312), // plant by the door
+    Rect.fromLTRB(1020, 278, 1068, 312), // plant by the door
     Rect.fromLTRB(950, 322, 982, 340), // the bard (an NPC)
     // Stairs: the two railings and the top; the bottom steps can be walked
     // onto, and climbing them (see [stairsUp]) goes upstairs.
     Rect.fromLTRB(1072, 85, 1092, 352),
     Rect.fromLTRB(1170, 85, 1190, 352),
     Rect.fromLTRB(1072, 85, 1190, 250),
-    Rect.fromLTRB(1212, 170, 1340, 290), // notice board
+    // Notice board (players stand just below it to read it, see
+    // [noticeBoardSpot]).
+    Rect.fromLTRB(1212, 170, 1280, 290),
     Rect.fromLTRB(1278, 265, 1340, 522), // stacked barrels (right)
-    Rect.fromLTRB(1232, 400, 1280, 488), // plant on stool (right)
-    // --- Left side -----------------------------------------------------------
-    Rect.fromLTRB(65, 425, 122, 630), // booth with two stools
-    Rect.fromLTRB(203, 545, 398, 658), // round table + chairs
-    Rect.fromLTRB(175, 712, 420, 888), // long table + chairs + stools
-    Rect.fromLTRB(88, 828, 158, 928), // plant (bottom-left)
-    Rect.fromLTRB(198, 912, 318, 982), // two barrels (bottom-left)
-    // --- Entrance ------------------------------------------------------------
-    Rect.fromLTRB(422, 928, 492, 1030), // plant left of the door
-    Rect.fromLTRB(785, 928, 858, 1030), // plant right of the door
-    // --- Right side ----------------------------------------------------------
-    Rect.fromLTRB(968, 425, 1162, 568), // table (top-right) + chairs
-    Rect.fromLTRB(1052, 582, 1268, 742), // table (middle-right) + chairs
-    Rect.fromLTRB(878, 740, 1185, 948), // big table (bottom-right) + chairs
-    Rect.fromLTRB(1222, 788, 1297, 888), // plant (bottom-right)
-    Rect.fromLTRB(1172, 902, 1236, 982), // barrel (bottom-right)
-  ];
+    Rect.fromLTRB(1235, 430, 1278, 488), // plant on a stool (right)
 
+    // --- Left side -----------------------------------------------------------
+    Rect.fromLTRB(65, 427, 118, 630), // booth with two stools
+    Rect.fromLTRB(205, 558, 245, 642), // chair (round table)
+    Rect.fromLTRB(253, 565, 353, 655), // round table
+    Rect.fromLTRB(358, 598, 397, 642), // stool (round table)
+    Rect.fromLTRB(178, 728, 372, 838), // long table
+    Rect.fromLTRB(185, 838, 197, 857), // its legs
+    Rect.fromLTRB(352, 838, 366, 857),
+    Rect.fromLTRB(212, 850, 247, 887), // its two stools
+    Rect.fromLTRB(302, 850, 338, 887),
+    Rect.fromLTRB(378, 778, 418, 828), // its chair (right end)
+    Rect.fromLTRB(98, 860, 150, 925), // plant (bottom-left)
+    Rect.fromLTRB(202, 925, 315, 977), // two barrels (bottom-left)
+
+    // --- Entrance ------------------------------------------------------------
+    Rect.fromLTRB(428, 950, 480, 977), // plant left of the door
+    Rect.fromLTRB(790, 950, 850, 977), // plant right of the door
+
+    // --- Right side ----------------------------------------------------------
+    // Table (top-right), where the two drinkers sit.
+    Rect.fromLTRB(1015, 440, 1122, 535),
+    Rect.fromLTRB(970, 480, 1007, 522), // its chair (left, the boy)
+    Rect.fromLTRB(1125, 480, 1158, 523), // its chair (right, the girl)
+    Rect.fromLTRB(1050, 535, 1087, 566), // its stool
+    // Table (middle-right).
+    Rect.fromLTRB(1103, 595, 1217, 710),
+    Rect.fromLTRB(1057, 655, 1097, 698), // its chair (left)
+    Rect.fromLTRB(1223, 655, 1263, 698), // its chair (right)
+    Rect.fromLTRB(1145, 708, 1182, 743), // its stool
+    // Big table (bottom-right).
+    Rect.fromLTRB(928, 785, 1128, 888),
+    Rect.fromLTRB(972, 745, 1013, 785), // its chairs behind it
+    Rect.fromLTRB(1060, 745, 1098, 785),
+    Rect.fromLTRB(880, 838, 920, 887), // its chair (left)
+    Rect.fromLTRB(1140, 838, 1180, 887), // its chair (right)
+    Rect.fromLTRB(965, 908, 1002, 943), // its two stools
+    Rect.fromLTRB(1057, 908, 1093, 943),
+    Rect.fromLTRB(1232, 830, 1290, 888), // plant (bottom-right)
+    Rect.fromLTRB(1180, 915, 1232, 977), // barrel (bottom-right)
+  ];
   static bool isBlocked(Rect feet) =>
       collisionBoxes.any((box) => box.overlaps(feet)) ||
       _upstairsBoxes.any((box) => box.overlaps(feet));
@@ -379,7 +412,9 @@ class Seat {
   const Seat.facingMeetingTable(double centerX)
     : this(
         centerX,
-        TavernMap.upstairsTop + 578,
+        // High enough that sitters end at the seat's front edge (as on the
+        // stools downstairs), so the edge drawn over them hides nothing.
+        TavernMap.upstairsTop + 571,
         frontLeft: centerX - 23,
         frontTop: TavernMap.upstairsTop + 562,
         frontRight: centerX + 24,
