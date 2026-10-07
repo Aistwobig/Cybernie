@@ -189,6 +189,12 @@ class AppStrings {
   static const String noMicrophones = 'No microphone found.';
   static const String microphoneNamesHint =
       'Join voice chat once to see your microphones by name.';
+  static const String cameraLabel = 'Camera';
+  static const String defaultCamera = 'Default camera';
+  static String cameraNumber(int n) => 'Camera $n';
+  static const String noCameras = 'No camera found.';
+  static const String cameraNamesHint =
+      'Turn your camera on once to see your cameras by name.';
 
   // Bernie's lucky wheel
   static const String lotteryTitle = "Bernie's Lucky Wheel";

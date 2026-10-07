@@ -10,13 +10,17 @@ import 'voice_engine.dart';
 
 VoiceEngine createVoiceEngine(SignalSender send) => _WebVoice(send);
 
-Future<List<MicOption>> listMicrophones() async {
+Future<List<DeviceOption>> listMicrophones() => _devices('audioinput');
+
+Future<List<DeviceOption>> listCameras() => _devices('videoinput');
+
+Future<List<DeviceOption>> _devices(String kind) async {
   final devices = await web.window.navigator.mediaDevices
       .enumerateDevices()
       .toDart;
   return [
     for (final d in devices.toDart)
-      if (d.kind == 'audioinput') MicOption(d.deviceId, d.label),
+      if (d.kind == kind) DeviceOption(d.deviceId, d.label),
   ];
 }
 
@@ -113,21 +117,50 @@ class _WebVoice implements VoiceEngine {
     }
   }
 
+  /// The chosen camera (null: the browser's default, the front one on
+  /// phones).
+  String? _cameraId;
+
+  Future<web.MediaStream> _openCamera() {
+    // Small and at 15 frames a second: everyone sends to everyone nearby
+    // directly, so this keeps it light.
+    final constraints = {
+      'width': {'ideal': 320},
+      'height': {'ideal': 240},
+      'frameRate': {'ideal': 15, 'max': 20},
+      if (_cameraId != null && _cameraId!.isNotEmpty)
+        'deviceId': {'exact': _cameraId}
+      else
+        'facingMode': 'user',
+    }.jsify()!;
+    return web.window.navigator.mediaDevices
+        .getUserMedia(web.MediaStreamConstraints(video: constraints))
+        .toDart;
+  }
+
+  @override
+  Future<void> useCamera(String? deviceId) async {
+    _cameraId = deviceId;
+    final old = _camera;
+    if (old == null) return; // Used when the camera is turned on.
+    final fresh = await _openCamera();
+    // Swap the camera in every call without calling again.
+    _camera = fresh;
+    for (final call in _calls.values) {
+      await _sendCamera(call);
+    }
+    _dropVideo(_myVideo);
+    _myVideo = _videoElement(fresh);
+    for (final t in old.getTracks().toDart) {
+      t.stop();
+    }
+  }
+
   @override
   Future<void> setCamera(bool on) async {
     if (on) {
       if (_camera != null) return;
-      // Small and at 15 frames a second: everyone sends to everyone nearby
-      // directly, so this keeps it light.
-      final constraints = {
-        'width': {'ideal': 320},
-        'height': {'ideal': 240},
-        'frameRate': {'ideal': 15, 'max': 20},
-        'facingMode': 'user',
-      }.jsify()!;
-      final camera = await web.window.navigator.mediaDevices
-          .getUserMedia(web.MediaStreamConstraints(video: constraints))
-          .toDart;
+      final camera = await _openCamera();
       _camera = camera;
       _myVideo = _videoElement(camera);
     } else {

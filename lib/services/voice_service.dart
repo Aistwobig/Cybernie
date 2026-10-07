@@ -52,6 +52,7 @@ class VoiceService {
       final prefs = await SharedPreferences.getInstance();
       volume.value = (prefs.getDouble(_volumeKey) ?? 1).clamp(0.0, 1.0);
       micId.value = prefs.getString(_micKey);
+      cameraId.value = prefs.getString(_cameraKey);
     } catch (_) {}
   }
 
@@ -65,7 +66,7 @@ class VoiceService {
   /// The voice chat in progress, so a new mic choice switches it live.
   static VoiceService? _active;
 
-  static Future<List<MicOption>> microphones() => listMicrophones();
+  static Future<List<DeviceOption>> microphones() => listMicrophones();
 
   static Future<void> chooseMic(String? id) async {
     micId.value = id;
@@ -81,6 +82,30 @@ class VoiceService {
       await _active?._engine?.useMic(id);
     } catch (error) {
       debugPrint('Switching mic: $error');
+    }
+  }
+
+  /// The camera picked in Settings (null: the device's default, the front
+  /// camera on phones). Remembered on this device.
+  static final ValueNotifier<String?> cameraId = ValueNotifier(null);
+  static const String _cameraKey = 'voice_camera';
+
+  static Future<List<DeviceOption>> cameras() => listCameras();
+
+  static Future<void> chooseCamera(String? id) async {
+    cameraId.value = id;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (id == null) {
+        await prefs.remove(_cameraKey);
+      } else {
+        await prefs.setString(_cameraKey, id);
+      }
+    } catch (_) {}
+    try {
+      await _active?._engine?.useCamera(id);
+    } catch (error) {
+      debugPrint('Switching camera: $error');
     }
   }
 
@@ -115,6 +140,7 @@ class VoiceService {
     _active = this;
     try {
       await engine.useMic(micId.value);
+      await engine.useCamera(cameraId.value);
       await engine.start();
       await room.setVoice(true);
       micOn.value = true;

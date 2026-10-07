@@ -6,7 +6,9 @@ import 'voice_engine.dart';
 /// platforms and tests get this engine, which does nothing.
 VoiceEngine createVoiceEngine(SignalSender send) => _NoVoice();
 
-Future<List<MicOption>> listMicrophones() async => const [];
+Future<List<DeviceOption>> listMicrophones() async => const [];
+
+Future<List<DeviceOption>> listCameras() async => const [];
 
 class _NoVoice implements VoiceEngine {
   @override
@@ -46,6 +48,9 @@ class _NoVoice implements VoiceEngine {
   @override
   Future<void> setCamera(bool on) async =>
       throw UnsupportedError('The camera works in the web version.');
+
+  @override
+  Future<void> useCamera(String? deviceId) async {}
 
   @override
   bool hasVideo(String? peerId) => false;

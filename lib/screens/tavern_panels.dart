@@ -9,7 +9,7 @@ import '../services/friends_service.dart';
 import '../services/inventory_service.dart';
 import '../services/music_service.dart';
 import '../services/sfx_service.dart';
-import '../services/voice_engine.dart' show MicOption;
+import '../services/voice_engine.dart' show DeviceOption;
 import '../services/voice_service.dart';
 import '../services/notice_board_service.dart';
 import '../services/profile_service.dart';
@@ -1412,7 +1412,29 @@ class SettingsPanel extends StatelessWidget {
             onDone: VoiceService.saveVolume,
           ),
           const SizedBox(height: 14),
-          const _MicPicker(),
+          _DevicePicker(
+            icon: Icons.mic,
+            label: AppStrings.microphoneLabel,
+            load: VoiceService.microphones,
+            chosen: VoiceService.micId,
+            onChosen: VoiceService.chooseMic,
+            defaultName: AppStrings.defaultMicrophone,
+            numberedName: AppStrings.microphoneNumber,
+            noneFound: AppStrings.noMicrophones,
+            namesHint: AppStrings.microphoneNamesHint,
+          ),
+          const SizedBox(height: 14),
+          _DevicePicker(
+            icon: Icons.videocam,
+            label: AppStrings.cameraLabel,
+            load: VoiceService.cameras,
+            chosen: VoiceService.cameraId,
+            onChosen: VoiceService.chooseCamera,
+            defaultName: AppStrings.defaultCamera,
+            numberedName: AppStrings.cameraNumber,
+            noneFound: AppStrings.noCameras,
+            namesHint: AppStrings.cameraNamesHint,
+          ),
         ],
       ),
     );
@@ -1465,17 +1487,40 @@ class _VolumeSlider extends StatelessWidget {
   }
 }
 
-/// Which microphone voice chat uses. Browsers only show microphone names
-/// after they've been allowed once (by joining voice chat).
-class _MicPicker extends StatefulWidget {
-  const _MicPicker();
+/// Which microphone (or camera) voice chat uses. Browsers only show device
+/// names after that kind of device has been allowed once (by joining voice
+/// chat, or turning the camera on).
+class _DevicePicker extends StatefulWidget {
+  const _DevicePicker({
+    required this.icon,
+    required this.label,
+    required this.load,
+    required this.chosen,
+    required this.onChosen,
+    required this.defaultName,
+    required this.numberedName,
+    required this.noneFound,
+    required this.namesHint,
+  });
+
+  final IconData icon;
+  final String label;
+  final Future<List<DeviceOption>> Function() load;
+  final ValueNotifier<String?> chosen;
+  final void Function(String?) onChosen;
+  final String defaultName;
+
+  /// "Camera 2", for a device whose name the browser hides.
+  final String Function(int n) numberedName;
+  final String noneFound;
+  final String namesHint;
 
   @override
-  State<_MicPicker> createState() => _MicPickerState();
+  State<_DevicePicker> createState() => _DevicePickerState();
 }
 
-class _MicPickerState extends State<_MicPicker> {
-  List<MicOption>? _mics;
+class _DevicePickerState extends State<_DevicePicker> {
+  List<DeviceOption>? _devices;
 
   @override
   void initState() {
@@ -1484,44 +1529,41 @@ class _MicPickerState extends State<_MicPicker> {
   }
 
   Future<void> _load() async {
-    List<MicOption> mics;
+    List<DeviceOption> devices;
     try {
-      mics = await VoiceService.microphones();
+      devices = await widget.load();
     } catch (_) {
-      mics = const [];
+      devices = const [];
     }
-    if (mounted) setState(() => _mics = mics);
+    if (mounted) setState(() => _devices = devices);
   }
 
   @override
   Widget build(BuildContext context) {
-    final mics = _mics;
-    final namesHidden = mics != null && mics.any((m) => m.label.isEmpty);
+    final devices = _devices;
+    final namesHidden = devices != null && devices.any((m) => m.label.isEmpty);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(Icons.mic, size: 18, color: AppColors.ink),
+            Icon(widget.icon, size: 18, color: AppColors.ink),
             const SizedBox(width: 6),
-            Text(
-              AppStrings.microphoneLabel,
-              style: _body(size: 14, weight: FontWeight.w700),
-            ),
+            Text(widget.label, style: _body(size: 14, weight: FontWeight.w700)),
           ],
         ),
         const SizedBox(height: 6),
-        if (mics == null)
+        if (devices == null)
           const LinearProgressIndicator(minHeight: 2)
-        else if (mics.isEmpty)
-          Text(AppStrings.noMicrophones, style: _muted(size: 12))
+        else if (devices.isEmpty)
+          Text(widget.noneFound, style: _muted(size: 12))
         else
           ValueListenableBuilder<String?>(
-            valueListenable: VoiceService.micId,
+            valueListenable: widget.chosen,
             builder: (context, chosen, _) {
-              // A saved mic that's no longer plugged in falls back to the
-              // default.
-              final value = mics.any((m) => m.id == chosen) ? chosen : null;
+              // A saved device that's no longer plugged in falls back to
+              // the default.
+              final value = devices.any((m) => m.id == chosen) ? chosen : null;
               return DropdownButtonFormField<String?>(
                 initialValue: value,
                 isExpanded: true,
@@ -1536,31 +1578,31 @@ class _MicPickerState extends State<_MicPicker> {
                   DropdownMenuItem<String?>(
                     value: null,
                     child: Text(
-                      AppStrings.defaultMicrophone,
+                      widget.defaultName,
                       overflow: TextOverflow.ellipsis,
                       style: _body(size: 13),
                     ),
                   ),
-                  for (var i = 0; i < mics.length; i++)
-                    if (mics[i].id != 'default')
+                  for (var i = 0; i < devices.length; i++)
+                    if (devices[i].id != 'default')
                       DropdownMenuItem<String?>(
-                        value: mics[i].id,
+                        value: devices[i].id,
                         child: Text(
-                          mics[i].label.isEmpty
-                              ? AppStrings.microphoneNumber(i + 1)
-                              : mics[i].label,
+                          devices[i].label.isEmpty
+                              ? widget.numberedName(i + 1)
+                              : devices[i].label,
                           overflow: TextOverflow.ellipsis,
                           style: _body(size: 13),
                         ),
                       ),
                 ],
-                onChanged: VoiceService.chooseMic,
+                onChanged: widget.onChosen,
               );
             },
           ),
         if (namesHidden) ...[
           const SizedBox(height: 4),
-          Text(AppStrings.microphoneNamesHint, style: _muted(size: 11.5)),
+          Text(widget.namesHint, style: _muted(size: 11.5)),
         ],
       ],
     );

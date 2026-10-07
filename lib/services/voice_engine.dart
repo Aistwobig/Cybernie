@@ -11,17 +11,20 @@ import 'voice_engine_stub.dart'
 /// Sends a call setup message (offer / answer / candidate) to a player.
 typedef SignalSender = void Function(String toId, Map<String, dynamic> signal);
 
-/// A microphone the player can pick (label is empty until the browser has
-/// been allowed to use the microphone once).
-class MicOption {
-  const MicOption(this.id, this.label);
+/// A microphone or camera the player can pick (label is empty until the
+/// browser has been allowed to use that kind of device once).
+class DeviceOption {
+  const DeviceOption(this.id, this.label);
 
   final String id;
   final String label;
 }
 
 /// The microphones on this device.
-Future<List<MicOption>> listMicrophones() => impl.listMicrophones();
+Future<List<DeviceOption>> listMicrophones() => impl.listMicrophones();
+
+/// The cameras on this device.
+Future<List<DeviceOption>> listCameras() => impl.listCameras();
 
 abstract class VoiceEngine {
   /// The browser's engine on the web; elsewhere one that isn't supported.
@@ -62,6 +65,10 @@ abstract class VoiceEngine {
   /// Turns our camera on or off in every call (the browser asks
   /// permission the first time).
   Future<void> setCamera(bool on);
+
+  /// Uses camera [deviceId] (null: the default one), switching it live in
+  /// every call if our camera is on.
+  Future<void> useCamera(String? deviceId);
 
   /// Whether a video picture exists for [peerId] (null: our own camera).
   bool hasVideo(String? peerId);
