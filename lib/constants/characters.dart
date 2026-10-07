@@ -93,6 +93,8 @@ const List<GameCharacter> gameCharacters = [
     sheet: AppImages.characterMenAnim,
     idleSheet: AppImages.boyIdleSheet,
     sitBackSheet: AppImages.boySitBackSheet,
+    // Hands on his knees on the side chairs, either way round.
+    sitSideSheet: AppImages.boySitSideSheet,
   ),
   GameCharacter(
     name: AppStrings.characterMage,
