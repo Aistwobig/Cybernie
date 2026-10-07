@@ -23,6 +23,7 @@
 
 | | |
 | --- | --- |
+| **Landing page** | [aistwobig.github.io/Cybernie/landing](https://aistwobig.github.io/Cybernie/landing/) |
 | **Live app** | [aistwobig.github.io/Cybernie](https://aistwobig.github.io/Cybernie/) |
 | **Demo video** | Coming soon |
 | **Course** | Applications Development and Emerging Technologies (6ADET), Holy Angel University |
