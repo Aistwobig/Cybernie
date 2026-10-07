@@ -149,12 +149,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       onPressed: _isSigningIn ? null : _continueWithGoogle,
                       child: _isSigningIn
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: AppColors.onInk,
                               ),
                             )
                           : Row(
@@ -167,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   style: GoogleFonts.inter(
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: 1,
-                                    color: Colors.white,
+                                    color: AppColors.onInk,
                                   ),
                                 ),
                               ],
@@ -245,10 +245,7 @@ class _GoogleBadge extends StatelessWidget {
       width: 20,
       height: 20,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: AppColors.onInk, shape: BoxShape.circle),
       child: Text(
         'G',
         style: GoogleFonts.inter(

@@ -8,7 +8,6 @@ import '../config/supabase_config.dart';
 import '../constants/app_images.dart';
 import '../constants/app_strings.dart';
 import '../services/auth_service.dart';
-import '../theme/app_theme.dart';
 import '../theme/text_styles.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -147,7 +146,7 @@ class _TapToContinueState extends State<_TapToContinue> {
           child: AnimatedDefaultTextStyle(
             duration: const Duration(milliseconds: 180),
             style: CyberniStyles.cta.copyWith(
-              color: _hovering ? Colors.white : AppColors.parchmentSoft,
+              color: _hovering ? Colors.white : CyberniStyles.brandSoft,
               letterSpacing: _hovering ? 4 : 3,
             ),
             child: Row(
@@ -156,7 +155,7 @@ class _TapToContinueState extends State<_TapToContinue> {
                 Icon(
                   Icons.diamond_outlined,
                   size: 9,
-                  color: _hovering ? Colors.white : AppColors.parchmentSoft,
+                  color: _hovering ? Colors.white : CyberniStyles.brandSoft,
                 ),
                 const SizedBox(width: 10),
                 Text(AppStrings.tapToContinue),
@@ -164,7 +163,7 @@ class _TapToContinueState extends State<_TapToContinue> {
                 Icon(
                   Icons.diamond_outlined,
                   size: 9,
-                  color: _hovering ? Colors.white : AppColors.parchmentSoft,
+                  color: _hovering ? Colors.white : CyberniStyles.brandSoft,
                 ),
               ],
             ),
@@ -180,6 +179,6 @@ class _OrnamentDash extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 18, height: 1, color: AppColors.parchmentDim);
+    return Container(width: 18, height: 1, color: CyberniStyles.brandDim);
   }
 }
