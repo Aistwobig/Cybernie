@@ -174,7 +174,12 @@ below in my own words.
   where players sign in with Google to get into the game. I also fixed the
   sprites myself, because the AI can't fix the sprites when the characters
   are sitting or doing animations. It still can't fix them, so I fixed the
-  sprite sheets by hand.
+  sprite sheets by hand. I drew the characters in Aseprite, and ChatGPT only
+  did the movements, so the frames came out with different sizes and some
+  frames didn't look like my character anymore. I had to fix them myself and
+  line them up so they don't jump around when they walk or sit, and that's
+  why there are a lot of "fix sprite" and "fix sitting" commits (like Lily
+  sitting, which I fixed again more than once).
 
 ### The AI-written part I understand best
 
@@ -183,4 +188,10 @@ below in my own words.
 - **What it does and why we kept it:** The camera above the characters' heads.
   I understand it the best because the AI explained to me how it did it, and
   it was exactly what I had in mind: the camera goes through WebRTC, and the
-  picture is drawn above the character's head so it moves with them.
+  picture is drawn above the character's head so it moves with them. I asked
+  for the camera to follow the movement of the character and to be on top of
+  the pixel art. The first version was buggy: the camera didn't accurately
+  follow the top of the character's head and it was delayed, so I told the AI
+  to fix it. After that, the camera became part of the character, the same as
+  the name tag, so now it stays exactly on top of the head when you walk. We
+  kept it because that's what I wanted from the start.
