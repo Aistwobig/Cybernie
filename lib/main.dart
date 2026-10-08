@@ -2,6 +2,7 @@
 // live here now instead of being split across app.dart / routes/app_routes.dart.
 
 import 'package:device_preview/device_preview.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -59,7 +60,12 @@ Future<void> main() async {
   await SfxService.load();
   await VoiceService.loadVolume();
 
-  runApp(DevicePreview(enabled: true, builder: (context) => const App()));
+  // The phone frame is for showing the app on a computer. On phones (the
+  // apps, or a phone's browser) the app fills the screen.
+  final onPhone =
+      defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+  runApp(DevicePreview(enabled: !onPhone, builder: (context) => const App()));
   // Background music; in a browser it waits for the first tap or click.
   MusicService.start();
 }

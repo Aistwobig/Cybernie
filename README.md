@@ -26,7 +26,7 @@
 | --- | --- |
 | **Landing page** | [aistwobig.github.io/Cybernie/landing](https://aistwobig.github.io/Cybernie/landing/) |
 | **Live app** | [aistwobig.github.io/Cybernie](https://aistwobig.github.io/Cybernie/) |
-| **Android app** | [Download Cybernie v1.0 (APK)](https://github.com/Aistwobig/Cybernie/releases/latest) |
+| **Android app** | [Download the APK](https://github.com/Aistwobig/Cybernie/releases/latest/download/Cybernie.apk) ([all releases](https://github.com/Aistwobig/Cybernie/releases)) |
 | **Demo video** | Coming soon |
 | **Course** | Applications Development and Emerging Technologies (6ADET), Holy Angel University |
 | **Author** | Mclaren Ais C. Miranda |
@@ -109,14 +109,14 @@ Coming soon.
 - **On Android:** download the APK from the
   [latest release](https://github.com/Aistwobig/Cybernie/releases/latest)
   and install it:
-  1. On the phone, download **`Cybernie-v1.0.apk`** (or copy it over from a
+  1. On the phone, download **`Cybernie.apk`** (or copy it over from a
      computer).
   2. Open it. If Android asks, allow installing apps from that source
      (Chrome, Files or Drive).
   3. Tap **Install**, then open Cybernie and sign in with Google.
 
   If the phone says the app isn't compatible, use
-  **`Cybernie-v1.0-all-phones.apk`** from the same release instead. Web and
+  **`Cybernie-all-phones.apk`** from the same release instead. Web and
   Android players share the same rooms and can talk, see each other's
   cameras and share screens with each other.
 

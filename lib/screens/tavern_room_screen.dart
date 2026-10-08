@@ -106,6 +106,15 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // The phone apps turn the whole screen sideways for the tavern, so the
+    // keyboard and notifications are sideways too. (A browser can't, so
+    // there the room itself is turned; see build.)
+    if (!kIsWeb) {
+      SystemChrome.setPreferredOrientations(const [
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    }
     _game.onPlayerTap = (id) => _openPlayerCard(id, fromList: false);
     _game.onNoticeBoardNearby = (near) {
       if (mounted) setState(() => _nearNoticeBoard = near);
@@ -137,7 +146,7 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     };
     _game.onDrinkOrdered = (drinkId) => _room?.sendDrink(drinkId);
     _game.onSeatTooFar = () => _showSnack(AppStrings.walkCloserToSit);
-    // Up or down the stairs: a couple of quick steps.
+    // Up or down the stairs: steps and a chime, rising or falling.
     _game.onFloorChanged = (upstairs) =>
         SfxService.play(upstairs ? Sfx.stairsUp : Sfx.stairsDown, gain: 0.6);
     // Footsteps on the boards, or the slime's wet squish.
@@ -168,6 +177,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
   @override
   void dispose() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    // Back to turning with the phone (empty: any orientation).
+    if (!kIsWeb) SystemChrome.setPreferredOrientations(const []);
     _game
       ..onLocalMove = null
       ..onPlayerTap = null
@@ -525,9 +536,13 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
     } catch (_) {}
   }
 
+  /// Shows notifications inside the (possibly turned) room.
+  final GlobalKey<ScaffoldMessengerState> _roomMessenger = GlobalKey();
+
   void _showSnack(String text) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+    (_roomMessenger.currentState ?? ScaffoldMessenger.of(context))
+        .showSnackBar(SnackBar(content: Text(text)));
   }
 
   void _leaveRoom() => Navigator.of(context).pop();
@@ -1093,9 +1108,19 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
         backgroundColor: Colors.black,
         body: LayoutBuilder(
           builder: (context, constraints) {
-            // The room is drawn landscape; on a phone held upright it's
-            // turned sideways rather than forcing the phone to rotate.
-            final room = _buildRoom();
+            // The room is drawn landscape; in a phone browser held upright
+            // it's turned sideways (the browser can't turn the phone). Its
+            // own messenger turns with it, so notifications like "Berry
+            // Wine sent to your inventory" read the same way as the room.
+            final room = ScaffoldMessenger(
+              key: _roomMessenger,
+              child: Scaffold(
+                backgroundColor: Colors.black,
+                // The page around it already makes room for the keyboard.
+                resizeToAvoidBottomInset: false,
+                body: _buildRoom(),
+              ),
+            );
             final sideways = constraints.maxHeight > constraints.maxWidth;
             // Then the phone is held sideways while its screen (and so its
             // camera) stays upright: the camera's picture lies on its side,

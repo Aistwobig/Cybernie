@@ -108,6 +108,16 @@ class SfxService {
 
   /// Reads the saved volume. Call before runApp.
   static Future<void> load() async {
+    if (!kIsWeb) {
+      // On phones each sound would otherwise ask for the audio to itself,
+      // and the background music stops when an effect plays: mix them.
+      try {
+        await AudioPlayer.global.setAudioContext(
+          AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers)
+              .build(),
+        );
+      } catch (_) {}
+    }
     try {
       final prefs = await SharedPreferences.getInstance();
       volume.value = (prefs.getDouble(_volumeKey) ?? defaultVolume).clamp(
