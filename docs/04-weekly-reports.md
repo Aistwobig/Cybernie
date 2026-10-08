@@ -1,7 +1,7 @@
 # Weekly reports
 
 One entry per week, newest at the top. The **Done** lists match the commit
-history for each week; the parts marked _(to fill in)_ are mine to write.
+history for each week, and the hours are estimated from commit times.
 
 ---
 
@@ -34,7 +34,12 @@ history for each week; the parts marked _(to fill in)_ are mine to write.
   furniture.
 - The camera picture lagged behind characters until it was drawn inside the
   game instead of over it.
-- _(to fill in)_
+- The background music kept restarting: the 60-minute music file was too big
+  for the browser, so I trimmed it to three songs.
+- The first Android build failed twice (a missing Android NDK, then a Kotlin
+  cache problem because the project and Flutter are on different drives).
+- On phones the keyboard and notifications came up sideways in the tavern.
+  Fixed in v1.1 by turning the app to landscape there.
 
 **Decisions made, and why**
 - Voice, video and screen sharing go directly between players (WebRTC), with
@@ -43,11 +48,12 @@ history for each week; the parts marked _(to fill in)_ are mine to write.
   editing their own row.
 - Built an Android app instead of iOS, because iOS needs a Mac.
 
-**Hours spent, roughly:** _(to fill in)_
+**Hours spent, roughly:** about 31 hours of coding sessions (estimated from
+commit times), plus time drawing in Aseprite.
 
 **Next week I will:**
 - Record the demo video and add screenshots.
-- _(to fill in)_
+- Write the final reflection and finish the documentation.
 
 ---
 
@@ -73,14 +79,16 @@ history for each week; the parts marked _(to fill in)_ are mine to write.
 - Sprite sheets with frames bleeding into each other and inconsistent idle
   animations.
 - Tab navigation sliding the wrong way (fixed).
-- _(to fill in)_
+- A new colour style that broke the UI tests, so I reverted it and kept the
+  old one for that day.
 
 **Decisions made, and why**
 - Moved from local-only data to Supabase, because a shared tavern needs a
   server and live updates.
 - Replaced the plain Material look with a fantasy UI to match the pixel art.
 
-**Hours spent, roughly:** _(to fill in)_
+**Hours spent, roughly:** about 17 hours of coding sessions (estimated from
+commit times), plus time drawing in Aseprite.
 
 **Next week I will:**
 - Private messages, sitting, and things to do in the tavern.
@@ -104,12 +112,15 @@ history for each week; the parts marked _(to fill in)_ are mine to write.
 - How to organize reusable components without overcomplicating the folder
   structure.
 - Turning the visual design into actual theme values.
+- Getting used to committing and pulling with GitHub (a few test commits and
+  a merge).
 
 **Decisions made, and why**
 - One central theme file, so every screen stays consistent.
 - Widgets take data and callbacks instead of holding screen logic.
 
-**Hours spent, roughly:** _(to fill in)_
+**Hours spent, roughly:** about 4 hours of coding sessions (estimated from
+commit times), plus planning the design system.
 
 **Next week I will:**
 - Finish login, add the profile screen and connect a backend.
