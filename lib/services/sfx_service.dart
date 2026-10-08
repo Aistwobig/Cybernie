@@ -26,7 +26,11 @@ enum Sfx {
   lose('sfx_lose'),
   // Voice chat: joining (rising chime) and leaving (falling chime).
   voiceJoin('sfx_voice_join'),
-  voiceLeave('sfx_voice_leave');
+  voiceLeave('sfx_voice_leave'),
+  // Taking the stairs: steps and a chime rising (up to the meeting room)
+  // or falling (back down to the tavern).
+  stairsUp('sfx_stairs_up'),
+  stairsDown('sfx_stairs_down');
 
   const Sfx(this.file);
 
