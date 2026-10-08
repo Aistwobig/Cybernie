@@ -203,7 +203,7 @@ redirect URLs. For the Android app, also add
 
 ## Project documentation
 
-| Document | |
+| Document | What's in it |
 | --- | --- |
 | [Proposal](docs/01-proposal.md) | the problem, the users, the scope |
 | [Mockup and wireframes](docs/02-mockup.md) | what it looks like, and the screen flow |
@@ -265,4 +265,8 @@ full record, including where the AI got things wrong, is in
 
 ## Licence
 
-MIT, see [LICENSE](LICENSE).
+The code and the character art are released under the MIT licence, see
+[LICENSE](LICENSE). Copyright (c) 2026 Mclaren Ais C. Miranda.
+
+Not covered by it: the background music belongs to its creator (see
+[Credits](#credits)), and the fonts keep their own SIL Open Font Licence.
