@@ -164,13 +164,23 @@ below in my own words.
 
 ### Written by me
 
-- **File:** _(to fill in: a file or part I wrote myself)_
-- **Commit:** _(to fill in)_
-- **What it does and why it is built this way:** _(to fill in, in my own
-  words)_
+- **File:** `lib/screens/login_screen.dart`, and the character sprite sheets
+  in `assets/images/` (sitting and walking animations)
+- **Commit:** https://github.com/Aistwobig/Cybernie/commit/1e43ecb (login
+  screen), https://github.com/Aistwobig/Cybernie/commit/3cbed48,
+  https://github.com/Aistwobig/Cybernie/commit/e7efb4a and
+  https://github.com/Aistwobig/Cybernie/commit/066a5bb (sprite fixes)
+- **What it does and why it is built this way:** I did the login screen,
+  where players sign in with Google to get into the game. I also fixed the
+  sprites myself, because the AI can't fix the sprites when the characters
+  are sitting or doing animations. It still can't fix them, so I fixed the
+  sprite sheets by hand.
 
 ### The AI-written part I understand best
 
-- **File:** _(to fill in)_
-- **Commit:** _(to fill in)_
-- **What it does and why we kept it:** _(to fill in, in my own words)_
+- **File:** `lib/game/character.dart` (`CameraPicture`)
+- **Commit:** https://github.com/Aistwobig/Cybernie/commit/d67ad6f
+- **What it does and why we kept it:** The camera above the characters' heads.
+  I understand it the best because the AI explained to me how it did it, and
+  it was exactly what I had in mind: the camera goes through WebRTC, and the
+  picture is drawn above the character's head so it moves with them.
