@@ -28,3 +28,9 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/launch.json
+
+# Java / Kotlin crash reports from Gradle builds
+hs_err_pid*.log
+replay_pid*.log
+.kotlin/
+android/.kotlin/
