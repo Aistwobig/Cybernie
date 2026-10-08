@@ -1,8 +1,9 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Links to a player's profile page, as put in their QR code:
-/// `<this site>/#/player/<player id>`. Scanning it with any phone camera
-/// opens the app on that profile.
+/// Links to a player's profile page. Their QR code holds
+/// `<this site>/p/?id=<player id>` (see [url]), which leads to the app's
+/// `/player/<player id>` route: in the Android app if it's installed,
+/// otherwise in the web app.
 class ProfileLink {
   ProfileLink._();
 
@@ -25,8 +26,10 @@ class ProfileLink {
   /// Android app).
   static const String liveSite = 'https://aistwobig.github.io/Cybernie/';
 
-  /// The full web address of [playerId]'s profile: on this site in a
-  /// browser, on [liveSite] in the app.
+  /// The web address in [playerId]'s QR code: this site's `p/` page (on
+  /// [liveSite] in the app). On Android it opens the app on the profile, or
+  /// the download page if the app isn't installed; elsewhere the web app's
+  /// profile page (see web/p/index.html).
   static String url(String playerId) {
     final here = Uri.base;
     final base = here.scheme == 'http' || here.scheme == 'https'
@@ -37,8 +40,8 @@ class ProfileLink {
       scheme: base.scheme,
       host: base.host,
       port: base.hasPort ? base.port : null,
-      path: path,
-      fragment: route(playerId),
+      path: '${path}p/',
+      queryParameters: {'id': playerId},
     ).toString();
   }
 

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cybernie profile</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="../favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <!--
+    Where profile QR codes point: /p/?id=<player id>.
+    Android: opens the Cybernie app on that profile, or the download page
+    if the app isn't installed. Everywhere else: the profile in the web app.
+  -->
+  <style>
+    :root {
+      --bg: #1a0f08;
+      --card: #2a1a10;
+      --text: #f5e6c8;
+      --dim: #c9b896;
+      --gold: #ffd027;
+      --ink: #2a1408;
+      --line: rgba(245, 230, 200, 0.14);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px 16px;
+      background: radial-gradient(circle at 50% 0%, #3a2414 0%, var(--bg) 65%);
+      color: var(--text);
+      font-family: Inter, system-ui, sans-serif;
+    }
+    .card {
+      width: 100%;
+      max-width: 380px;
+      padding: 28px 22px;
+      border-radius: 18px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+      text-align: center;
+    }
+    .logo { width: 56px; height: 56px; image-rendering: pixelated; }
+    h1 {
+      margin: 12px 0 6px;
+      font-family: 'Plus Jakarta Sans', Inter, sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+    }
+    p { margin: 0 0 22px; color: var(--dim); font-size: 14px; line-height: 1.5; }
+    a.btn {
+      display: block;
+      padding: 13px 16px;
+      margin-top: 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      color: var(--text);
+    }
+    a.btn.primary { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+    a.btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+    .android-only { display: none; }
+    .android .android-only { display: block; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <img class="logo" src="../favicon.png" alt="">
+    <h1>Opening a Cybernie profile</h1>
+    <p id="note">Taking you there…</p>
+    <a class="btn primary android-only" id="open-app" href="#">Open in the Cybernie app</a>
+    <a class="btn android-only" id="get-app" href="#">Get the Android app</a>
+    <a class="btn" id="open-web" href="../">Open in the browser</a>
+  </main>
+  <script>
+    (function () {
+      // The download page for the Android app (always its newest version).
+      var DOWNLOAD = 'https://github.com/Aistwobig/Cybernie/releases/latest';
+      var APP_PACKAGE = 'com.cybernie.app';
+
+      var params = new URLSearchParams(location.search);
+      var raw = params.get('id') || '';
+      // Player ids are UUIDs: anything else isn't a profile link.
+      var id = /^[A-Za-z0-9-]{1,64}$/.test(raw) ? raw : '';
+
+      var web = new URL(id ? '../#/player/' + id : '../', location.href).href;
+      document.getElementById('open-web').href = web;
+      document.getElementById('get-app').href = DOWNLOAD;
+
+      if (!/Android/i.test(navigator.userAgent)) {
+        // iPhone and computers: the web app.
+        location.replace(web);
+        return;
+      }
+
+      // Android: the app if it's installed (it opens com.cybernie://open/...),
+      // otherwise Chrome goes to the download page instead.
+      document.documentElement.classList.add('android');
+      var path = id ? 'open/player/' + id : 'open/';
+      var intent = 'intent://' + path + '#Intent;scheme=com.cybernie;package=' +
+        APP_PACKAGE + ';S.browser_fallback_url=' + encodeURIComponent(DOWNLOAD) +
+        ';end';
+      document.getElementById('open-app').href = intent;
+      document.getElementById('note').textContent =
+        "If the app doesn't open, tap a button below.";
+      location.href = intent;
+    })();
+  </script>
+</body>
+</html>

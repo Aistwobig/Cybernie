@@ -90,6 +90,15 @@ class App extends StatefulWidget {
     // A player's profile (from their QR code): /player/<id>.
     final playerId = ProfileLink.playerIdIn(settings.name);
     if (playerId != null) {
+      // Opened from a QR code while signed out (the Android app): sign in
+      // first, then the profile opens (see WelcomeScreen).
+      if (SupabaseConfig.isConfigured && !AuthService.isSignedIn) {
+        ProfileLink.savePending(playerId);
+        return MaterialPageRoute<void>(
+          settings: const RouteSettings(name: '/login'),
+          builder: (_) => const LoginScreen(),
+        );
+      }
       return MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => PlayerProfileScreen(playerId: playerId),

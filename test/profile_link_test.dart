@@ -13,9 +13,10 @@ void main() {
     expect(ProfileLink.playerIdIn(null), isNull);
   });
 
-  test('the link points at this site, with the profile route', () {
-    final link = ProfileLink.url('abc');
-    expect(link, endsWith('#/player/abc'));
-    expect(Uri.parse(link).fragment, '/player/abc');
+  test('the link points at the profile page, with the player id', () {
+    final link = Uri.parse(ProfileLink.url('abc'));
+    expect(link.scheme, startsWith('http'));
+    expect(link.path, endsWith('/p/'));
+    expect(link.queryParameters['id'], 'abc');
   });
 }

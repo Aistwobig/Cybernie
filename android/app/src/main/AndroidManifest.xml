@@ -45,6 +45,16 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="com.cybernie" android:host="login-callback"/>
             </intent-filter>
+            <!-- Scanned profile QR codes open the app on that profile:
+                 com.cybernie://open/player/<id> becomes the app's
+                 /player/<id> route (see web/p/index.html). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="com.cybernie" android:host="open"/>
+            </intent-filter>
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="true"/>
         </activity>
         <service
             android:name=".ScreenCaptureService"
