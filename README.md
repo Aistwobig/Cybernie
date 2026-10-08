@@ -248,8 +248,10 @@ phone browsers.
 - **Character sprites:** drawn by the author in Aseprite; the animation
   frames (walking, idle and sitting movements) were generated with ChatGPT
   from those drawings, then cleaned up and lined up for the game.
-- **Tavern maps and UI art:** _(fill in where these came from and their
-  licence)_
+- **Tavern maps and UI art:** the tavern, the upstairs meeting room, the
+  furniture and the UI kit (frames, buttons, coins, the lucky wheel) were made
+  by the author in Aseprite, with a little help from AI, and are released with
+  the project under the MIT licence.
 - **Background music:** "【Isekai Fantasy Music】Garments in the Mountain
   Breeze【Free BGM 60min】" from YouTube, shared as free background music.
   All credit goes to its creator. The game uses part of it, trimmed to three

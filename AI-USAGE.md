@@ -7,7 +7,8 @@ Tools used:
   sheet processing, the landing page, the Android build and documentation
   drafts.
 - **ChatGPT** (OpenAI): the animation frames (walking, idle, sitting) for the
-  characters, generated from my own Aseprite drawings.
+  characters, generated from my own Aseprite drawings, and some help with the
+  tavern maps and UI art, which I made in Aseprite.
 
 ## 1. How I used AI
 
