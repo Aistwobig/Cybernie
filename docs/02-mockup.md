@@ -14,16 +14,18 @@ Screenshots of the finished app (more to come).
   <img src="assets/screenshots/login-night.png" alt="Login screen, night mode" width="250">
 </p>
 
-### Home, friends and profile
+### Home, messages, friends and profile
 
-**Home** greets you with your hero and the Join Room button, **Friends**
-shows who is online with a chat button for each, and **Profile** is where
-you rename yourself, get your QR code and pick one of the six heroes.
+**Home** greets you with your hero and the Join Room button, **Messages**
+is a private chat with a friend (with emotes), **Friends** shows who is
+online with a chat button for each, and **Profile** is where you rename
+yourself, get your QR code and pick one of the six heroes.
 
 <p align="center">
-  <img src="assets/screenshots/home.png" alt="Home screen" width="250">
-  <img src="assets/screenshots/friends.png" alt="Friends screen" width="250">
-  <img src="assets/screenshots/profile.png" alt="Profile screen" width="250">
+  <img src="assets/screenshots/home.png" alt="Home screen" width="200">
+  <img src="assets/screenshots/messages.png" alt="Private messages with a friend" width="200">
+  <img src="assets/screenshots/friends.png" alt="Friends screen" width="200">
+  <img src="assets/screenshots/profile.png" alt="Profile screen" width="200">
 </p>
 
 ### Upstairs meeting room
