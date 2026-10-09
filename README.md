@@ -139,6 +139,13 @@ yourself, get your QR code and pick one of the six heroes.
   <img src="docs/assets/screenshots/profile.png" alt="Profile screen" width="200">
 </p>
 
+**Friend requests:** accept or decline the requests you get, and cancel the
+ones you sent while they wait.
+
+<p align="center">
+  <img src="docs/assets/screenshots/friend-requests.png" alt="Friend requests and sent requests" width="250">
+</p>
+
 ## What it does
 
 **Accounts and friends**
