@@ -28,6 +28,23 @@ yourself, get your QR code and pick one of the six heroes.
   <img src="assets/screenshots/profile.png" alt="Profile screen" width="200">
 </p>
 
+### Chat and notifications
+
+**A message notification:** a new private message slides in at the top,
+even in the middle of a blackjack hand.
+
+![A message notification over the blackjack table](assets/screenshots/message-notification.png)
+
+**Private chat in the tavern:** the conversation opens beside the room, so
+you can keep chatting without leaving it.
+
+![Private chat open in the tavern](assets/screenshots/tavern-private-chat.png)
+
+**Tavern chat:** everyone in the room can read the open chat log above the
+message box.
+
+![The tavern chat log](assets/screenshots/tavern-chat.png)
+
 ### Upstairs meeting room
 
 Six players watching a shared game, one seated at the table:

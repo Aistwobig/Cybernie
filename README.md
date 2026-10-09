@@ -98,6 +98,23 @@ of the room.
 
 ![Meeting room with a long chat bubble](docs/assets/screenshots/meeting-room-chat-bubble.png)
 
+### Chat and notifications
+
+**A message notification:** a new private message slides in at the top,
+even in the middle of a blackjack hand.
+
+![A message notification over the blackjack table](docs/assets/screenshots/message-notification.png)
+
+**Private chat in the tavern:** the conversation opens beside the room, so
+you can keep chatting without leaving it.
+
+![Private chat open in the tavern](docs/assets/screenshots/tavern-private-chat.png)
+
+**Tavern chat:** everyone in the room can read the open chat log above the
+message box.
+
+![The tavern chat log](docs/assets/screenshots/tavern-chat.png)
+
 ### Getting in
 
 The splash screen, and the Google sign-in screen in day and night mode.
