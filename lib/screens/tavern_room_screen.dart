@@ -757,6 +757,8 @@ class _TavernRoomScreenState extends State<TavernRoomScreen> {
           if (TavernMap.isUpstairs(Offset(entry.value.x, entry.value.y)))
             entry.key,
       },
+      room: _room,
+      upstairs: _game.upstairs,
       onLostToEarlier: (name) => _showSnack(AppStrings.screenShareBusy(name)),
     );
     // Its sound follows the voice chat volume in Settings, and turns the

@@ -94,6 +94,16 @@ class ScreenShareService {
     _room ??= room;
     myId ??= room.myId;
     final engine = _engineFor(room);
+    // A viewer upstairs has no picture yet (e.g. our first offer reached
+    // them before they knew we were sharing, so they ignored it): send a
+    // fresh one.
+    if (signal['kind'] == 'scr-want') {
+      if (sharing.value && _viewers.contains(fromId)) {
+        engine.drop(fromId);
+        engine.offerTo(fromId);
+      }
+      return;
+    }
     // Only take a picture from whoever is sharing.
     if (signal['kind'] == 'scr-offer' && sharerId.value != fromId) return;
     engine.handleSignal(fromId, signal).catchError((Object error) {
@@ -108,8 +118,15 @@ class ScreenShareService {
   void update({
     required List<RoomPlayer> others,
     required Set<String> viewers,
+    RoomService? room,
+    bool upstairs = false,
     void Function(String name)? onLostToEarlier,
   }) {
+    if (room != null) {
+      _room ??= room;
+      myId ??= room.myId;
+    }
+    _viewers = viewers;
     final engine = _engine;
     final others0 = [
       for (final p in others)
@@ -146,7 +163,22 @@ class ScreenShareService {
       }
       sharerId.value = sharer;
     }
+    // Upstairs while someone shares, but no picture from them: ask for it
+    // (every few seconds until it comes).
+    final linked = engine?.peers.contains(sharer) ?? false;
+    if (sharer == null || !upstairs || linked) return;
+    final now = DateTime.now();
+    if (now.difference(_lastAsked) < _askEvery) return;
+    _lastAsked = now;
+    _room?.sendVoiceSignal(sharer, {'kind': 'scr-want'});
   }
+
+  /// The players upstairs, as of the last [update] (the sharer only sends
+  /// to them).
+  Set<String> _viewers = const {};
+
+  DateTime _lastAsked = DateTime.fromMillisecondsSinceEpoch(0);
+  static const Duration _askEvery = Duration(seconds: 3);
 
   /// Whether a shared screen's sound is playing for us.
   bool get hasSound => _engine?.hasSound ?? false;
