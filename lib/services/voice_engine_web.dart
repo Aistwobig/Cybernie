@@ -80,17 +80,34 @@ class _WebVoice implements VoiceEngine {
   /// The chosen microphone (null: the browser's default).
   String? _deviceId;
 
-  Future<web.MediaStream> _openMic() {
+  Future<web.MediaStream> _openMic() => _withFallback(_deviceId, (id) {
     final constraints = {
       'echoCancellation': true,
       'noiseSuppression': true,
       'autoGainControl': true,
-      if (_deviceId != null && _deviceId!.isNotEmpty)
-        'deviceId': {'exact': _deviceId},
+      if (id != null) 'deviceId': {'exact': id},
     }.jsify()!;
     return web.window.navigator.mediaDevices
         .getUserMedia(web.MediaStreamConstraints(audio: constraints))
         .toDart;
+  });
+
+  /// Opens the device chosen in Settings ([id]), or the default one if
+  /// that fails for any reason but permission: browsers give devices new
+  /// ids now and then (and a webcam may be unplugged), so a saved id can
+  /// point at nothing.
+  static Future<web.MediaStream> _withFallback(
+    String? id,
+    Future<web.MediaStream> Function(String? id) open,
+  ) async {
+    if (id == null || id.isEmpty) return open(null);
+    try {
+      return await open(id);
+    } catch (error) {
+      if ('$error'.contains('NotAllowedError')) rethrow;
+      debugPrint('Voice: device $id unavailable ($error), using the default');
+      return open(null);
+    }
   }
 
   @override
@@ -149,22 +166,19 @@ class _WebVoice implements VoiceEngine {
   /// phones).
   String? _cameraId;
 
-  Future<web.MediaStream> _openCamera() {
+  Future<web.MediaStream> _openCamera() => _withFallback(_cameraId, (id) {
     // Small and at 15 frames a second: everyone sends to everyone nearby
     // directly, so this keeps it light.
     final constraints = {
       'width': {'ideal': 320},
       'height': {'ideal': 240},
       'frameRate': {'ideal': 15, 'max': 20},
-      if (_cameraId != null && _cameraId!.isNotEmpty)
-        'deviceId': {'exact': _cameraId}
-      else
-        'facingMode': 'user',
+      if (id != null) 'deviceId': {'exact': id} else 'facingMode': 'user',
     }.jsify()!;
     return web.window.navigator.mediaDevices
         .getUserMedia(web.MediaStreamConstraints(video: constraints))
         .toDart;
-  }
+  });
 
   @override
   Future<void> useCamera(String? deviceId) async {

@@ -86,16 +86,34 @@ class _NativeVoice implements VoiceEngine {
   /// The chosen microphone (null: the phone's default).
   String? _deviceId;
 
-  Future<rtc.MediaStream> _openMic() =>
-      rtc.navigator.mediaDevices.getUserMedia({
-        'audio': {
-          'echoCancellation': true,
-          'noiseSuppression': true,
-          'autoGainControl': true,
-          if (_deviceId != null && _deviceId!.isNotEmpty) 'deviceId': _deviceId,
-        },
-        'video': false,
-      });
+  Future<rtc.MediaStream> _openMic() => _withFallback(
+    _deviceId,
+    (id) => rtc.navigator.mediaDevices.getUserMedia({
+      'audio': {
+        'echoCancellation': true,
+        'noiseSuppression': true,
+        'autoGainControl': true,
+        'deviceId': ?id,
+      },
+      'video': false,
+    }),
+  );
+
+  /// Opens the device chosen in Settings ([id]), or the default one if
+  /// that fails for any reason but permission (a saved id can point at a
+  /// device that's gone).
+  static Future<rtc.MediaStream> _withFallback(
+    String? id,
+    Future<rtc.MediaStream> Function(String? id) open,
+  ) async {
+    if (id == null || id.isEmpty) return open(null);
+    try {
+      return await open(id);
+    } catch (error) {
+      if ('$error'.contains('Permission')) rethrow;
+      return open(null);
+    }
+  }
 
   @override
   Future<void> start() async {
@@ -152,21 +170,20 @@ class _NativeVoice implements VoiceEngine {
   /// The chosen camera (null: the front one).
   String? _cameraId;
 
-  Future<rtc.MediaStream> _openCamera() =>
-      rtc.navigator.mediaDevices.getUserMedia({
-        'audio': false,
-        // Small and at 15 frames a second: everyone sends to everyone nearby
-        // directly, so this keeps it light.
-        'video': {
-          'width': 320,
-          'height': 240,
-          'frameRate': 15,
-          if (_cameraId != null && _cameraId!.isNotEmpty)
-            'deviceId': _cameraId
-          else
-            'facingMode': 'user',
-        },
-      });
+  Future<rtc.MediaStream> _openCamera() => _withFallback(
+    _cameraId,
+    (id) => rtc.navigator.mediaDevices.getUserMedia({
+      'audio': false,
+      // Small and at 15 frames a second: everyone sends to everyone nearby
+      // directly, so this keeps it light.
+      'video': {
+        'width': 320,
+        'height': 240,
+        'frameRate': 15,
+        if (id != null) 'deviceId': id else 'facingMode': 'user',
+      },
+    }),
+  );
 
   @override
   Future<void> useCamera(String? deviceId) async {

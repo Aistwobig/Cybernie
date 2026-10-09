@@ -113,8 +113,9 @@ class SfxService {
       // and the background music stops when an effect plays: mix them.
       try {
         await AudioPlayer.global.setAudioContext(
-          AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers)
-              .build(),
+          AudioContextConfig(
+            focus: AudioContextConfigFocus.mixWithOthers,
+          ).build(),
         );
       } catch (_) {}
     }
