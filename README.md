@@ -54,9 +54,6 @@ personal data.
 
 ## Trailer
 
-**Cybernie V2**: the tavern, drinks, blackjack, the lucky wheel, voice and
-video, screen sharing, the app and QR invites, in 42 seconds. Click to watch.
-
 <p align="center">
   <a href="docs/assets/video/cybernie-trailer-v2.mp4">
     <img src="docs/assets/video/trailer-poster.png" alt="Cybernie V2 trailer" width="720">
