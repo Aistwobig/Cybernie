@@ -12,6 +12,10 @@ Six players watching a shared game, one seated at the table:
 
 ![Six players in the meeting room watching a shared screen](assets/screenshots/meeting-room-six-players.png)
 
+Five players seated at the table, cameras on, watching the projector:
+
+![Five players seated at the meeting table with cameras on](assets/screenshots/meeting-table-seated-cameras.png)
+
 Tapping the projector shows **Share screen** and **Full screen**:
 
 ![Projector with Share screen and Full screen buttons](assets/screenshots/meeting-room-projector-buttons.png)

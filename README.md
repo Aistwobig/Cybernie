@@ -58,6 +58,11 @@ projector, with one seated at the meeting table.
 
 ![Six players in the meeting room watching a shared screen](docs/assets/screenshots/meeting-room-six-players.png)
 
+**A meeting at the table:** five players seated side by side, cameras on
+above their heads, while Cyrel shares a video on the projector.
+
+![Five players seated at the meeting table with cameras on](docs/assets/screenshots/meeting-table-seated-cameras.png)
+
 **The projector's buttons:** tapping the shared screen shows **Share
 screen** and **Full screen**, here while SEAN shares a song, with emotes,
 a chat bubble and "SEAN is typing…" around it.
