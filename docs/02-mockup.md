@@ -6,6 +6,14 @@ The visual plan for Cybernie, updated to the finished app (v1.1, 2026-10-09).
 
 Screenshots of the finished app (more to come).
 
+### Splash and Login
+
+<p align="center">
+  <img src="assets/screenshots/splash.png" alt="Splash screen" width="250">
+  <img src="assets/screenshots/login-day.png" alt="Login screen, day mode" width="250">
+  <img src="assets/screenshots/login-night.png" alt="Login screen, night mode" width="250">
+</p>
+
 ### Upstairs meeting room
 
 Six players watching a shared game, one seated at the table:

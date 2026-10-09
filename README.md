@@ -89,6 +89,30 @@ of the room.
 
 ![Meeting room with a long chat bubble](docs/assets/screenshots/meeting-room-chat-bubble.png)
 
+### Getting in
+
+The splash screen, and the Google sign-in screen in day and night mode.
+
+<p align="center">
+  <img src="docs/assets/screenshots/splash.png" alt="Splash screen" width="250">
+  <img src="docs/assets/screenshots/login-day.png" alt="Login screen, day mode" width="250">
+  <img src="docs/assets/screenshots/login-night.png" alt="Login screen, night mode" width="250">
+</p>
+
+### Landing page
+
+The [landing page](https://aistwobig.github.io/Cybernie/landing/): the hero
+with the Android download, the six characters, friends, and a playable hand
+of blackjack against Bernie.
+
+![Landing page hero](docs/assets/screenshots/landing-hero.png)
+
+![Landing page characters](docs/assets/screenshots/landing-roster.png)
+
+![Landing page friends section](docs/assets/screenshots/landing-friends.png)
+
+![Landing page blackjack demo](docs/assets/screenshots/landing-blackjack.png)
+
 More screenshots coming soon.
 
 ## What it does
