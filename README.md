@@ -55,7 +55,7 @@ personal data.
 ## Trailer
 
 <p align="center">
-  <a href="docs/assets/video/cybernie-trailer-v2.mp4">
+  <a href="https://www.youtube.com/watch?v=x5QkkTg2f88">
     <img src="docs/assets/video/trailer-poster.png" alt="Cybernie V2 trailer" width="720">
   </a>
 </p>
