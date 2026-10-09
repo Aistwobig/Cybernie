@@ -53,7 +53,38 @@ personal data.
 
 ## Screenshots
 
-Coming soon.
+**Six players in the meeting room**, watching a shared game on the
+projector, with one seated at the meeting table.
+
+![Six players in the meeting room watching a shared screen](docs/assets/screenshots/meeting-room-six-players.png)
+
+**The projector's buttons:** tapping the shared screen shows **Share
+screen** and **Full screen**, here while SEAN shares a song, with emotes,
+a chat bubble and "SEAN is typing…" around it.
+
+![Projector with Share screen and Full screen buttons](docs/assets/screenshots/meeting-room-projector-buttons.png)
+
+**Upstairs meeting room:** Cyrel shares their screen on the projector while
+players in voice chat have their cameras on above their heads.
+
+![Meeting room with screen sharing and cameras](docs/assets/screenshots/meeting-room-screen-share-camera.png)
+
+**Chat in the meeting room:** a speech bubble over a player while the shared
+screen keeps playing.
+
+![Meeting room with screen sharing and chat](docs/assets/screenshots/meeting-room-screen-share.png)
+
+**Hanging out while a game is shared:** cameras, a "typing…" indicator and
+the "Click to sit" prompt next to the meeting table.
+
+![Meeting room with cameras and a typing indicator](docs/assets/screenshots/meeting-room-typing.png)
+
+**Longer chat bubbles** stay over the player who sent them, readable on top
+of the room.
+
+![Meeting room with a long chat bubble](docs/assets/screenshots/meeting-room-chat-bubble.png)
+
+More screenshots coming soon.
 
 ## What it does
 

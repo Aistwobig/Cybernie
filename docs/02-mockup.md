@@ -4,8 +4,33 @@ The visual plan for Cybernie, updated to the finished app (v1.1, 2026-10-09).
 
 ## Mockup
 
-_(To add: screenshots of the finished screens in `assets/`, one heading per
-screen, e.g. `![Home](assets/home.png)`. Use test accounts only.)_
+Screenshots of the finished app (more to come).
+
+### Upstairs meeting room
+
+Six players watching a shared game, one seated at the table:
+
+![Six players in the meeting room watching a shared screen](assets/screenshots/meeting-room-six-players.png)
+
+Tapping the projector shows **Share screen** and **Full screen**:
+
+![Projector with Share screen and Full screen buttons](assets/screenshots/meeting-room-projector-buttons.png)
+
+Screen sharing on the projector, with players' cameras above their heads:
+
+![Meeting room with screen sharing and cameras](assets/screenshots/meeting-room-screen-share-camera.png)
+
+Chatting while a screen is shared:
+
+![Meeting room with screen sharing and chat](assets/screenshots/meeting-room-screen-share.png)
+
+Cameras on, someone typing, and the "Click to sit" prompt near the table:
+
+![Meeting room with cameras and a typing indicator](assets/screenshots/meeting-room-typing.png)
+
+A longer chat bubble over a player:
+
+![Meeting room with a long chat bubble](assets/screenshots/meeting-room-chat-bubble.png)
 
 ## Screen flow
 
