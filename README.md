@@ -27,7 +27,7 @@
 | **Landing page** | [aistwobig.github.io/Cybernie/landing](https://aistwobig.github.io/Cybernie/landing/) |
 | **Live app** | [aistwobig.github.io/Cybernie](https://aistwobig.github.io/Cybernie/) |
 | **Android app** | [Download the APK](https://github.com/Aistwobig/Cybernie/releases/latest/download/Cybernie.apk) ([all releases](https://github.com/Aistwobig/Cybernie/releases)) |
-| **Demo video** | Coming soon |
+| **Demo video** | [Watch on YouTube](https://youtu.be/jBdyOs0AQtU) |
 | **Course** | Applications Development and Emerging Technologies (6ADET), Holy Angel University |
 | **Author** | Mclaren Ais C. Miranda |
 
